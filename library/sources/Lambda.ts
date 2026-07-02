@@ -3,10 +3,10 @@ import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
 import { runWithContext, Context as AgentContext } from "../agent/Context";
 import { envToBool } from "../helpers/envToBool";
-import { isJsonContentType } from "../helpers/isJsonContentType";
 import { isPlainObject } from "../helpers/isPlainObject";
-import { parse } from "../helpers/parseCookies";
 import { shouldDiscoverRoute } from "./http-server/shouldDiscoverRoute";
+import { getContextForGatewayEvent, isGatewayEvent } from "./lambda/gateway";
+import { tryParseJSON } from "../helpers/tryParseJSON";
 
 type CallbackHandler<TEvent, TResult> = (
   event: TEvent,
@@ -52,51 +52,6 @@ function convertToAsyncFunction<TEvent, TResult>(
       }
     });
   };
-}
-
-function normalizeHeaders(headers: Record<string, string | undefined>) {
-  const normalized: Record<string, string | undefined> = {};
-  for (const key in headers) {
-    normalized[key.toLowerCase()] = headers[key];
-  }
-
-  return normalized;
-}
-
-function tryParseAsJSON(json: string) {
-  try {
-    return JSON.parse(json);
-  } catch {
-    return undefined;
-  }
-}
-
-function parseBody(event: APIGatewayProxyEvent) {
-  const headers = event.headers ? normalizeHeaders(event.headers) : {};
-
-  if (!event.body || !isJsonContentType(headers["content-type"] || "")) {
-    return undefined;
-  }
-
-  return tryParseAsJSON(event.body);
-}
-
-export type APIGatewayProxyEvent = {
-  resource: string;
-  httpMethod: string;
-  headers: Record<string, string | undefined>;
-  queryStringParameters?: Record<string, string>;
-  pathParameters?: Record<string, string>;
-  requestContext?: {
-    identity?: {
-      sourceIp?: string;
-    };
-  };
-  body?: string;
-};
-
-function isGatewayEvent(event: unknown): event is APIGatewayProxyEvent {
-  return isPlainObject(event) && "httpMethod" in event && "headers" in event;
 }
 
 type GatewayResponse = {
@@ -168,7 +123,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
 
     if (isSQSEvent(event)) {
       const body: unknown[] = event.Records.map((record) =>
-        tryParseAsJSON(record.body)
+        tryParseJSON(record.body)
       ).filter((body) => body);
 
       agentContext = {
@@ -188,18 +143,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
         route: undefined,
       };
     } else if (isGatewayEvent(event)) {
-      agentContext = {
-        url: undefined,
-        method: event.httpMethod,
-        remoteAddress: event.requestContext?.identity?.sourceIp,
-        body: parseBody(event),
-        headers: event.headers,
-        routeParams: event.pathParameters ? event.pathParameters : {},
-        query: event.queryStringParameters ? event.queryStringParameters : {},
-        cookies: event.headers?.cookie ? parse(event.headers.cookie) : {},
-        source: "lambda/gateway",
-        route: event.resource ? event.resource : undefined,
-      };
+      agentContext = getContextForGatewayEvent(event);
     }
 
     if (!agentContext) {
@@ -249,20 +193,28 @@ function incrementStatsAndDiscoverAPISpec(
     return;
   }
 
-  if (
-    isGatewayEvent(event) &&
-    isGatewayResponse(result) &&
-    agentContext.route &&
-    agentContext.method
-  ) {
-    const shouldDiscover = shouldDiscoverRoute({
-      statusCode: result.statusCode,
-      method: agentContext.method,
-      route: agentContext.route,
-    });
+  if (isGatewayEvent(event) && agentContext.route && agentContext.method) {
+    if (isGatewayResponse(result)) {
+      const shouldDiscover = shouldDiscoverRoute({
+        statusCode: result.statusCode,
+        method: agentContext.method,
+        route: agentContext.route,
+      });
 
-    if (shouldDiscover) {
-      agent.onRouteExecute(agentContext);
+      if (shouldDiscover) {
+        agent.onRouteExecute(agentContext);
+      }
+    }
+
+    if (
+      agentContext.remoteAddress &&
+      !agentContext.blockedDueToIPOrBot &&
+      agent.getAttackWaveDetector().check(agentContext)
+    ) {
+      agent.onDetectedAttackWave({
+        request: agentContext,
+      });
+      agent.getInspectionStatistics().onAttackWaveDetected();
     }
   }
 
