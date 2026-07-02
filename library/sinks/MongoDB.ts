@@ -124,6 +124,37 @@ export class MongoDB implements Wrapper {
     return undefined;
   }
 
+  private inspectBulkOpFind(
+    args: unknown[],
+    bulkOp: unknown
+  ): InterceptorResult {
+    const context = getContext();
+    if (!context) {
+      return undefined;
+    }
+
+    // v6+: this.collection; v4/v5: this.s.collection
+    const bulkOpAny = bulkOp as any;
+    const collection = (bulkOpAny?.collection ?? bulkOpAny?.s?.collection) as
+      | Collection
+      | undefined;
+    if (!collection) {
+      return undefined;
+    }
+
+    if (args.length > 0 && isPlainObject(args[0])) {
+      return this.inspectFilter(
+        collection.dbName,
+        collection.collectionName,
+        context,
+        args[0],
+        "find"
+      );
+    }
+
+    return undefined;
+  }
+
   private inspectBulkWrite(args: unknown[], collection: Collection) {
     const context = getContext();
 
@@ -269,6 +300,23 @@ export class MongoDB implements Wrapper {
       inspectArgs: (args, agent, collection) =>
         this.inspectDistinct(args, collection as Collection),
     });
+
+    // BulkOperationBase.prototype.find is not on Collection but on the bulk op
+    // classes returned by initializeOrderedBulkOp / initializeUnorderedBulkOp.
+    // Both subclasses inherit find from BulkOperationBase, so we patch it once
+    // on the shared base prototype.
+    if (exports.OrderedBulkOperation?.prototype) {
+      const bulkOpBaseProto = Object.getPrototypeOf(
+        exports.OrderedBulkOperation.prototype
+      );
+      if (bulkOpBaseProto?.find) {
+        wrapExport(bulkOpBaseProto, "find", pkgInfo, {
+          kind: "nosql_op",
+          inspectArgs: (args, agent, bulkOp) =>
+            this.inspectBulkOpFind(args, bulkOp),
+        });
+      }
+    }
   }
 
   wrap(hooks: Hooks) {
@@ -322,6 +370,19 @@ export class MongoDB implements Wrapper {
             operationKind: "nosql_op",
             inspectArgs: (args, agent, collection) =>
               this.inspectDistinct(args, collection as Collection),
+          },
+        ],
+      })
+      .addFileInstrumentation({
+        path: "lib/bulk/common.js",
+        functions: [
+          {
+            name: "find",
+            nodeType: "MethodDefinition",
+            className: "BulkOperationBase",
+            operationKind: "nosql_op",
+            inspectArgs: (args, agent, bulkOp) =>
+              this.inspectBulkOpFind(args, bulkOp),
           },
         ],
       });

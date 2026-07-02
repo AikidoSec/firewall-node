@@ -406,6 +406,54 @@ export function createMongoDBTests(
           "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.name"
         );
       }
+
+      await runWithContext(safeContext, async () => {
+        const bulk = collection.initializeOrderedBulkOp();
+        bulk
+          .find({ title: "Yet Another Title" })
+          .update({ $set: { title: "Bulk Title" } });
+        await bulk.execute();
+      });
+
+      const orderedBulkFindError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, async () => {
+          const bulk = collection.initializeOrderedBulkOp();
+          bulk
+            .find({ title: { $ne: null } })
+            .update({ $set: { title: "Injected" } });
+          await bulk.execute();
+        });
+      });
+      t.ok(orderedBulkFindError instanceof Error);
+      if (orderedBulkFindError instanceof Error) {
+        t.same(
+          orderedBulkFindError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
+        );
+      }
+
+      await runWithContext(safeContext, async () => {
+        const bulk = collection.initializeUnorderedBulkOp();
+        bulk
+          .find({ title: "Bulk Title" })
+          .update({ $set: { title: "Yet Another Title" } });
+        await bulk.execute();
+      });
+
+      const unorderedBulkFindError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, async () => {
+          const bulk = collection.initializeUnorderedBulkOp();
+          bulk.find({ title: { $ne: null } }).delete();
+          await bulk.execute();
+        });
+      });
+      t.ok(unorderedBulkFindError instanceof Error);
+      if (unorderedBulkFindError instanceof Error) {
+        t.same(
+          unorderedBulkFindError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
+        );
+      }
     } catch (error: any) {
       t.fail(error.message);
     } finally {
