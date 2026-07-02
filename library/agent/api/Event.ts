@@ -24,6 +24,7 @@ export type AgentInfo = {
   nodeEnv: string;
   serverless: boolean;
   stack: string[];
+  supportedFeatures: string[];
 };
 
 type Started = {
