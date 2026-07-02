@@ -91,7 +91,7 @@ See list above for supported database drivers.
 
 ### API tools
 
-- ✅ [`graphql`](https://www.npmjs.com/package/graphql) 15.x, 16.x
+- ✅ [`graphql`](https://www.npmjs.com/package/graphql) 17.x, 15.x, 16.x
 
 ### Data serialization tools
 

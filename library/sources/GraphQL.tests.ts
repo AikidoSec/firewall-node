@@ -58,7 +58,7 @@ export function createGraphQLTests(pkgName: string) {
 
     const { graphql, buildSchema } = require(
       pkgName
-    ) as typeof import("graphql");
+    ) as typeof import("graphql-v17");
 
     const schema = buildSchema(`
         type Query {
