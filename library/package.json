@@ -95,6 +95,7 @@
     "ai-v4": "npm:ai@^4.3.16",
     "ai-v5": "npm:ai@^5.0.14",
     "ai-v6": "npm:ai@^6.0.3",
+    "ai-v7": "npm:ai@^7.0.8",
     "aws-sdk": "^2.1595.0",
     "axios": "^1.8.4",
     "better-sqlite3": "^12.10.0",
