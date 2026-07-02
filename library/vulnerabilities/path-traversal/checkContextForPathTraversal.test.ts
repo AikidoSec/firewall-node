@@ -460,3 +460,46 @@ t.test(
     );
   }
 );
+
+t.test(
+  "it detects absolute path traversal via file URL object (no traversal segments)",
+  async (t) => {
+    const paths = [
+      { input: "file:///etc/passwd", filename: "/etc/passwd" },
+      { input: "file:///proc/self/environ", filename: "/proc/self/environ" },
+      {
+        input: "file:///home/user/secret.txt",
+        filename: "/home/user/secret.txt",
+      },
+    ];
+
+    for (const { input, filename } of paths) {
+      t.same(
+        checkContextForPathTraversal({
+          filename: new URL(input),
+          operation: "operation",
+          context: {
+            cookies: {},
+            headers: {},
+            remoteAddress: "ip",
+            method: "GET",
+            url: "url",
+            query: { f: input },
+            body: {},
+            routeParams: {},
+            source: "express",
+            route: undefined,
+          },
+        }),
+        {
+          operation: "operation",
+          kind: "path_traversal",
+          source: "query",
+          pathsToPayload: [".f"],
+          metadata: { filename },
+          payload: input,
+        }
+      );
+    }
+  }
+);
