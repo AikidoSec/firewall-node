@@ -1,3 +1,6 @@
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { createGraphQLTests } from "./GraphQL.tests";
 
-createGraphQLTests("graphql-v17");
+if (getMajorNodeVersion() >= 20) {
+  createGraphQLTests("graphql-v17");
+}
