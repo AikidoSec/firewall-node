@@ -3,12 +3,14 @@ use oxc_ast::{
     AstBuilder, NONE,
     ast::{
         Argument, ArrayExpressionElement, AssignmentOperator, AssignmentTarget, Expression,
-        FunctionBody, Statement,
+        FunctionBody, Statement, UnaryOperator,
     },
 };
 use oxc_span::SPAN;
 
 // Add a statement to the beginning of the function: __instrumentInspectArgs('function_identifier', arguments, "{pkg_version}", this);
+// In case of callback_on_block being true, we add an if statement that checks the result of the callback and returns early if the callback returns false:
+// if (!__instrumentInspectArgs('function_identifier', arguments, "{pkg_version}", this)) return;
 pub fn insert_inspect_args<'a>(
     allocator: &'a Allocator,
     builder: &'a AstBuilder,
@@ -16,6 +18,7 @@ pub fn insert_inspect_args<'a>(
     pkg_version: &'a str,
     body: &mut Box<'a, FunctionBody<'a>>,
     is_constructor: bool,
+    callback_on_block: bool,
 ) {
     let mut inspect_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(4);
 
@@ -48,10 +51,20 @@ pub fn insert_inspect_args<'a>(
         false,
     );
 
-    let stmt_expression = builder.statement_expression(SPAN, call_expr);
-
     let insert_pos = get_insert_pos(body, is_constructor);
-    body.statements.insert(insert_pos, stmt_expression);
+
+    if !callback_on_block {
+        let stmt_expression = builder.statement_expression(SPAN, call_expr);
+
+        body.statements.insert(insert_pos, stmt_expression);
+        return;
+    }
+
+    let return_stmt = builder.statement_return(SPAN, None);
+    let test = builder.expression_unary(SPAN, UnaryOperator::LogicalNot, call_expr);
+    let if_stmt = builder.statement_if(SPAN, test, return_stmt, None);
+
+    body.statements.insert(insert_pos, if_stmt);
 }
 
 // Modify the arguments by adding a statement to the beginning of the function

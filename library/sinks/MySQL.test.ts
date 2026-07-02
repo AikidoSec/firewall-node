@@ -148,6 +148,35 @@ t.test("it detects SQL injections", async () => {
         t.same(getContext(), context);
       });
     });
+
+    await new Promise<void>((resolve) => {
+      runWithContext(context, () => {
+        connection.query("-- should be blocked", (err: Error | null) => {
+          t.ok(err instanceof Error);
+          t.same(
+            err?.message,
+            "Zen has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
+          );
+          resolve();
+        });
+      });
+    });
+
+    await new Promise<void>((resolve) => {
+      runWithContext(context, () => {
+        connection.query(
+          { sql: "-- should be blocked" },
+          (err: Error | null) => {
+            t.ok(err instanceof Error);
+            t.same(
+              err?.message,
+              "Zen has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
+            );
+            resolve();
+          }
+        );
+      });
+    });
   } catch (error: any) {
     t.fail(error);
   } finally {

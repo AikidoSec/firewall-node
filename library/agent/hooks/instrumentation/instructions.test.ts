@@ -65,6 +65,7 @@ t.test("it works", async (t) => {
         modifyArgs: false,
         modifyReturnValue: false,
         modifyArgumentsObject: false,
+        callbackOnBlock: false,
         className: undefined,
       },
     ],
@@ -268,6 +269,64 @@ t.test("it works using injected functions", async (t) => {
   const wrapped = wrapBuiltinExports("http", {}) as any;
   t.equal(builtinOnRequireCalled, true);
   t.equal(wrapped.test, 42);
+});
+
+t.test("callbackOnBlock calls callback instead of throwing", async (t) => {
+  let callbackError: unknown;
+
+  const pkg = new Package("foo");
+  pkg.withVersion("^1.0.0").addFileInstrumentation({
+    path: "bar.js",
+    functions: [
+      {
+        nodeType: "MethodDefinition",
+        name: "baz",
+        operationKind: "outgoing_http_op",
+        callbackOnBlock: true,
+        inspectArgs: () => {
+          return {
+            operation: "http.get",
+            hostname: "example.com",
+          };
+        },
+      },
+    ],
+  });
+
+  setPackagesToInstrument([pkg]);
+  createTestAgent();
+
+  t.equal(
+    getPackageFileInstrumentationInstructions("foo", "1.0.0", "bar.js")
+      ?.functions[0].callbackOnBlock,
+    true
+  );
+
+  const shouldContinue = __instrumentInspectArgs(
+    "foo.bar.js.baz.MethodDefinition.^1.0.0",
+    [
+      "input",
+      (err: unknown) => {
+        callbackError = err;
+      },
+    ],
+    "1.0.0",
+    this
+  );
+
+  t.equal(shouldContinue, false);
+
+  await new Promise((resolve) => process.nextTick(resolve));
+
+  t.ok(callbackError instanceof Error);
+  if (callbackError instanceof Error) {
+    t.match(
+      callbackError.message,
+      "Zen has blocked an outbound connection: http.get(...)"
+    );
+  }
+
+  setPackagesToInstrument([]);
 });
 
 t.test("modifyArgs always returns a array", async (t) => {
@@ -639,6 +698,7 @@ t.test(
             modifyReturnValue: false,
             modifyArgumentsObject: false,
             className: "MyClass",
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],

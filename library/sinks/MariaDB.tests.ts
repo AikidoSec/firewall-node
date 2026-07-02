@@ -228,61 +228,43 @@ export async function createMariadbTests(versionPkgName: string) {
             t.same(Number(meta.insertId), 0);
             connection.execute("TRUNCATE cats");
 
-            try {
-              runWithContext(dangerousContext, () => {
-                pool.query("-- should be blocked", () => {
-                  t.fail("Should not be called");
+            // With callbackOnBlock, errors are routed to the callback instead of thrown
+            runWithContext(dangerousContext, () => {
+              pool.query("-- should be blocked", (err: any) => {
+                t.ok(err instanceof Error);
+                if (err instanceof Error) {
+                  t.same(
+                    err.message,
+                    "Zen has blocked an SQL injection: mariadb.query(...) originating from body.myTitle"
+                  );
+                }
+                runWithContext(dangerousContext, () => {
+                  connection.query("-- should be blocked", (err: any) => {
+                    t.ok(err instanceof Error);
+                    if (err instanceof Error) {
+                      t.same(
+                        err.message,
+                        "Zen has blocked an SQL injection: mariadb.query(...) originating from body.myTitle"
+                      );
+                    }
+                    runWithContext(dangerousContext, () => {
+                      connection.execute("-- should be blocked", (err: any) => {
+                        t.ok(err instanceof Error);
+                        if (err instanceof Error) {
+                          t.same(
+                            err.message,
+                            "Zen has blocked an SQL injection: mariadb.execute(...) originating from body.myTitle"
+                          );
+                        }
+                        connection.end();
+                        pool.end(() => {
+                          t.end();
+                        });
+                      });
+                    });
+                  });
                 });
-                t.fail("Should not be called");
               });
-            } catch (error) {
-              t.ok(error instanceof Error);
-              if (error instanceof Error) {
-                t.same(
-                  error.message,
-                  "Zen has blocked an SQL injection: mariadb.query(...) originating from body.myTitle"
-                );
-              }
-            }
-
-            try {
-              runWithContext(dangerousContext, () => {
-                connection.query("-- should be blocked", () => {
-                  t.fail("Should not be called");
-                });
-                t.fail("Should not be called");
-              });
-            } catch (error) {
-              t.ok(error instanceof Error);
-              if (error instanceof Error) {
-                t.same(
-                  error.message,
-                  "Zen has blocked an SQL injection: mariadb.query(...) originating from body.myTitle"
-                );
-              }
-            }
-
-            try {
-              runWithContext(dangerousContext, () => {
-                connection.execute("-- should be blocked", () => {
-                  t.fail("Should not be called");
-                });
-                t.fail("Should not be called");
-              });
-            } catch (error) {
-              t.ok(error instanceof Error);
-              if (error instanceof Error) {
-                t.same(
-                  error.message,
-                  "Zen has blocked an SQL injection: mariadb.execute(...) originating from body.myTitle"
-                );
-              }
-            }
-
-            connection.end();
-
-            pool.end(() => {
-              t.end();
             });
           }
         );

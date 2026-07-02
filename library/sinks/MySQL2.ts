@@ -135,6 +135,7 @@ export class MySQL2 implements Wrapper {
         inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
         operationKind: "sql_op",
         bindContext: true,
+        callbackOnBlock: true,
       },
       {
         nodeType: "MethodDefinition",
@@ -142,6 +143,7 @@ export class MySQL2 implements Wrapper {
         inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
         operationKind: "sql_op",
         bindContext: true,
+        callbackOnBlock: true,
       },
       {
         nodeType: "MethodDefinition",
@@ -216,6 +218,7 @@ export class MySQL2 implements Wrapper {
         wrapExport(connectionPrototype, "query", pkgInfo, {
           kind: "sql_op",
           inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
+          callbackOnBlock: true,
         });
       }
 
@@ -224,6 +227,7 @@ export class MySQL2 implements Wrapper {
         wrapExport(connectionPrototype, "execute", pkgInfo, {
           kind: "sql_op",
           inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
+          callbackOnBlock: true,
         });
       }
 
