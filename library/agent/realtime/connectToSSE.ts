@@ -67,9 +67,7 @@ function connect({
         logDebug("SSE connected successfully");
 
         const parser = createParser({
-          onEvent(event) {
-            onEvent(event);
-          },
+          onEvent,
         });
 
         response.setEncoding("utf-8");
