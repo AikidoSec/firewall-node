@@ -1,44 +1,74 @@
-import { getCurrentAndNextSegments } from "../../helpers/getCurrentAndNextSegments";
-
-const escapeChars = ['"', "'"];
 const dangerousCharsInsideDoubleQuotes = ["$", "`", "\\", "!"];
 
-export function isSafelyEncapsulated(command: string, userInput: string) {
-  return getCurrentAndNextSegments(command.split(userInput)).every(
-    ({ currentSegment, nextSegment }) => {
-      const charBeforeUserInput = currentSegment.slice(-1);
-      const charAfterUserInput = nextSegment.slice(0, 1);
+type QuoteRegion = {
+  start: number;
+  end: number;
+  quoteChar: string;
+};
 
-      const isEscapeChar = escapeChars.find(
-        (char) => char === charBeforeUserInput
-      );
-
-      if (!isEscapeChar) {
-        return false;
+// Walks the command and returns all properly closed single-quote and
+// double-quote regions. Inside double quotes, backslash escapes are
+// respected (per POSIX/bash rules); single quotes have no escape mechanism.
+function parseQuoteRegions(command: string): QuoteRegion[] {
+  const regions: QuoteRegion[] = [];
+  let i = 0;
+  while (i < command.length) {
+    const ch = command[i];
+    if (ch === "'" || ch === '"') {
+      const start = i;
+      i++;
+      while (i < command.length && command[i] !== ch) {
+        if (ch === '"' && command[i] === "\\") {
+          i++;
+        }
+        i++;
       }
-
-      if (charBeforeUserInput !== charAfterUserInput) {
-        return false;
+      if (i < command.length) {
+        regions.push({ start, end: i, quoteChar: ch });
       }
-
-      if (userInput.includes(charBeforeUserInput)) {
-        return false;
-      }
-
-      // There are no dangerous characters inside single quotes
-      // You can use certain characters inside double quotes
-      // https://www.gnu.org/software/bash/manual/html_node/Single-Quotes.html
-      // https://www.gnu.org/software/bash/manual/html_node/Double-Quotes.html
-      if (
-        isEscapeChar === '"' &&
-        dangerousCharsInsideDoubleQuotes.some((char) =>
-          userInput.includes(char)
-        )
-      ) {
-        return false;
-      }
-
-      return true;
+      i++;
+    } else {
+      i++;
     }
+  }
+  return regions;
+}
+
+export function isSafelyEncapsulated(command: string, userInput: string) {
+  const regions = parseQuoteRegions(command);
+  const hasDangerousChars = dangerousCharsInsideDoubleQuotes.some((dc) =>
+    userInput.includes(dc)
   );
+
+  let idx = 0;
+  while (true) {
+    const pos = command.indexOf(userInput, idx);
+    if (pos === -1) {
+      break;
+    }
+    const absStart = pos;
+    const absEnd = pos + userInput.length - 1;
+
+    let inSafeQuote = false;
+    for (const region of regions) {
+      if (absStart > region.start && absEnd < region.end) {
+        if (region.quoteChar === "'") {
+          inSafeQuote = true;
+          break;
+        }
+        if (region.quoteChar === '"' && !hasDangerousChars) {
+          inSafeQuote = true;
+          break;
+        }
+      }
+    }
+
+    if (!inSafeQuote) {
+      return false;
+    }
+
+    idx = absStart + 1;
+  }
+
+  return true;
 }
