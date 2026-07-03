@@ -100,6 +100,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
 
     // Clear all the cached user input strings
     delete current.cache;
+    delete current.cachePathTraversal;
 
     return fn();
   }
