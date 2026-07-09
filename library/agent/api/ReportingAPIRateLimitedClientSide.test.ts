@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { ReportingAPIForTesting } from "./ReportingAPIForTesting";
 import { ReportingAPIRateLimitedClientSide } from "./ReportingAPIRateLimitedClientSide";
 import { Token } from "./Token";

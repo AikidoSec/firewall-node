@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { Mistral as MistralSink } from "./Mistral";
 import { startTestAgent } from "../helpers/startTestAgent";
 
@@ -18,7 +18,9 @@ export function createMistralTests(pkgName: string) {
         },
       });
 
-      const { Mistral } = require(pkgName) as typeof import("mistralai-v2");
+      const { Mistral } = require(pkgName) as typeof import("mistralai-v2", {
+        with: { "resolution-mode": "import" },
+      });
 
       const mistral = new Mistral({
         apiKey: process.env.MISTRAL_API_KEY,

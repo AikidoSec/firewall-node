@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { wrapExport } from "./wrapExport";
 
 t.test("Agent is not initialized", async (t) => {

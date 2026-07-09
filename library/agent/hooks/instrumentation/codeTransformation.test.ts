@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { transformCode } from "./codeTransformation";
 
 const compareCodeStrings = (code1: string, code2: string) => {

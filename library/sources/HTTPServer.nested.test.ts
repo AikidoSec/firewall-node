@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { runWithContext } from "../agent/Context";
 import { fetch } from "../helpers/fetch";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";

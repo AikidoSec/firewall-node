@@ -1,5 +1,5 @@
-import * as t from "tap";
-import * as FakeTimers from "@sinonjs/fake-timers";
+import t from "tap";
+import FakeTimers from "@sinonjs/fake-timers";
 import { Packages } from "./Packages";
 
 t.test("addPackage should add a new package", async (t) => {

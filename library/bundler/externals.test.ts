@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { externals } from "./externals";
 
 t.test("it returns externals", async (t) => {

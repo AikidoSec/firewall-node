@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { NodeSQLite } from "./NodeSQLite";
 import { isPackageInstalled } from "../helpers/isPackageInstalled";

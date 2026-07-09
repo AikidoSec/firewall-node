@@ -1,5 +1,5 @@
-import * as t from "tap";
-import * as FakeTimers from "@sinonjs/fake-timers";
+import t from "tap";
+import FakeTimers from "@sinonjs/fake-timers";
 import { RateLimiter } from "./RateLimiter";
 
 let clock: FakeTimers.InstalledClock;

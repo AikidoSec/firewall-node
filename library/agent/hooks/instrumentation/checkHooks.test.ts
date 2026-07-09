@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { checkHooks } from "./checkHooks";
 import { wrap } from "../../../helpers/wrap";
 

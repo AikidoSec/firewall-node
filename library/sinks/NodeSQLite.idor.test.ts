@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { withoutIdorProtection } from "../agent/context/withoutIdorProtection";

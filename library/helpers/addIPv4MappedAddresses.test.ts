@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { addIPv4MappedAddresses } from "./addIPv4MappedAddresses";
 
 t.test("it adds IPv4-mapped IPv6 addresses", async (t) => {

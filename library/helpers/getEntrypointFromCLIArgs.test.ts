@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { resolve } from "path";
 import { getEntrypointFromCLIArgs } from "./getEntrypointFromCLIArgs";
 

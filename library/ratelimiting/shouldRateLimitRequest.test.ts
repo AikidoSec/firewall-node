@@ -1,5 +1,5 @@
-import * as t from "tap";
-import * as FakeTimers from "@sinonjs/fake-timers";
+import t from "tap";
+import FakeTimers from "@sinonjs/fake-timers";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { EndpointConfig } from "../agent/Config";

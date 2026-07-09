@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
@@ -33,7 +33,7 @@ const agent = createTestAgent({
 });
 agent.start([new Hapi(), new FileSystem(), new HTTPServer()]);
 
-import * as request from "supertest";
+import request from "supertest";
 import { getContext } from "../agent/Context";
 
 // Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode

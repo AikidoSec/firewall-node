@@ -1,8 +1,8 @@
-import * as t from "tap";
+import t from "tap";
 import { createTestAgent } from "../../../helpers/createTestAgent";
 import { applyHooks } from "../../applyHooks";
 import { Hooks } from "../Hooks";
-import * as mod from "node:module";
+import mod from "node:module";
 import { registerNodeHooks } from "./index";
 import { Agent } from "../../Agent";
 import { onModuleLoad } from "./loadHook";
@@ -240,7 +240,7 @@ t.test(
       t.same(packageJson.name, "@aikidosec/firewall");
 
       // Load user code
-      const userCode = await import("./getSourceType");
+      const userCode = await import("./getSourceType.js");
       t.same(typeof userCode.getSourceType, "function");
     }
 

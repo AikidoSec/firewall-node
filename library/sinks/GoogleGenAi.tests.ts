@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { GoogleGenAi as GoogleGenAiWrapper } from "./GoogleGenAi";
 import { runWithContext, type Context } from "../agent/Context";
@@ -40,7 +40,9 @@ export function createGoogleGenAiTests(versionPkgName: string) {
 
       const { GoogleGenAI } = require(
         versionPkgName
-      ) as typeof import("@google/genai-v2");
+      ) as typeof import("@google/genai-v2", {
+        with: { "resolution-mode": "import" },
+      });
 
       const ai = new GoogleGenAI({
         apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,

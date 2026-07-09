@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { IPMatcher } from "./IPMatcher";
 import { BlockList } from "net";
 

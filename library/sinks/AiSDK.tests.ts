@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { AiSDK } from "./AiSDK";
 import { runWithContext, type Context } from "../agent/Context";
@@ -45,9 +45,13 @@ export function createAiSdkTests(
 
       const { google } = require(
         googlePkgName
-      ) as typeof import("@ai-sdk/google-v3");
+      ) as typeof import("@ai-sdk/google-v3", {
+        with: { "resolution-mode": "import" },
+      });
       const { generateText, generateObject, streamText, streamObject } =
-        require(pkgName) as typeof import("ai-v7");
+        require(pkgName) as typeof import("ai-v7", {
+          with: { "resolution-mode": "import" },
+        });
 
       const { z } = require(zodPkgName) as typeof import("zod/v4");
 

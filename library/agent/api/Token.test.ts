@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { Token } from "./Token";
 
 t.test("it throws error if token is empty", async (t) => {

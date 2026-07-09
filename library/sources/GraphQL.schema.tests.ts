@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, getContext, runWithContext } from "../agent/Context";
 import { startTestAgent } from "../helpers/startTestAgent";

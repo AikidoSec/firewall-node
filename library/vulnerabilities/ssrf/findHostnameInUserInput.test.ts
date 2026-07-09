@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 
 t.test("returns false if user input and hostname are empty", async (t) => {

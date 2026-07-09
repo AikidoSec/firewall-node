@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getContext, runWithContext } from "../agent/Context";
 import { FastXmlParser } from "./FastXmlParser";
 import { startTestAgent } from "../helpers/startTestAgent";

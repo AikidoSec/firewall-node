@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getUrlFromHTTPRequestArgs as getURL } from "./getUrlFromHTTPRequestArgs";
 
 t.test("it works with strings", async (t) => {

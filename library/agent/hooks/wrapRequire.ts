@@ -1,4 +1,4 @@
-import * as mod from "module";
+import mod from "module";
 import { BuiltinModule } from "./BuiltinModule";
 import { isBuiltinModule } from "./isBuiltinModule";
 import { getModuleInfoFromPath } from "./getModuleInfoFromPath";

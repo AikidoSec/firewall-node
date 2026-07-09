@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { createServer, Server } from "http";
 import { fetch } from "./fetch";
 import { gzip } from "zlib";

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { createTestAgent } from "../../helpers/createTestAgent";
 import { wrap } from "../../helpers/wrap";
 import { checkContextForSqlInjection } from "../../vulnerabilities/sql-injection/checkContextForSqlInjection";

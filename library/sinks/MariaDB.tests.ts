@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { MariaDB } from "./MariaDB";
 import { startTestAgent } from "../helpers/startTestAgent";
@@ -41,7 +41,9 @@ export async function createMariadbTests(versionPkgName: string) {
     });
   });
 
-  const mariadb = require(versionPkgName) as typeof import("mariadb-v3.5");
+  const mariadb = require(versionPkgName) as typeof import("mariadb-v3.5", {
+    with: { "resolution-mode": "import" },
+  });
 
   t.test("it detects SQL injections", async (t) => {
     const pool = mariadb.createPool({
@@ -166,7 +168,6 @@ export async function createMariadbTests(versionPkgName: string) {
 
       const undefinedQueryError = await t.rejects(async () => {
         await runWithContext(dangerousContext, () => {
-          // @ts-expect-error Testing undefined query
           return connection.query(undefined);
         });
       });
@@ -192,7 +193,9 @@ export async function createMariadbTests(versionPkgName: string) {
 
   const mariadbCallback = require(
     `${versionPkgName}/callback.js`
-  ) as typeof import("mariadb-v3.5/callback");
+  ) as typeof import("mariadb-v3.5/callback", {
+    with: { "resolution-mode": "import" },
+  });
 
   t.test("it detects SQL injections using callbacks", (t) => {
     const pool = mariadbCallback.createPool({
@@ -386,7 +389,6 @@ export async function createMariadbTests(versionPkgName: string) {
 
       const undefinedQueryError = await t.rejects(async () => {
         await runWithContext(dangerousContext, () => {
-          // @ts-expect-error Testing undefined query
           return connection.query(undefined);
         });
       });

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { tryParseURLPath } from "./tryParseURLPath";
 
 t.test("it returns undefined if nothing found", async () => {

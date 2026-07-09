@@ -1,6 +1,6 @@
-import * as express from "express";
-import * as asyncHandler from "express-async-handler";
-import * as t from "tap";
+import express from "express";
+import asyncHandler from "express-async-handler";
+import t from "tap";
 import { ReportingAPINodeHTTP } from "./ReportingAPINodeHTTP";
 import { Event } from "./Event";
 import { Token } from "./Token";

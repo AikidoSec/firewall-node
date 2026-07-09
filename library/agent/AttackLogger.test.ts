@@ -1,8 +1,8 @@
 import { wrap } from "../helpers/wrap";
 import { DetectedAttack } from "./api/Event";
 import { AttackLogger } from "./AttackLogger";
-import * as t from "tap";
-import * as FakeTimers from "@sinonjs/fake-timers";
+import t from "tap";
+import FakeTimers from "@sinonjs/fake-timers";
 
 const logs: string[] = [];
 wrap(console, "log", function log() {

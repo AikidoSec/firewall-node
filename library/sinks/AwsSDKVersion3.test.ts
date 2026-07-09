@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { AwsSDKVersion3 as AwsSDKVersion3Sink } from "./AwsSDKVersion3";
 

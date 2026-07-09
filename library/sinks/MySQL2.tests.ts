@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getContext, runWithContext, type Context } from "../agent/Context";
 import { MySQL2 } from "./MySQL2";
 import { startTestAgent } from "../helpers/startTestAgent";

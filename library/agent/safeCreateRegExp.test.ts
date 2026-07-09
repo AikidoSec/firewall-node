@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { safeCreateRegExp } from "./safeCreateRegExp";
 
 t.test("safeCreateRegExp returns RegExp for valid pattern", async (t) => {

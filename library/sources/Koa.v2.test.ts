@@ -1,7 +1,7 @@
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
 import { createKoaTests } from "./Koa.tests";
-import * as t from "tap";
+import t from "tap";
 
 t.test(
   "Koa",

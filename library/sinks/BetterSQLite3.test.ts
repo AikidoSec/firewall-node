@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { BetterSQLite3 } from "./BetterSQLite3";
 import { createTestAgent } from "../helpers/createTestAgent";
