@@ -14,6 +14,7 @@ import { getInstance } from "../../AgentSingleton";
 import { syncBuiltinESMExports } from "module";
 import { getBuiltinModuleWithoutPatching } from "./processGetBuiltin";
 import { wrapBuiltinExports } from "./wrapBuiltinExports";
+import { ImportSink } from "../../../sinks/ImportSink";
 
 const builtinPatchedSymbol = Symbol("zen.instrumentation.builtin.patched");
 
@@ -22,6 +23,8 @@ export function onModuleLoad(
   context: Parameters<LoadFunction>[1],
   previousLoadResult: ReturnType<LoadFunction>
 ): ReturnType<LoadFunction> {
+  ImportSink.checkImport(path);
+
   try {
     // Ignore unsupported formats, e.g. wasm, native addons or json
     if (
