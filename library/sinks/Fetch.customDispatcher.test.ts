@@ -1,6 +1,5 @@
 import * as t from "tap";
 import * as http from "http";
-import { Agent as UndiciAgent } from "undici-v8";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
@@ -48,6 +47,18 @@ function createContext(port: number): Context {
   };
 }
 
+async function getUndiciAgentForNodeVersion() {
+  const bundledUndiciMajorVersion = process.versions.undici?.split(".")[0];
+
+  if (!bundledUndiciMajorVersion) {
+    throw new Error("Undici is not available in this Node.js version");
+  }
+
+  const undici = await import(`undici-v${bundledUndiciMajorVersion}`);
+
+  return undici.Agent;
+}
+
 t.test(
   "fetch() with a custom dispatcher is still protected against SSRF",
   { skip: !global.fetch ? "fetch is not available" : false },
@@ -86,6 +97,8 @@ t.test(
         );
       }
     });
+
+    const UndiciAgent = await getUndiciAgentForNodeVersion();
 
     await runWithContext(createContext(port), async () => {
       const customDispatcher = new UndiciAgent();
@@ -135,7 +148,7 @@ t.test(
   }
 );
 
-function setupPatchTest() {
+async function setupPatchTest() {
   const logger = new LoggerForTesting();
   const agent = createTestAgent({ token: new Token("123"), logger });
   const fetchSink = new Fetch();
@@ -151,42 +164,53 @@ function setupPatchTest() {
         }
       ).patchCustomDispatcher(dispatcher, agent);
     },
+    UndiciAgent: await getUndiciAgentForNodeVersion(),
   };
 }
 
-t.test("ignores non-object dispatchers", async (t) => {
-  const { patch, logger } = setupPatchTest();
+t.test(
+  "ignores non-object dispatchers",
+  { skip: !global.fetch ? "fetch is not available" : false },
+  async (t) => {
+    const { patch, logger } = await setupPatchTest();
 
-  t.doesNotThrow(() => patch(null));
-  t.doesNotThrow(() => patch(undefined));
-  t.doesNotThrow(() => patch("string"));
-  t.doesNotThrow(() => patch(42));
-  t.doesNotThrow(() => patch(true));
-  t.doesNotThrow(() => patch([]));
+    t.doesNotThrow(() => patch(null));
+    t.doesNotThrow(() => patch(undefined));
+    t.doesNotThrow(() => patch("string"));
+    t.doesNotThrow(() => patch(42));
+    t.doesNotThrow(() => patch(true));
+    t.doesNotThrow(() => patch([]));
 
-  t.same(logger.getMessages(), []);
-});
+    t.same(logger.getMessages(), []);
+  }
+);
 
-t.test("ignores dispatchers without a dispatch function", async (t) => {
-  const { patch, logger } = setupPatchTest();
+t.test(
+  "ignores dispatchers without a dispatch function",
+  { skip: !global.fetch ? "fetch is not available" : false },
+  async (t) => {
+    const { patch, logger, UndiciAgent } = await setupPatchTest();
 
-  const fakeDispatcher = { dispatch: "not-a-function" };
-  patch(fakeDispatcher);
+    const fakeDispatcher = { dispatch: "not-a-function" };
+    patch(fakeDispatcher);
 
-  t.same(fakeDispatcher.dispatch, "not-a-function");
-  t.same(logger.getMessages(), []);
-});
+    t.same(fakeDispatcher.dispatch, "not-a-function");
+    t.same(logger.getMessages(), []);
+  }
+);
 
 t.test(
   "wraps dispatch and injects a lookup when there is no connect option",
+  { skip: !global.fetch ? "fetch is not available" : false },
   async (t) => {
-    const { patch, logger } = setupPatchTest();
+    const { patch, logger, UndiciAgent } = await setupPatchTest();
+
     const dispatcher = new UndiciAgent();
     const originalDispatch = dispatcher.dispatch;
 
     patch(dispatcher);
 
-    t.not(dispatcher.dispatch, originalDispatch);
+    t.ok(dispatcher.dispatch !== originalDispatch);
 
     const options = getInternalDispatcherOptions(dispatcher);
     t.ok(options, "found internal options");
@@ -200,8 +224,9 @@ t.test(
 
 t.test(
   "wraps an existing custom connect.lookup instead of discarding it",
+  { skip: !global.fetch ? "fetch is not available" : false },
   async (t) => {
-    const { patch } = setupPatchTest();
+    const { patch, UndiciAgent } = await setupPatchTest();
 
     let customLookupCalled = false;
     const customLookup = (
@@ -228,7 +253,7 @@ t.test(
     const wrappedLookup = options.connect?.lookup;
 
     t.equal(typeof wrappedLookup, "function");
-    t.not(wrappedLookup, customLookup);
+    t.ok(wrappedLookup !== customLookup);
 
     await new Promise<void>((resolve) => {
       (
@@ -248,8 +273,9 @@ t.test(
 
 t.test(
   "logs and leaves a function-based connect option untouched",
+  { skip: !global.fetch ? "fetch is not available" : false },
   async (t) => {
-    const { patch, logger } = setupPatchTest();
+    const { patch, logger, UndiciAgent } = await setupPatchTest();
 
     const customConnect = () => {};
     const dispatcher = new UndiciAgent({ connect: customConnect as never });
@@ -269,64 +295,76 @@ t.test(
       "logged a reduced-protection warning"
     );
 
-    t.not(dispatcher.dispatch, originalDispatch);
+    t.ok(dispatcher.dispatch !== originalDispatch);
   }
 );
 
-t.test("logs when the internal options symbol can't be found", async (t) => {
-  const { patch, logger } = setupPatchTest();
+t.test(
+  "logs when the internal options symbol can't be found",
+  { skip: !global.fetch ? "fetch is not available" : false },
+  async (t) => {
+    const { patch, logger, UndiciAgent } = await setupPatchTest();
 
-  const fakeDispatcher = { dispatch: () => {} };
-  const originalDispatch = fakeDispatcher.dispatch;
+    const fakeDispatcher = { dispatch: () => {} };
+    const originalDispatch = fakeDispatcher.dispatch;
 
-  patch(fakeDispatcher);
+    patch(fakeDispatcher);
 
-  t.ok(
-    logger
-      .getMessages()
-      .some((m) => m.includes("Could not find internal options"))
-  );
-  t.not(fakeDispatcher.dispatch, originalDispatch);
-});
+    t.ok(
+      logger
+        .getMessages()
+        .some((m) => m.includes("Could not find internal options"))
+    );
+    t.ok(fakeDispatcher.dispatch !== originalDispatch);
+  }
+);
 
-t.test("does not re-patch an already-patched dispatcher", async (t) => {
-  const { patch } = setupPatchTest();
-  const dispatcher = new UndiciAgent();
+t.test(
+  "does not re-patch an already-patched dispatcher",
+  { skip: !global.fetch ? "fetch is not available" : false },
+  async (t) => {
+    const { patch, UndiciAgent } = await setupPatchTest();
+    const dispatcher = new UndiciAgent();
 
-  patch(dispatcher);
-  const dispatchAfterFirstPatch = dispatcher.dispatch;
-  const lookupAfterFirstPatch = (
-    getInternalDispatcherOptions(dispatcher) as {
-      connect?: { lookup?: unknown };
-    }
-  ).connect?.lookup;
-
-  patch(dispatcher);
-
-  t.equal(dispatcher.dispatch, dispatchAfterFirstPatch);
-  t.equal(
-    (
+    patch(dispatcher);
+    const dispatchAfterFirstPatch = dispatcher.dispatch;
+    const lookupAfterFirstPatch = (
       getInternalDispatcherOptions(dispatcher) as {
         connect?: { lookup?: unknown };
       }
-    ).connect?.lookup,
-    lookupAfterFirstPatch
-  );
-});
+    ).connect?.lookup;
 
-t.test("gracefully logs when patching throws", async (t) => {
-  const { patch, logger } = setupPatchTest();
-  const dispatcher = new UndiciAgent();
+    patch(dispatcher);
 
-  const options = getInternalDispatcherOptions(dispatcher);
-  t.ok(options);
-  Object.freeze(options);
+    t.equal(dispatcher.dispatch, dispatchAfterFirstPatch);
+    t.equal(
+      (
+        getInternalDispatcherOptions(dispatcher) as {
+          connect?: { lookup?: unknown };
+        }
+      ).connect?.lookup,
+      lookupAfterFirstPatch
+    );
+  }
+);
 
-  t.doesNotThrow(() => patch(dispatcher));
+t.test(
+  "gracefully logs when patching throws",
+  { skip: !global.fetch ? "fetch is not available" : false },
+  async (t) => {
+    const { patch, logger, UndiciAgent } = await setupPatchTest();
+    const dispatcher = new UndiciAgent();
 
-  t.ok(
-    logger
-      .getMessages()
-      .some((m) => m.includes("Failed to patch custom dispatcher"))
-  );
-});
+    const options = getInternalDispatcherOptions(dispatcher);
+    t.ok(options);
+    Object.freeze(options);
+
+    t.doesNotThrow(() => patch(dispatcher));
+
+    t.ok(
+      logger
+        .getMessages()
+        .some((m) => m.includes("Failed to patch custom dispatcher"))
+    );
+  }
+);
