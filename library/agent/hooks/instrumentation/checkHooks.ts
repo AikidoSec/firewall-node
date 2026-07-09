@@ -1,8 +1,8 @@
-export async function checkHooks() {
+export function checkHooks() {
   let success = false;
 
   try {
-    const imported = await import("./zenHooksCheckImport.js");
+    const imported = require("./zenHooksCheckImport");
 
     if (imported.test() === ":)") {
       success = true;
