@@ -139,11 +139,3 @@ export function notMatch(actual, expected, message) {
 
   assert.fail(message || "Values are deeply equal");
 }
-
-export function doesNotThrow(fn, message) {
-  try {
-    fn();
-  } catch (err) {
-    assert.fail(message || `Unexpected exception thrown: ${err}`);
-  }
-}
