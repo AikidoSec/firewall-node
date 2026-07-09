@@ -1,31 +1,57 @@
 import * as t from "tap";
-import { Agent as UndiciAgent } from "undici-v8";
 import { getInternalDispatcherOptions } from "./getInternalDispatcherOptions";
 
-t.test("finds the internal options on a real undici Agent", async (t) => {
-  const dispatcher = new UndiciAgent();
+async function getUndiciAgentForNodeVersion() {
+  const bundledUndiciMajorVersion = process.versions.undici?.split(".")[0];
 
-  const options = getInternalDispatcherOptions(dispatcher);
+  if (!bundledUndiciMajorVersion) {
+    throw new Error("Undici is not available in this Node.js version");
+  }
 
-  t.ok(options, "found internal options");
-});
+  const undici = await import(`undici-v${bundledUndiciMajorVersion}`);
 
-t.test("returns the connect option that was passed in", async (t) => {
-  const lookup = () => {};
-  const dispatcher = new UndiciAgent({ connect: { lookup } });
+  return undici.Agent;
+}
 
-  const options = getInternalDispatcherOptions(dispatcher) as {
-    connect?: { lookup?: unknown };
-  };
+t.test(
+  "finds the internal options on a real undici Agent",
+  { skip: !global.fetch ? "fetch is not available" : false },
+  async (t) => {
+    const UndiciAgent = await getUndiciAgentForNodeVersion();
+    const dispatcher = new UndiciAgent();
 
-  t.equal(options.connect?.lookup, lookup);
-});
+    const options = getInternalDispatcherOptions(dispatcher);
 
-t.test("returns undefined when there is no options symbol", async (t) => {
-  const instance = {};
+    t.ok(options, "found internal options");
+  }
+);
 
-  t.same(getInternalDispatcherOptions(instance), undefined);
-});
+t.test(
+  "returns the connect option that was passed in",
+  { skip: !global.fetch ? "fetch is not available" : false },
+  async (t) => {
+    const lookup = () => {};
+    const UndiciAgent = await getUndiciAgentForNodeVersion();
+
+    const dispatcher = new UndiciAgent({ connect: { lookup } });
+
+    const options = getInternalDispatcherOptions(dispatcher) as {
+      connect?: { lookup?: unknown };
+    };
+
+    t.equal(options.connect?.lookup, lookup);
+  }
+);
+
+t.test(
+  "returns undefined when there is no options symbol",
+  { skip: !global.fetch ? "fetch is not available" : false },
+  async (t) => {
+    const instance = {};
+
+    t.same(getInternalDispatcherOptions(instance), undefined);
+  }
+);
 
 t.test("ignores unrelated symbols", async (t) => {
   const instance = {
@@ -35,18 +61,22 @@ t.test("ignores unrelated symbols", async (t) => {
   t.same(getInternalDispatcherOptions(instance), undefined);
 });
 
-t.test("finds an options symbol regardless of enumerability", async (t) => {
-  const optionsSymbol = Symbol("options");
-  const connect = { lookup: () => {} };
-  const instance = {};
-  Object.defineProperty(instance, optionsSymbol, {
-    value: { connect },
-    enumerable: false,
-  });
+t.test(
+  "finds an options symbol regardless of enumerability",
+  { skip: !global.fetch ? "fetch is not available" : false },
+  async (t) => {
+    const optionsSymbol = Symbol("options");
+    const connect = { lookup: () => {} };
+    const instance = {};
+    Object.defineProperty(instance, optionsSymbol, {
+      value: { connect },
+      enumerable: false,
+    });
 
-  const options = getInternalDispatcherOptions(instance) as {
-    connect?: unknown;
-  };
+    const options = getInternalDispatcherOptions(instance) as {
+      connect?: unknown;
+    };
 
-  t.equal(options.connect, connect);
-});
+    t.equal(options.connect, connect);
+  }
+);
