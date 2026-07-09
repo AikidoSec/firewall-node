@@ -27,6 +27,12 @@ export type Context = {
   rawBody?: unknown;
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
   markUnsafe?: unknown[];
+  /**
+   * Maps transformed values back to their original source and payload.
+   * Used by taint tracking to attribute attacks through string transformations.
+   * Key: transformed string, Value: { source, payload (original value) }
+   */
+  taintTracking?: Map<string, { source: Source; payload: string }>;
   cache?: ReturnType<typeof extractStringsFromUserInput>;
   cachePathTraversal?: ReturnType<typeof extractStringsFromUserInput>;
   /**
