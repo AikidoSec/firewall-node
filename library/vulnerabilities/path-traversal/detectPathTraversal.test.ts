@@ -227,6 +227,56 @@ t.test(
 );
 
 t.test(
+  "file URL user input is detected correctly and bypasses length guard",
+  async () => {
+    t.same(
+      detectPathTraversal("/etc/passwd", "file:///etc/passwd", true, true),
+      true
+    );
+    t.same(
+      detectPathTraversal(
+        "/proc/self/environ",
+        "file:///proc/self/environ",
+        true,
+        true
+      ),
+      true
+    );
+    t.same(
+      detectPathTraversal(
+        "/home/user/secret.txt",
+        "file:///home/user/secret.txt",
+        true,
+        true
+      ),
+      true
+    );
+    t.same(
+      detectPathTraversal(
+        "/etc/passwd",
+        "file:///../../etc/passwd",
+        true,
+        true
+      ),
+      true
+    );
+    t.same(
+      detectPathTraversal(
+        "/app/uploads/image.png",
+        "file:///app/uploads/image.png",
+        true,
+        true
+      ),
+      true
+    );
+    t.same(
+      detectPathTraversal("/etc/passwd", "file:///etc/passwd", true, false),
+      false
+    );
+  }
+);
+
+t.test(
   "case-insensitive comparison detects traversal on case-insensitive filesystems",
   async () => {
     t.same(detectPathTraversal("/etc/passwd", "/ETC/passwd"), true);

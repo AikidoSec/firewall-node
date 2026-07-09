@@ -29,6 +29,21 @@ export function detectPathTraversal(
     }
   }
 
+  // When user input is a file URL string (e.g. "file:///etc/passwd"), the raw URL string is longer
+  // than the resolved filesystem path ("/etc/passwd"), so the length guard below would return false
+  // before reaching startsWithUnsafePath — a bypass. Resolve it first and re-run all checks.
+  if (isUrl && isFileUrlString(userInput)) {
+    const filePathFromUrl = parseAsFileUrl(userInput);
+    if (filePathFromUrl) {
+      return detectPathTraversal(
+        filePath,
+        filePathFromUrl,
+        checkPathStart,
+        false
+      );
+    }
+  }
+
   if (userInput.length > filePath.length) {
     // We ignore cases where the user input is longer than the file path.
     // Because the user input can't be part of the file path.
