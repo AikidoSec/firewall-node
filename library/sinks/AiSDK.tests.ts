@@ -43,11 +43,12 @@ export function createAiSdkTests(
         };
       };
 
-      const { google } = require(
-        googlePkgName
-      ) as typeof import("@ai-sdk/google-v3", {
-        with: { "resolution-mode": "import" },
-      });
+      const { google } = require(googlePkgName) as typeof import(
+        "@ai-sdk/google-v3",
+        {
+          with: { "resolution-mode": "import" },
+        }
+      );
       const { generateText, generateObject, streamText, streamObject } =
         require(pkgName) as typeof import("ai-v7", {
           with: { "resolution-mode": "import" },

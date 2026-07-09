@@ -1,5 +1,5 @@
 import t from "tap";
-import { fetch } from "../../helpers/fetch";
+import * as fetch from "../../helpers/fetch";
 import { wrap } from "../../helpers/wrap";
 import { Token } from "../api/Token";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
