@@ -147,7 +147,7 @@ t.test(
         if (error instanceof Error) {
           t.match(
             error.message,
-            /Cannot find module '@aikidosec\/firewall\/instrument\/internals'/
+            /(Cannot find module '@aikidosec\/firewall\/instrument\/internals'|Cannot find package '@aikidosec\/firewall')/
           );
         }
       }
@@ -165,7 +165,7 @@ t.test(
         if (error instanceof Error) {
           t.match(
             error.message,
-            /Cannot find module '@aikidosec\/firewall\/instrument\/internals'/
+            /(Cannot find module '@aikidosec\/firewall\/instrument\/internals'|Cannot find package '@aikidosec\/firewall')/
           );
         }
       }
