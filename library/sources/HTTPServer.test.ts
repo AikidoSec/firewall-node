@@ -831,7 +831,7 @@ t.test("it blocks double encoded path traversal", async (t) => {
         t.equal(statusCode, 500);
         t.equal(
           body,
-          "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from query"
+          "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from query.path"
         );
         server.close();
         resolve();
