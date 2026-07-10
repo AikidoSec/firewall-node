@@ -43,6 +43,7 @@ export class ChildProcess implements Wrapper {
         inspectArgs: (args) => {
           return this.inspectExecFile(args, "execFile");
         },
+        callbackOnBlock: true,
       });
       wrapExport(exports, "execFileSync", pkgInfo, {
         kind: "exec_op",

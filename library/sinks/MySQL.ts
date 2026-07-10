@@ -103,6 +103,7 @@ export class MySQL implements Wrapper {
         wrapExport(exports.prototype, "query", pkgInfo, {
           kind: "sql_op",
           inspectArgs: (args) => this.inspectQuery(args),
+          callbackOnBlock: true,
         });
       })
       .addFileInstrumentation({
@@ -114,6 +115,7 @@ export class MySQL implements Wrapper {
             operationKind: "sql_op",
             bindContext: true,
             inspectArgs: (args) => this.inspectQuery(args),
+            callbackOnBlock: true,
           },
         ],
       });

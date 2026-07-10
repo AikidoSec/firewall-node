@@ -106,16 +106,23 @@ t.test("it works", async (t) => {
   });
 
   await runWithContext(unsafeContext, async () => {
-    throws(
-      () =>
-        writeFile(
-          "../../test.txt",
-          "some file content to test with",
-          { encoding: "utf-8" },
-          () => {}
-        ),
-      "Zen has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
-    );
+    const writeFileMsg =
+      "Zen has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches";
+    const renameMsg =
+      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches";
+
+    await new Promise<void>((resolve) => {
+      writeFile(
+        "../../test.txt",
+        "some file content to test with",
+        { encoding: "utf-8" },
+        (err: any) => {
+          t.ok(err instanceof Error);
+          if (err instanceof Error) t.match(err.message, writeFileMsg);
+          resolve();
+        }
+      );
+    });
 
     throws(
       () =>
@@ -136,10 +143,7 @@ t.test("it works", async (t) => {
     );
     t.ok(error instanceof Error);
     if (error instanceof Error) {
-      t.match(
-        error.message,
-        "Zen has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
-      );
+      t.match(error.message, writeFileMsg);
       t.same(error.stack!.includes("wrapExport.ts"), false);
     }
 
@@ -152,80 +156,126 @@ t.test("it works", async (t) => {
     );
     t.ok(error2 instanceof Error);
     if (error2 instanceof Error) {
+      t.match(error2.message, writeFileMsg);
+    }
+
+    const error3 = await t.rejects(() =>
+      fsDotPromise.readFile("../../test.txt", { encoding: "utf-8" })
+    );
+    t.ok(error3 instanceof Error);
+    if (error3 instanceof Error) {
       t.match(
-        error2.message,
-        "Zen has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
+        error3.message,
+        "Zen has blocked a path traversal attack: fs.readFile(...) originating from body.file.matches"
       );
     }
 
-    throws(
-      () => rename("../../test.txt", "./test2.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+    await new Promise<void>((resolve) => {
+      rename("../../test.txt", "./test2.txt", (err: any) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, renameMsg);
+        resolve();
+      });
+    });
 
-    throws(
-      () => rename("./test.txt", "../../test.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+    await new Promise<void>((resolve) => {
+      rename("./test.txt", "../../test.txt", (err: any) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, renameMsg);
+        resolve();
+      });
+    });
 
-    throws(
-      () => rename(new URL("file:///../test.txt"), "../test2.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+    await new Promise<void>((resolve) => {
+      rename(new URL("file:///../test.txt"), "../test2.txt", (err: any) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, renameMsg);
+        resolve();
+      });
+    });
 
-    throws(
-      () => rename(new URL("file:///./../test.txt"), "../test2.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+    await new Promise<void>((resolve) => {
+      rename(new URL("file:///./../test.txt"), "../test2.txt", (err: any) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, renameMsg);
+        resolve();
+      });
+    });
 
-    throws(
-      () => rename(new URL("file:///../../test.txt"), "../test2.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+    await new Promise<void>((resolve) => {
+      rename(new URL("file:///../../test.txt"), "../test2.txt", (err: any) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, renameMsg);
+        resolve();
+      });
+    });
 
-    throws(
-      () => rename(Buffer.from("../test.txt"), "../test2.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+    await new Promise<void>((resolve) => {
+      rename(Buffer.from("../test.txt"), "../test2.txt", (err: any) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, renameMsg);
+        resolve();
+      });
+    });
   });
 
-  runWithContext(unsafeContextAbsolute, () => {
-    throws(
-      () => rename(new URL("file:///etc/passwd"), "../test123.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
-    throws(
-      () =>
-        rename(new URL("file:///../etc/passwd"), "../test123.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+  await runWithContext(unsafeContextAbsolute, async () => {
+    const msg =
+      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches";
 
-    throws(
-      () => rename("/etc/passwd", "../test123.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+    await new Promise<void>((resolve) => {
+      rename(new URL("file:///etc/passwd"), "../test123.txt", (err: any) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, msg);
+        resolve();
+      });
+    });
+
+    await new Promise<void>((resolve) => {
+      rename(new URL("file:///../etc/passwd"), "../test123.txt", (err: any) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, msg);
+        resolve();
+      });
+    });
+
+    await new Promise<void>((resolve) => {
+      rename("/etc/passwd", "../test123.txt", (err: any) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, msg);
+        resolve();
+      });
+    });
   });
 
-  runWithContext(
+  await runWithContext(
     {
       ...unsafeContextAbsolute,
       body: { file: { matches: "//etc/passwd" } },
     },
-    () => {
-      throws(
-        () =>
-          rename(new URL("file:////etc/passwd"), "../test123.txt", () => {}),
-        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-      );
+    async () => {
+      const msg =
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches";
 
-      throws(
-        () => rename("//etc/passwd", "../test123.txt", () => {}),
-        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-      );
+      await new Promise<void>((resolve) => {
+        rename(new URL("file:////etc/passwd"), "../test123.txt", (err: any) => {
+          t.ok(err instanceof Error);
+          if (err instanceof Error) t.match(err.message, msg);
+          resolve();
+        });
+      });
+
+      await new Promise<void>((resolve) => {
+        rename("//etc/passwd", "../test123.txt", (err: any) => {
+          t.ok(err instanceof Error);
+          if (err instanceof Error) t.match(err.message, msg);
+          resolve();
+        });
+      });
     }
   );
 
-  runWithContext(
+  await runWithContext(
     {
       remoteAddress: "::1",
       method: "POST",
@@ -240,16 +290,22 @@ t.test("it works", async (t) => {
       source: "express",
       route: "/posts/:id",
     },
-    () => {
-      throws(
-        () =>
-          rename(
-            new URL("file:///.\t./etc/passwd"),
-            "../test123.txt",
-            () => {}
-          ),
-        "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
-      );
+    async () => {
+      await new Promise<void>((resolve) => {
+        rename(
+          new URL("file:///.\t./etc/passwd"),
+          "../test123.txt",
+          (err: any) => {
+            t.ok(err instanceof Error);
+            if (err instanceof Error)
+              t.match(
+                err.message,
+                "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
+              );
+            resolve();
+          }
+        );
+      });
     }
   );
 
@@ -273,7 +329,7 @@ t.test("it works", async (t) => {
     }
   );
 
-  runWithContext(
+  await runWithContext(
     {
       remoteAddress: "::1",
       method: "POST",
@@ -288,16 +344,22 @@ t.test("it works", async (t) => {
       source: "express",
       route: "/posts/:id",
     },
-    () => {
-      throws(
-        () =>
-          rename(
-            new URL("file:///.\t\t./etc/passwd"),
-            "../test123.txt",
-            () => {}
-          ),
-        "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
-      );
+    async () => {
+      await new Promise<void>((resolve) => {
+        rename(
+          new URL("file:///.\t\t./etc/passwd"),
+          "../test123.txt",
+          (err: any) => {
+            t.ok(err instanceof Error);
+            if (err instanceof Error)
+              t.match(
+                err.message,
+                "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
+              );
+            resolve();
+          }
+        );
+      });
     }
   );
 
