@@ -85,6 +85,8 @@ export class HTTPRequest implements Wrapper {
 
     const url = getUrlFromHTTPRequestArgs(args, module);
     if (!url) {
+      // From the Node.js docs:
+      // Cannot be used if one of host or port is specified, as those specify a TCP Socket.
       return this.checkForPathTraversalInSocketPath(args, module);
     }
 
