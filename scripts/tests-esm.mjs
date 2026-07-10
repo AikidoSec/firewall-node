@@ -260,6 +260,7 @@ for await (const entry of testFiles) {
             case "notOk":
             case "fail":
             case "error":
+            case "doesNotThrow":
               node.callee.object = {
                 type: "MemberExpression",
                 object: { type: "Identifier", name: "t" },
@@ -271,6 +272,9 @@ for await (const entry of testFiles) {
                   break;
                 case "throws":
                   node.callee.property.name = "throws";
+                  break;
+                case "doesNotThrow":
+                  node.callee.property.name = "doesNotThrow";
                   break;
                 case "notOk":
                   node.callee.property.name = "ok";

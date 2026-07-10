@@ -10,6 +10,10 @@ import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
+import { getInternalDispatcherOptions } from "./undici/getInternalDispatcherOptions";
+
+// Marks a dispatcher instance we've already patched to prevent double-patching
+const patchedDispatcherSymbol = Symbol.for("zen.dispatcher.patched");
 
 export class Fetch implements Wrapper {
   private patchedGlobalDispatcher = false;
@@ -183,6 +187,82 @@ export class Fetch implements Wrapper {
     }
   }
 
+  private patchCustomDispatcher(dispatcher: unknown, agent: Agent) {
+    if (!dispatcher || typeof dispatcher !== "object") {
+      return;
+    }
+
+    const instance = dispatcher as Record<PropertyKey, unknown>;
+
+    if (instance[patchedDispatcherSymbol]) {
+      // Already patched this exact dispatcher instance
+      return;
+    }
+
+    const originalDispatch = instance.dispatch;
+    if (typeof originalDispatch !== "function") {
+      return;
+    }
+
+    try {
+      instance.dispatch = wrapDispatch(originalDispatch.bind(instance), agent);
+      this.patchDispatcherConnectLookup(instance, agent);
+
+      Object.defineProperty(instance, patchedDispatcherSymbol, {
+        value: true,
+        enumerable: false,
+      });
+    } catch {
+      agent.log(
+        `Failed to patch custom dispatcher for fetch, we can't guarantee protection!`
+      );
+    }
+  }
+
+  private patchDispatcherConnectLookup(
+    instance: Record<PropertyKey, unknown>,
+    agent: Agent
+  ) {
+    const options = getInternalDispatcherOptions(instance);
+
+    if (!options) {
+      agent.log(
+        `Could not find internal options on custom dispatcher for fetch, we can only provide partial protection!`
+      );
+      return;
+    }
+
+    const canPatchConnect =
+      options.connect === undefined ||
+      (typeof options.connect === "object" && options.connect !== null);
+
+    if (!canPatchConnect) {
+      agent.log(
+        `Custom dispatcher for fetch uses a function-based connect option, we can only provide partial protection!`
+      );
+      return;
+    }
+
+    const existingConnect = options.connect as { lookup?: unknown } | undefined;
+
+    const existingLookup =
+      typeof existingConnect?.lookup === "function"
+        ? (existingConnect.lookup as typeof lookup)
+        : lookup;
+
+    const patchedLookupFn = inspectDNSLookupCalls(
+      existingLookup,
+      agent,
+      "fetch",
+      "fetch"
+    );
+
+    options.connect = {
+      ...existingConnect,
+      lookup: patchedLookupFn,
+    };
+  }
+
   wrap(hooks: Hooks) {
     if (typeof globalThis.fetch === "function") {
       // Fetch is lazy loaded in Node.js
@@ -203,6 +283,19 @@ export class Fetch implements Wrapper {
         if (!this.patchedGlobalDispatcher) {
           this.patchGlobalDispatcher(agent);
           this.patchedGlobalDispatcher = true;
+        }
+
+        if (
+          args.length > 1 &&
+          args[1] &&
+          typeof args[1] === "object" &&
+          !Array.isArray(args[1]) &&
+          "dispatcher" in args[1]
+        ) {
+          this.patchCustomDispatcher(
+            (args[1] as { dispatcher?: unknown }).dispatcher,
+            agent
+          );
         }
 
         return args;
