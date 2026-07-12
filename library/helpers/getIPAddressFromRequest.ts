@@ -1,18 +1,26 @@
 import { isIP } from "net";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
-import { trustProxy } from "./trustProxy";
+import { getTrustProxyConfig, TrustProxyConfig } from "./trustProxy";
 
 export function getIPAddressFromRequest(req: {
   headers: Record<string, unknown>;
   remoteAddress: string | undefined;
 }) {
+  const config = getTrustProxyConfig();
+  if (config.type === "boolean" && !config.value) {
+    if (req.remoteAddress) {
+      return req.remoteAddress;
+    }
+  }
+
   if (req.headers) {
     const ipHeaderName = getIpHeaderName();
-    if (typeof req.headers[ipHeaderName] === "string" && trustProxy()) {
-      const ipHeaderValue = getClientIpFromHeader(req.headers[ipHeaderName]);
+    if (typeof req.headers[ipHeaderName] === "string") {
+      const ips = parseIPsFromHeader(req.headers[ipHeaderName]);
+      const ip = selectClientIP(ips, config);
 
-      if (ipHeaderValue && isIP(ipHeaderValue)) {
-        return ipHeaderValue;
+      if (ip) {
+        return ip;
       }
     }
   }
@@ -24,6 +32,35 @@ export function getIPAddressFromRequest(req: {
   return undefined;
 }
 
+function selectClientIP(
+  ips: string[],
+  config: TrustProxyConfig
+): string | null {
+  if (config.type === "count") {
+    const idx = ips.length - config.value;
+    if (idx >= 0) {
+      const ip = ips[idx];
+      if (isIP(ip) && !isPrivateIP(ip)) return ip;
+    }
+    return null;
+  }
+
+  // Search right-to-left for the first non-private IP not belonging to a trusted proxy
+  for (let i = ips.length - 1; i >= 0; i--) {
+    const ip = ips[i];
+    if (!isIP(ip) || isPrivateIP(ip)) {
+      continue;
+    }
+    if (config.type === "cidr" && config.matcher.hasWithMappedCheck(ip)) {
+      continue;
+    }
+
+    return ip;
+  }
+
+  return null;
+}
+
 function getIpHeaderName(): string {
   if (process.env.AIKIDO_CLIENT_IP_HEADER) {
     return process.env.AIKIDO_CLIENT_IP_HEADER.toLowerCase();
@@ -31,8 +68,8 @@ function getIpHeaderName(): string {
   return "x-forwarded-for";
 }
 
-function getClientIpFromHeader(value: string) {
-  const forwardedIps = value.split(",").map((e) => {
+function parseIPsFromHeader(value: string): string[] {
+  return value.split(",").map((e) => {
     const ip = e.trim();
 
     // We do a first check here to make sure that valid IPv6 addresses don't
@@ -66,14 +103,4 @@ function getClientIpFromHeader(value: string) {
 
     return ip;
   });
-
-  // When selecting an address from the X-Forwarded-For header,
-  // we should select the first valid IP address that is not a private IP address
-  for (let i = 0; i < forwardedIps.length; i++) {
-    if (isIP(forwardedIps[i]) && !isPrivateIP(forwardedIps[i])) {
-      return forwardedIps[i];
-    }
-  }
-
-  return null;
 }

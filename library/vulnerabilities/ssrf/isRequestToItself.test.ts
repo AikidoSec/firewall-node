@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { isRequestToItself } from "./isRequestToItself";
+import { clearTrustProxyCache } from "../../helpers/trustProxy";
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_TRUST_PROXY;
@@ -161,6 +162,7 @@ t.test("it returns true for special case HTTP<->HTTPS", async (t) => {
 t.test("it returns false if trust proxy is false", async (t) => {
   // Trust proxy is enabled by default
   process.env.AIKIDO_TRUST_PROXY = "false";
+  clearTrustProxyCache();
 
   t.same(
     false,
