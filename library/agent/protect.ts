@@ -16,6 +16,7 @@ import {
   createCloudFunctionWrapper,
   FunctionsFramework,
 } from "../sources/FunctionsFramework";
+import { Elysia } from "../sources/Elysia";
 import { Hono } from "../sources/Hono";
 import { HTTPServer } from "../sources/HTTPServer";
 import { createLambdaWrapper } from "../sources/Lambda";
@@ -133,6 +134,7 @@ function startAgent({
   return agent;
 }
 
+// When adding a new web framework, also update the list in Agent.hasWebFrameworkLoaded()
 export function getWrappers() {
   return [
     new Express(),
@@ -150,6 +152,7 @@ export function getWrappers() {
     new Path(),
     new HTTPServer(),
     new Hono(),
+    new Elysia(),
     new GraphQL(),
     new OpenAI(),
     new Mistral(),

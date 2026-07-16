@@ -1,4 +1,4 @@
-import type { Dispatcher } from "undici-v6";
+import type { Dispatcher } from "undici-v8";
 import { getMetadataForSSRFAttack } from "../../vulnerabilities/ssrf/getMetadataForSSRFAttack";
 import { RequestContextStorage } from "./RequestContextStorage";
 import { Context, getContext } from "../../agent/Context";
@@ -8,7 +8,7 @@ import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isRedirectToPrivateIP } from "../../vulnerabilities/ssrf/isRedirectToPrivateIP";
-import { wrapOnHeaders } from "./wrapOnHeaders";
+import { wrapOnHeaders, wrapOnResponseStart } from "./wrapOnHeaders";
 import { cleanError } from "../../helpers/cleanError";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { getLibraryRoot } from "../../helpers/getLibraryRoot";
@@ -61,12 +61,23 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
 
     const port = getPortFromURL(url);
 
-    // Wrap onHeaders to check for redirects
-    handler.onHeaders = wrapOnHeaders(
-      handler.onHeaders,
-      { port, url },
-      context
-    );
+    // Wrap redirect detection — undici v7 (Node.js v26+) uses onResponseStart;
+    // undici v6 / older Node.js uses onHeaders.
+    if (typeof handler.onResponseStart === "function") {
+      handler.onResponseStart = wrapOnResponseStart(
+        handler.onResponseStart,
+        { port, url },
+        context
+      );
+    } else {
+      // @ts-expect-error onHeaders is the undici v6 API not present in undici-v8 types
+      handler.onHeaders = wrapOnHeaders(
+        // @ts-expect-error onHeaders is the undici v6 API not present in undici-v8 types
+        handler.onHeaders,
+        { port, url },
+        context
+      );
+    }
 
     return RequestContextStorage.run({ port, url }, () => {
       return orig.apply(

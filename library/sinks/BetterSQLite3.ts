@@ -16,9 +16,6 @@ export class BetterSQLite3 implements Wrapper {
 
   private inspectQuery(operation: string, args: unknown[]): InterceptorResult {
     const context = getContext();
-    if (!context) {
-      return undefined;
-    }
 
     if (args.length > 0) {
       if (typeof args[0] === "string" && args[0].length > 0) {
@@ -36,9 +33,6 @@ export class BetterSQLite3 implements Wrapper {
     statement: unknown
   ) {
     const context = getContext();
-    if (!context) {
-      return undefined;
-    }
 
     if (
       statement &&
@@ -60,24 +54,25 @@ export class BetterSQLite3 implements Wrapper {
 
   private inspectSQLCommand(
     sql: string,
-    context: Context,
+    context: Context | undefined,
     operation: string,
     params?: unknown[]
   ) {
-    const sqlResult = checkContextForSqlInjection({
-      operation: operation,
-      sql: sql,
-      context: context,
-      dialect: this.dialect,
-    });
+    if (context) {
+      const sqlResult = checkContextForSqlInjection({
+        operation: operation,
+        sql: sql,
+        context: context,
+        dialect: this.dialect,
+      });
 
-    if (sqlResult) {
-      return sqlResult;
+      if (sqlResult) {
+        return sqlResult;
+      }
     }
 
     return checkContextForIdor({
       sql,
-      context,
       dialect: this.dialect,
       resolvePlaceholder: (placeholder, placeholderNumber) =>
         this.resolvePlaceholder(placeholder, placeholderNumber, params),

@@ -53,6 +53,7 @@ Zen for Node.js 16+ is compatible with:
 - ✅ [Koa](docs/koa.md) 3.x and 2.x
 - ✅ [NestJS](docs/nestjs.md) 10.x and 11.x
 - ✅ [Restify](docs/restify.md) 11.x, 10.x, 9.x and 8.x
+- ✅ [ElysiaJS](docs/elysiajs.md) 1.x (minimum 1.4.0)
 
 ### Database drivers
 
@@ -90,7 +91,7 @@ See list above for supported database drivers.
 
 ### API tools
 
-- ✅ [`graphql`](https://www.npmjs.com/package/graphql) 15.x, 16.x
+- ✅ [`graphql`](https://www.npmjs.com/package/graphql) 17.x, 15.x, 16.x
 
 ### Data serialization tools
 
@@ -114,7 +115,7 @@ Zen instruments the following AI SDKs to track which models are used and how man
 - ✅ [`@mistralai/mistralai`](https://www.npmjs.com/package/@mistralai/mistralai) 1.x and 2.x (2.x+ requires ESM instrumentation)
 - ✅ [`@anthropic-ai/sdk`](https://www.npmjs.com/package/@anthropic-ai/sdk) ^0.40.x
 - ✅ [`@aws-sdk/client-bedrock-runtime`](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime) 3.x
-- ✅ [`ai`](https://www.npmjs.com/package/ai) 6.x, 5.x, 4.x
+- ✅ [`ai`](https://www.npmjs.com/package/ai) 7.x, 6.x, 5.x, 4.x
 - ✅ [`@google/genai`](https://www.npmjs.com/package/@google/genai) ^1.6.0
 
 _Note: Prompt injection attacks are currently not covered by Zen._

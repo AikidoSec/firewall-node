@@ -40,6 +40,14 @@ export function blockIPsAndBots(
   // Also ensures that the statistics are only counted once
   res[checkedBlocks] = true;
 
+  const isBypassedIP =
+    context.remoteAddress &&
+    agent.getConfig().isBypassedIP(context.remoteAddress);
+
+  if (isBypassedIP) {
+    return false;
+  }
+
   if (!ipAllowedToAccessRoute(context, agent)) {
     let message = "Your IP address is not allowed to access this resource.";
     if (context.remoteAddress) {
@@ -49,14 +57,6 @@ export function blockIPsAndBots(
     sendResponse(res, 403, message);
 
     return true;
-  }
-
-  const isBypassedIP =
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress);
-
-  if (isBypassedIP) {
-    return false;
   }
 
   if (

@@ -15,8 +15,8 @@ import type {
 } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
-import { Endpoint } from "./Config";
-import { pollForChanges } from "./realtime/pollForChanges";
+import { type Config, Endpoint } from "./Config";
+import { listenForConfigUpdates } from "./realtime/listenForConfigUpdates";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
@@ -37,6 +37,8 @@ import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
+import { pollForChanges } from "./realtime/pollForChanges";
+import { isFeatureEnabled } from "../helpers/featureFlags";
 
 type WrappedPackage = { version: string; supported: boolean };
 
@@ -452,16 +454,33 @@ export class Agent {
   }
 
   private startPollingForConfigChanges() {
+    if (!this.token) {
+      return;
+    }
+
+    const onConfigUpdate = (config: Config) => {
+      this.updateServiceConfig({ success: true, ...config });
+      this.updateBlockedLists().catch((error) => {
+        this.logger.log(`Failed to update blocked lists: ${error.message}`);
+      });
+    };
+
+    const lastUpdatedAt = this.serviceConfig.getLastUpdatedAt();
+
+    if (isFeatureEnabled("sse")) {
+      listenForConfigUpdates({
+        token: this.token,
+        logger: this.logger,
+        lastUpdatedAt,
+        onConfigUpdate,
+      });
+    }
+
     pollForChanges({
       token: this.token,
       logger: this.logger,
-      lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
-      onConfigUpdate: (config) => {
-        this.updateServiceConfig({ success: true, ...config });
-        this.updateBlockedLists().catch((error) => {
-          this.logger.log(`Failed to update blocked lists: ${error.message}`);
-        });
-      },
+      lastUpdatedAt,
+      onConfigUpdate,
     });
   }
 
@@ -604,6 +623,34 @@ export class Agent {
 
   onBuiltinWrapped(name: string) {
     this.logger.log(`node:${name} is supported!`);
+  }
+
+  // We check this.packages, which tracks every package loaded by the app.
+  // Careful: this.packages gets cleared after the first heartbeat (30s).
+  // This works because HTTP servers are created at startup, well before that.
+  hasWebFrameworkLoaded(): boolean {
+    if (this.serverless) {
+      return true;
+    }
+
+    const webFrameworks = [
+      "express",
+      "fastify",
+      "hono",
+      "elysia",
+      "koa",
+      "@hapi/hapi",
+      "restify",
+      "next",
+      "@nestjs/core",
+      "micro",
+      "nuxt",
+    ];
+
+    return webFrameworks.some(
+      (framework) =>
+        this.packages.has(framework) || this.wrappedPackages.has(framework)
+    );
   }
 
   onConnectHostname(hostname: string, port: number) {
