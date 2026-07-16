@@ -13,13 +13,20 @@ import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
+import { shutdown } from "./agent/shutdown";
 import { isLibBundled } from "./helpers/isLibBundled";
-import { setTenantId } from "./agent/context/tenantId";
+import {
+  setTenantId,
+  runWithTenant,
+  getTenantId,
+} from "./agent/context/tenantId";
 import { enableIdorProtection } from "./agent/idorProtection";
 import { withoutIdorProtection } from "./agent/context/withoutIdorProtection";
 import { colorText } from "./helpers/colorText";
+import { warnBox } from "./helpers/warnBox";
 import { isPreloaded } from "./helpers/isPreloaded";
 import { warnIfEntrypointIsModule } from "./helpers/warnIfEntrypointIsModule";
+import { elysiaHandler } from "./middleware/elysia";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -33,7 +40,9 @@ if (!isNewHookSystemUsed()) {
       console.warn(
         colorText(
           "red",
-          "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions (https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md)."
+          warnBox(
+            "Zen is NOT protecting your application. Your app runs in ESM mode, which requires the new hook system. Setup instructions: https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+          )
         )
       );
     }
@@ -43,7 +52,9 @@ if (!isNewHookSystemUsed()) {
       console.warn(
         colorText(
           "red",
-          "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
+          warnBox(
+            "Zen is NOT protecting your application. Your app uses a bundler without externalizing Zen and the packages it needs to protect. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md"
+          )
         )
       );
     }
@@ -67,8 +78,12 @@ export {
   fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
+  elysiaHandler,
   setRateLimitGroup,
+  shutdown,
   setTenantId,
+  runWithTenant,
+  getTenantId,
   enableIdorProtection,
   withoutIdorProtection,
 };
@@ -86,8 +101,12 @@ export default {
   fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
+  elysiaHandler,
   setRateLimitGroup,
+  shutdown,
   setTenantId,
+  runWithTenant,
+  getTenantId,
   enableIdorProtection,
   withoutIdorProtection,
 };

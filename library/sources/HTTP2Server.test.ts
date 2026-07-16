@@ -41,6 +41,7 @@ const api = new ReportingAPIForTesting({
     },
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
+  excludedUserIdsFromRateLimiting: [],
 });
 const agent = createTestAgent({
   token: new Token("123"),
@@ -247,7 +248,7 @@ t.test("it parses cookies", async () => {
 
 t.test("it sets body in context", async () => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = createMinimalTestServer();
 
@@ -272,7 +273,7 @@ t.test("it sets body in context", async () => {
 
 t.test("it sends 413 when body is larger than 20 Mb", async () => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = createMinimalTestServer();
 
@@ -736,7 +737,7 @@ t.test("it reports attack waves", async (t) => {
 
 t.test("it parses Multipart body", async () => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = createMinimalTestServer();
 
@@ -767,7 +768,7 @@ t.test("it parses Multipart body", async () => {
 
 t.test("it ignores files in Multipart body", async () => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = createMinimalTestServer();
 
@@ -798,7 +799,7 @@ t.test("it ignores files in Multipart body", async () => {
 
 t.test("invalid Multipart body results in empty body", async () => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = createMinimalTestServer();
 

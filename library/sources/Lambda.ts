@@ -204,17 +204,17 @@ function incrementStatsAndDiscoverAPISpec(
       if (shouldDiscover) {
         agent.onRouteExecute(agentContext);
       }
-    }
 
-    if (
-      agentContext.remoteAddress &&
-      !agentContext.blockedDueToIPOrBot &&
-      agent.getAttackWaveDetector().check(agentContext)
-    ) {
-      agent.onDetectedAttackWave({
-        request: agentContext,
-      });
-      agent.getInspectionStatistics().onAttackWaveDetected();
+      if (
+        agentContext.remoteAddress &&
+        !agentContext.blockedDueToIPOrBot &&
+        agent.getAttackWaveDetector().check(agentContext, result.statusCode)
+      ) {
+        agent.onDetectedAttackWave({
+          request: agentContext,
+        });
+        agent.getInspectionStatistics().onAttackWaveDetected();
+      }
     }
   }
 

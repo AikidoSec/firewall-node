@@ -2,10 +2,33 @@ import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
+import { colorText } from "../helpers/colorText";
+import { warnBox } from "../helpers/warnBox";
 import { createRequestListener } from "./http-server/createRequestListener";
 import { createStreamListener } from "./http-server/http2/createStreamListener";
 
 export class HTTPServer implements Wrapper {
+  private warnedAboutMissingSource = false;
+
+  private warnIfNoSourceWrapped(agent: Agent) {
+    if (this.warnedAboutMissingSource) {
+      return;
+    }
+    this.warnedAboutMissingSource = true;
+
+    if (!agent.hasWebFrameworkLoaded()) {
+      // oxlint-disable-next-line no-console
+      console.warn(
+        colorText(
+          "red",
+          warnBox(
+            "Zen detected an HTTP server but no supported web framework. If you use a framework like Express or Fastify, it might be bundled (see https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md). For the list of supported frameworks, see https://github.com/AikidoSec/firewall-node#web-frameworks"
+          )
+        )
+      );
+    }
+  }
+
   private wrapRequestListener(args: unknown[], module: string, agent: Agent) {
     // Without options
     // http(s).createServer(listener)
@@ -50,6 +73,7 @@ export class HTTPServer implements Wrapper {
           wrapExport(exports, "Server", pkgInfo, {
             kind: undefined,
             modifyArgs: (args, agent) => {
+              this.warnIfNoSourceWrapped(agent);
               return this.wrapRequestListener(args, module, agent);
             },
           });
@@ -58,6 +82,7 @@ export class HTTPServer implements Wrapper {
         wrapExport(exports, "createServer", pkgInfo, {
           kind: undefined,
           modifyArgs: (args, agent) => {
+            this.warnIfNoSourceWrapped(agent);
             return this.wrapRequestListener(args, module, agent);
           },
           modifyReturnValue: (args, instance) => {
@@ -75,6 +100,7 @@ export class HTTPServer implements Wrapper {
           wrapExport(exports, "createSecureServer", pkgInfo, {
             kind: undefined,
             modifyArgs: (args, agent) => {
+              this.warnIfNoSourceWrapped(agent);
               return this.wrapRequestListener(args, module, agent);
             },
             modifyReturnValue: (args, instance) => {

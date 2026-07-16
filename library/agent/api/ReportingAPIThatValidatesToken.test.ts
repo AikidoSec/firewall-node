@@ -49,6 +49,7 @@ t.test("it ignores valid tokens", async () => {
     allowedIPAddresses: [],
     blockNewOutgoingRequests: false,
     domains: [],
+    excludedUserIdsFromRateLimiting: [],
   });
   t.same(api.getEvents(), [event]);
 
@@ -61,6 +62,7 @@ t.test("it ignores valid tokens", async () => {
     allowedIPAddresses: [],
     blockNewOutgoingRequests: false,
     domains: [],
+    excludedUserIdsFromRateLimiting: [],
   });
   t.same(api.getEvents(), [event, event]);
 });

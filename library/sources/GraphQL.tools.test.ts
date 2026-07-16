@@ -30,6 +30,7 @@ t.test("it works", async () => {
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
+      excludedUserIdsFromRateLimiting: [],
     }),
     token: new Token("123"),
   });

@@ -1,5 +1,7 @@
 import * as t from "tap";
+import { sep } from "node:path";
 import { extractStringsFromUserInputCached } from "../helpers/extractStringsFromUserInputCached";
+import { extractPathStringsFromUserInputCached } from "../helpers/extractPathStringsFromUserInputCached";
 import {
   type Context,
   getContext,
@@ -126,3 +128,37 @@ t.test("it clears cache when context is mutated", async (t) => {
     });
   });
 });
+
+t.test(
+  "it does not use a stale path traversal cache after the body is parsed by an inner middleware",
+  async (t) => {
+    const contextBeforeBodyIsParsed: Context = {
+      remoteAddress: "::1",
+      method: "POST",
+      url: undefined,
+      query: {},
+      headers: {},
+      body: undefined,
+      cookies: {},
+      routeParams: {},
+      source: "express",
+      route: "/mp",
+    };
+
+    runWithContext(contextBeforeBodyIsParsed, () => {
+      t.same(extractPathStringsFromUserInputCached(getContext()!), new Set());
+
+      const payload = `..${sep}..${sep}etc${sep}passwd`;
+      runWithContext(
+        { ...contextBeforeBodyIsParsed, body: { name: payload } },
+        () => {
+          t.same(
+            extractPathStringsFromUserInputCached(getContext()!),
+            new Set([payload]),
+            "cachePathTraversal must be invalidated once the body becomes available, otherwise path traversal attacks go undetected"
+          );
+        }
+      );
+    });
+  }
+);

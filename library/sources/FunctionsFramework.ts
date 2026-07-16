@@ -121,7 +121,7 @@ function incrementStatsAndDiscoverAPISpec(
     if (
       context.remoteAddress &&
       !context.blockedDueToIPOrBot &&
-      agent.getAttackWaveDetector().check(context)
+      agent.getAttackWaveDetector().check(context, statusCode)
     ) {
       agent.onDetectedAttackWave({
         request: context,

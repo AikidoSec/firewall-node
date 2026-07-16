@@ -37,28 +37,25 @@ export class MySQL implements Wrapper {
   private inspectQuery(args: unknown[]): InterceptorResult {
     const context = getContext();
 
-    if (!context) {
-      return undefined;
-    }
-
     if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
       const sql = args[0];
       const params = this.findParams(args);
 
       // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
-      const sqlInjectionResult = checkContextForSqlInjection({
-        sql: sql,
-        context: context,
-        operation: "MySQL.query",
-        dialect: this.dialect,
-      });
-      if (sqlInjectionResult) {
-        return sqlInjectionResult;
+      if (context) {
+        const sqlInjectionResult = checkContextForSqlInjection({
+          sql: sql,
+          context: context,
+          operation: "MySQL.query",
+          dialect: this.dialect,
+        });
+        if (sqlInjectionResult) {
+          return sqlInjectionResult;
+        }
       }
 
       return checkContextForIdor({
         sql,
-        context,
         dialect: this.dialect,
         resolvePlaceholder: (placeholder, placeholderNumber) =>
           this.resolvePlaceholder(placeholder, placeholderNumber, params),
@@ -75,19 +72,20 @@ export class MySQL implements Wrapper {
       const params = this.findParams(args);
 
       // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
-      const sqlInjectionResult = checkContextForSqlInjection({
-        sql: sql,
-        context: context,
-        operation: "MySQL.query",
-        dialect: this.dialect,
-      });
-      if (sqlInjectionResult) {
-        return sqlInjectionResult;
+      if (context) {
+        const sqlInjectionResult = checkContextForSqlInjection({
+          sql: sql,
+          context: context,
+          operation: "MySQL.query",
+          dialect: this.dialect,
+        });
+        if (sqlInjectionResult) {
+          return sqlInjectionResult;
+        }
       }
 
       return checkContextForIdor({
         sql,
-        context,
         dialect: this.dialect,
         resolvePlaceholder: (placeholder, placeholderNumber) =>
           this.resolvePlaceholder(placeholder, placeholderNumber, params),

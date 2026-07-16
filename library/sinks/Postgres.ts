@@ -8,6 +8,7 @@ import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect
 import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 
 export class Postgres implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectPostgres();
@@ -48,28 +49,26 @@ export class Postgres implements Wrapper {
 
   private inspectQuery(args: unknown[]): InterceptorResult {
     const context = getContext();
-    if (!context) {
-      return undefined;
-    }
 
     if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
       const sql: string = args[0];
       const params = this.findParams(args);
 
       // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
-      const sqlInjectionResult = checkContextForSqlInjection({
-        sql: sql,
-        context: context,
-        operation: "pg.query",
-        dialect: this.dialect,
-      });
-      if (sqlInjectionResult) {
-        return sqlInjectionResult;
+      if (context) {
+        const sqlInjectionResult = checkContextForSqlInjection({
+          sql: sql,
+          context: context,
+          operation: "pg.query",
+          dialect: this.dialect,
+        });
+        if (sqlInjectionResult) {
+          return sqlInjectionResult;
+        }
       }
 
       return checkContextForIdor({
         sql,
-        context,
         dialect: this.dialect,
         resolvePlaceholder: (placeholder, placeholderNumber) =>
           this.resolvePlaceholder(placeholder, placeholderNumber, params),
@@ -86,19 +85,20 @@ export class Postgres implements Wrapper {
       const params = this.findParams(args);
 
       // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
-      const sqlInjectionResult = checkContextForSqlInjection({
-        sql: text,
-        context: context,
-        operation: "pg.query",
-        dialect: this.dialect,
-      });
-      if (sqlInjectionResult) {
-        return sqlInjectionResult;
+      if (context) {
+        const sqlInjectionResult = checkContextForSqlInjection({
+          sql: text,
+          context: context,
+          operation: "pg.query",
+          dialect: this.dialect,
+        });
+        if (sqlInjectionResult) {
+          return sqlInjectionResult;
+        }
       }
 
       return checkContextForIdor({
         sql: text,
-        context,
         dialect: this.dialect,
         resolvePlaceholder: (placeholder, placeholderNumber) =>
           this.resolvePlaceholder(placeholder, placeholderNumber, params),
@@ -160,6 +160,54 @@ export class Postgres implements Wrapper {
             name: "connect",
             operationKind: "sql_op",
             modifyArgs: (args) => this.modifyPoolConnectArgs(args),
+          },
+        ],
+      });
+
+    hooks
+      .addPackage("@prisma/adapter-pg")
+      .withVersion("^7.0.0")
+      .addFileInstrumentation({
+        // This is not needed for CJS, as we can see sub-imports of CJS packages
+        path: "dist/index.mjs",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            className: "PrismaPgAdapter",
+            name: "constructor",
+            operationKind: undefined,
+            modifyArgs: (args) => {
+              const pkgInfo = {
+                type: "external",
+                name: "@prisma/adapter-pg",
+              } satisfies PartialWrapPackageInfo;
+
+              if (
+                !args[0] ||
+                typeof args[0] !== "object" ||
+                !("connect" in args[0]) ||
+                !("Client" in args[0])
+              ) {
+                return args;
+              }
+
+              const pool = args[0] as {
+                connect: unknown;
+                Client: { prototype: unknown };
+              };
+
+              wrapExport(pool, "connect", pkgInfo, {
+                kind: "sql_op",
+                modifyArgs: (args) => this.modifyPoolConnectArgs(args),
+              });
+
+              wrapExport(pool.Client.prototype, "query", pkgInfo, {
+                kind: "sql_op",
+                inspectArgs: (args) => this.inspectQuery(args),
+              });
+
+              return args;
+            },
           },
         ],
       });

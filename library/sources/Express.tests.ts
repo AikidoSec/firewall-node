@@ -66,6 +66,7 @@ export async function createExpressTests(expressPackageName: string) {
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
       allowedIPAddresses: ["4.3.2.1"],
+      excludedUserIdsFromRateLimiting: [],
     }),
     token: new Token("123"),
     wrappers: [new Express(), new FileSystem(), new HTTPServer()],
@@ -139,6 +140,10 @@ export async function createExpressTests(expressPackageName: string) {
 
     const newRouter = express.Router();
     newRouter.get("/nested-router", (req, res) => {
+      res.send(getContext());
+    });
+
+    newRouter.get("/nested-router/:id", (req, res) => {
       res.send(getContext());
     });
 
@@ -555,6 +560,7 @@ export async function createExpressTests(expressPackageName: string) {
       .set("x-forwarded-for", "1.2.3.4");
     t.same(res2.statusCode, 429);
     t.same(res2.text, "You are rate limited by Zen. (Your IP: 1.2.3.4)");
+    t.ok(parseInt(res2.headers["retry-after"]) > 0);
 
     await sleep(2000);
 
@@ -651,6 +657,20 @@ export async function createExpressTests(expressPackageName: string) {
       route: "/nested-router",
     });
   });
+
+  t.test(
+    "it sets routeParams in context for routes on a Router instance",
+    async () => {
+      const response = await request(getApp()).get("/nested-router/123");
+
+      t.match(response.body, {
+        method: "GET",
+        source: "express",
+        route: "/nested-router/:number",
+        routeParams: { id: "123" },
+      });
+    }
+  );
 
   t.test("it supports static files", async (t) => {
     const response = await request(getApp()).get("/test.txt");
