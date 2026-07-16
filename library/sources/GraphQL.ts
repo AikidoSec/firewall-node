@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { Agent } from "../agent/Agent";
 import { Context, getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -149,6 +148,7 @@ export class GraphQL implements Wrapper {
             extensions: {
               code: "RATE_LIMITED_BY_ZEN",
               ipAddress: context.remoteAddress,
+              retryAfterSeconds: result.retryAfterSeconds,
             },
           }),
         ],
@@ -162,6 +162,10 @@ export class GraphQL implements Wrapper {
     const methods = ["execute", "executeSync"];
 
     for (const method of methods) {
+      if (typeof (exports as Record<string, unknown>)[method] !== "function") {
+        // Skip non existing methods
+        continue;
+      }
       wrapExport(exports, method, pkgInfo, {
         kind: "graphql_op",
         modifyReturnValue: (args, returnValue, agent) =>
@@ -174,16 +178,25 @@ export class GraphQL implements Wrapper {
   wrap(hooks: Hooks) {
     const graphqlPkg = hooks
       .addPackage("graphql")
-      .withVersion("^15.0.0 || ^16.0.0");
+      .withVersion("^15.0.0 || ^16.0.0 || ^17.0.0");
 
     graphqlPkg
       .onFileRequire("execution/execute.js", (exports, pkgInfo) => {
         this.wrapExecution(exports, pkgInfo);
       })
-      .onRequire((exports) => {
+      .onRequire((exports, pkgInfo) => {
         this.printSchema = exports.printSchema;
         this.visit = exports.visit;
         this.GraphQLError = exports.GraphQLError;
+
+        // graphql v17 resolves to an ESM entry point even for CJS in modern Node.js,
+        // so internal files like execution/execute.js are never loaded via CJS require() and our onFileRequire hook never fires
+        if (
+          exports.defaultHarness &&
+          typeof exports.defaultHarness.execute === "function"
+        ) {
+          this.wrapExecution(exports.defaultHarness, pkgInfo);
+        }
       })
       .addMultiFileInstrumentation(
         ["execution/execute.js", "execution/execute.mjs"],

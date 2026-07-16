@@ -33,3 +33,7 @@ jobs:
     name: 🧪 QA Tests
     uses: ./.github/workflows/qa-tests.yml
     needs: build
+  alpine-test:
+    name: 🏔️ Alpine test
+    uses: ./.github/workflows/alpine-test.yml
+    needs: build

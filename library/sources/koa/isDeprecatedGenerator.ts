@@ -1,4 +1,5 @@
-/* eslint-disable func-names */
+/* oxlint-disable func-names */
+
 /**
  * Checks if a function is a generator function.
  * They are deprecated in koa v2 and are already removed in the main branch (will be completely removed in v3).

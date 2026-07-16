@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { resolve } from "path";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
@@ -10,6 +9,7 @@ import {
   InterceptorResult,
   isAttackResult,
   isBlockOutboundConnectionResult,
+  isIdorViolationResult,
 } from "./InterceptorResult";
 import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { cleanError } from "../../helpers/cleanError";
@@ -28,23 +28,31 @@ export function onInspectionInterceptorResult(
 ) {
   const end = performance.now();
 
+  const isBypassedIP =
+    context &&
+    context.remoteAddress &&
+    agent.getConfig().isBypassedIP(context.remoteAddress);
+
   if (kind) {
     agent.getInspectionStatistics().onInspectedCall({
       operation: operation,
       kind: kind,
-      attackDetected: !!result,
+      attackDetected: !isBypassedIP && !!result,
       blocked: agent.shouldBlock(),
       durationInMs: end - start,
       withoutContext: !context,
     });
   }
 
-  const isBypassedIP =
-    context &&
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress);
+  if (isBypassedIP) {
+    return;
+  }
 
-  if (isBlockOutboundConnectionResult(result) && !isBypassedIP) {
+  if (isIdorViolationResult(result)) {
+    throw cleanError(new Error(result.message));
+  }
+
+  if (isBlockOutboundConnectionResult(result)) {
     throw cleanError(
       new Error(
         `Zen has blocked an outbound connection: ${result.operation}(...) to ${escapeHTML(result.hostname)}`
@@ -52,7 +60,7 @@ export function onInspectionInterceptorResult(
     );
   }
 
-  if (isAttackResult(result) && context && !isBypassedIP) {
+  if (isAttackResult(result) && context) {
     // Flag request as having an attack detected
     updateContext(context, "attackDetected", true);
 

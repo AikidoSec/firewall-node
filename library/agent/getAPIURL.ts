@@ -15,5 +15,9 @@ export function getAPIURL() {
     return new URL("https://guard.me.aikido.dev");
   }
 
+  if (region === "AU") {
+    return new URL("https://guard.au.aikido.dev");
+  }
+
   return new URL("https://guard.aikido.dev");
 }

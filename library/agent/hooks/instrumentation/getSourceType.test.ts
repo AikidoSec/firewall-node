@@ -30,5 +30,13 @@ t.test("getSourceType works", async (t) => {
   t.same(getSourceType("/test/file.ts", "module"), "ts");
   t.same(getSourceType("/test/file.ts", "unambiguous"), "ts");
 
+  t.same(getSourceType("/test/file.mts", "unambiguous"), "mts");
+  t.same(getSourceType("/test/file.mts", "commonjs"), "mts");
+  t.same(getSourceType("/test/file.mts", "module"), "mts");
+
+  t.same(getSourceType("/test/file.cts", "unambiguous"), "cts");
+  t.same(getSourceType("/test/file.cts", "commonjs"), "cts");
+  t.same(getSourceType("/test/file.cts", "module"), "cts");
+
   t.throws(() => getSourceType("file.unknown", "commonjs"));
 });

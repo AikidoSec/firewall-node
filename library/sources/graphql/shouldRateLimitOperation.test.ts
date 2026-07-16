@@ -68,6 +68,7 @@ t.test("it rate limits query", async () => {
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
+      excludedUserIdsFromRateLimiting: [],
     }),
   });
 
@@ -136,6 +137,7 @@ t.test("it rate limits mutation", async () => {
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
+      excludedUserIdsFromRateLimiting: [],
     }),
   });
 
@@ -204,6 +206,7 @@ t.test("it rate limits by user", async () => {
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
+      excludedUserIdsFromRateLimiting: [],
     }),
   });
 
@@ -275,6 +278,7 @@ t.test("it rate limits user groups", async () => {
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
+      excludedUserIdsFromRateLimiting: [],
     }),
   });
 

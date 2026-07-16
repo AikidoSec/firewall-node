@@ -6,6 +6,7 @@ import { getContext } from "../../agent/Context";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPlainObject } from "../../helpers/isPlainObject";
+import { normalizeHostname } from "../../helpers/normalizeHostname";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
@@ -34,6 +35,9 @@ export function inspectDNSLookupCalls(
       return lookup(...args);
     }
 
+    // Normalize hostname for security checks while preserving original for lookup compatibility
+    const normalizedHostname = normalizeHostname(hostname);
+
     const options = args.find((arg) => isPlainObject(arg)) as
       | Record<string, unknown>
       | undefined;
@@ -44,7 +48,7 @@ export function inspectDNSLookupCalls(
           options,
           wrapDNSLookupCallback(
             callback as Function,
-            hostname,
+            normalizedHostname,
             module,
             agent,
             operation,
@@ -56,7 +60,7 @@ export function inspectDNSLookupCalls(
           hostname,
           wrapDNSLookupCallback(
             callback as Function,
-            hostname,
+            normalizedHostname,
             module,
             agent,
             operation,
@@ -69,7 +73,6 @@ export function inspectDNSLookupCalls(
   };
 }
 
-// eslint-disable-next-line max-lines-per-function
 function wrapDNSLookupCallback(
   callback: Function,
   hostname: string,
@@ -79,7 +82,6 @@ function wrapDNSLookupCallback(
   urlArg?: URL,
   callingLocationStackTrace?: Error
 ): Function {
-  // eslint-disable-next-line max-lines-per-function
   return function wrappedDNSLookupCallback(
     err: Error,
     addresses: string | LookupAddress[],
@@ -166,6 +168,7 @@ function wrapDNSLookupCallback(
       }
 
       if (url) {
+        url.hostname = normalizeHostname(url.hostname);
         // Get the origin of the redirect chain (the first URL in the chain), if the URL is the result of a redirect
         const redirectOrigin = getRedirectOrigin(
           context.outgoingRequestRedirects,
@@ -181,6 +184,17 @@ function wrapDNSLookupCallback(
           );
         }
       }
+    }
+
+    const isBypassedIP =
+      context &&
+      context.remoteAddress &&
+      agent.getConfig().isBypassedIP(context.remoteAddress);
+
+    if (isBypassedIP) {
+      // If the IP address is allowed, we don't need to block the request
+      // Just call the original callback to allow the DNS lookup
+      return callback(err, addresses, family);
     }
 
     if (!found) {
@@ -207,17 +221,6 @@ function wrapDNSLookupCallback(
       }
 
       // If we can't find the hostname in the context, it's not an SSRF attack
-      // Just call the original callback to allow the DNS lookup
-      return callback(err, addresses, family);
-    }
-
-    const isBypassedIP =
-      context &&
-      context.remoteAddress &&
-      agent.getConfig().isBypassedIP(context.remoteAddress);
-
-    if (isBypassedIP) {
-      // If the IP address is allowed, we don't need to block the request
       // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }

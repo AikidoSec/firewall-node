@@ -74,13 +74,13 @@ t.test("it detects SQL injections", async (t) => {
       }
 
       const error2 = t.throws(() =>
-        db.prepare("SELECT 1;-- should be blocked")
+        db.prepare("SELECT 1;-- should be blocked").all()
       );
       t.ok(error2 instanceof Error);
       if (error2 instanceof Error) {
         t.same(
           error2.message,
-          "Zen has blocked an SQL injection: better-sqlite3.prepare(...) originating from body.myTitle"
+          "Zen has blocked an SQL injection: better-sqlite3.prepare(...).all(...) originating from body.myTitle"
         );
       }
 
@@ -94,6 +94,17 @@ t.test("it detects SQL injections", async (t) => {
           );
         }
       });
+
+      const error3 = t.throws(() =>
+        db.prepare("SELECT 1;-- should be blocked").get()
+      );
+      t.ok(error3 instanceof Error);
+      if (error3 instanceof Error) {
+        t.same(
+          error3.message,
+          "Zen has blocked an SQL injection: better-sqlite3.prepare(...).get(...) originating from body.myTitle"
+        );
+      }
     });
 
     await runWithContext(safeContext, async () => {

@@ -88,7 +88,7 @@ for await (const entry of testFiles) {
   const newFilename = filename.replace(/ts$/, "js");
 
   // --------------- Transform TS to JS and parse to AST ----------------
-  let { code, errors } = await transform(filename, sourceText, {
+  let { code, errors } = transform(filename, sourceText, {
     target: "es2022",
     typescript: {
       rewriteImportExtensions: "rewrite",
@@ -207,6 +207,9 @@ for await (const entry of testFiles) {
                 testCb.params.push({ type: "Identifier", name: "t" });
               }
               break;
+            case "teardown":
+              node.callee = { type: "Identifier", name: "after" };
+              break;
             case "beforeEach":
             case "before":
             case "after":
@@ -238,10 +241,10 @@ for await (const entry of testFiles) {
               break;
             case "throws":
             case "match":
+            case "notMatch":
             case "pass":
             case "rejects":
             case "same":
-            case "doesNotThrow":
               node.callee = {
                 type: "MemberExpression",
                 object: { type: "Identifier", name: "_testHelpers" },
@@ -257,6 +260,7 @@ for await (const entry of testFiles) {
             case "notOk":
             case "fail":
             case "error":
+            case "doesNotThrow":
               node.callee.object = {
                 type: "MemberExpression",
                 object: { type: "Identifier", name: "t" },
@@ -268,6 +272,9 @@ for await (const entry of testFiles) {
                   break;
                 case "throws":
                   node.callee.property.name = "throws";
+                  break;
+                case "doesNotThrow":
+                  node.callee.property.name = "doesNotThrow";
                   break;
                 case "notOk":
                   node.callee.property.name = "ok";

@@ -20,7 +20,6 @@ t.test(
     });
 
     const result = await client.messages.create({
-      // eslint-disable-next-line camelcase
       max_tokens: 1024,
       messages: [
         {
@@ -29,7 +28,7 @@ t.test(
             "What is the capital of France? Answer with just the city name, no punctuation.",
         },
       ],
-      model: "claude-3-haiku-20240307",
+      model: "claude-haiku-4-5-20251001",
     });
 
     t.same(result.content[0].text, "Paris");
@@ -49,7 +48,6 @@ t.test(
     // We don't track the token usage of streaming calls yet.
     // Verify that we don't break user's code
     const stream = await client.messages.create({
-      // eslint-disable-next-line camelcase
       max_tokens: 1024,
       messages: [
         {
@@ -58,7 +56,7 @@ t.test(
             "What is the capital of France? Answer with just the city name, no punctuation.",
         },
       ],
-      model: "claude-3-haiku-20240307",
+      model: "claude-haiku-4-5-20251001",
       stream: true,
     });
 

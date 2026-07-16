@@ -1,4 +1,3 @@
-/* eslint-disable max-classes-per-file */
 import * as t from "tap";
 import { wrapNewInstance } from "./wrapNewInstance";
 import { LoggerForTesting } from "../logger/LoggerForTesting";

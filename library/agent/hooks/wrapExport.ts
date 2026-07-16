@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import type { Agent } from "../Agent";
 import { getInstance } from "../AgentSingleton";
 import { OperationKind } from "../api/Event";
@@ -58,7 +57,6 @@ export function wrapExport(
       methodName,
       function wrap(original: Function) {
         return function wrap() {
-          // eslint-disable-next-line prefer-rest-params
           let args = Array.from(arguments);
           const context = getContext();
 

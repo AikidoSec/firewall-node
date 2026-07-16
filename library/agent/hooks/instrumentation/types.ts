@@ -116,6 +116,12 @@ export type PackageFunctionInstrumentationInstruction = {
    * If enabled, the bindContext function will be called for all callbacks that are passed to the function.
    */
   bindContext?: boolean;
+
+  /**
+   * Can be used to specify the class name to limit the instrumentation to a specific method of a class.
+   * Only has an effect if the nodeType is MethodDefinition, otherwise it will be ignored.
+   */
+  className?: string;
 };
 
 export type PackageFileInstrumentationInstruction = {
@@ -144,5 +150,6 @@ export type PackageFileInstrumentationInstructionJSON = {
     modifyArgs: boolean;
     modifyReturnValue: boolean;
     modifyArgumentsObject: boolean;
+    className?: string;
   }[];
 };

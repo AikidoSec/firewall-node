@@ -1,6 +1,5 @@
 import { SQLDialect } from "./dialects/SQLDialect";
 import { shouldReturnEarly } from "./shouldReturnEarly";
-// eslint-disable-next-line camelcase
 import { wasm_detect_sql_injection } from "../../internals/zen_internals";
 
 export const SQLInjectionDetectionResult = {
@@ -18,13 +17,14 @@ export function detectSQLInjection(
   userInput: string,
   dialect: SQLDialect
 ): SQLInjectionDetectionResultType {
-  if (shouldReturnEarly(query, userInput)) {
+  const userInputNormalized = userInput.toLowerCase().trim();
+  if (shouldReturnEarly(query, userInputNormalized)) {
     return SQLInjectionDetectionResult.SAFE;
   }
 
   const code = wasm_detect_sql_injection(
     query.toLowerCase(),
-    userInput.toLowerCase(),
+    userInputNormalized,
     dialect.getWASMDialectInt()
   );
 

@@ -1,4 +1,5 @@
-/* eslint-disable no-console */
+/* oxlint-disable no-console */
+
 import * as mod from "node:module";
 import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 import isFirewallSupported from "../helpers/isFirewallSupported";
@@ -6,6 +7,10 @@ import { protectWithNewInstrumentation } from "../agent/protect";
 import { setIsNewHookSystemUsed } from "../agent/isNewHookSystemUsed";
 import { checkIndexImportGuard } from "../helpers/indexImportGuard";
 import { isMainThread } from "node:worker_threads";
+import { isESM } from "../helpers/isESM";
+import { isPreloaded } from "../helpers/isPreloaded";
+import { colorText } from "../helpers/colorText";
+import { warnBox } from "../helpers/warnBox";
 
 setIsNewHookSystemUsed(true);
 
@@ -20,7 +25,12 @@ function start() {
 
   if (!("registerHooks" in mod) || typeof mod.registerHooks !== "function") {
     console.error(
-      "AIKIDO: Error: Zen requires that your Node.js version supports the `module.registerHooks` API. Please upgrade to a newer version of Node.js."
+      colorText(
+        "red",
+        warnBox(
+          "Zen is NOT protecting your application. Your Node.js version does not support module.registerHooks. Upgrade Node.js and see https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+        )
+      )
     );
     return;
   }
@@ -32,9 +42,16 @@ function start() {
     return;
   }
 
-  console.warn(
-    "AIKIDO: The new instrumentation system with ESM support is still under active development and not suitable for production use."
-  );
+  if (isESM() === true && !isPreloaded()) {
+    console.error(
+      colorText(
+        "red",
+        warnBox(
+          "Zen is NOT protecting your application. Your ESM app needs the library preloaded with --require. See https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+        )
+      )
+    );
+  }
 
   protectWithNewInstrumentation();
 }

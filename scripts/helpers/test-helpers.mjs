@@ -122,20 +122,26 @@ export function rejects(...args) {
   });
 }
 
-export function doesNotThrow(...args) {
-  if (args.length === 0) {
-    throw new TypeError("doesNotThrow requires at least one argument");
+export function notMatch(actual, expected, message) {
+  if (typeof expected === "string") {
+    expected = new RegExp(RegExp.escape(expected));
   }
 
-  if (typeof args[0] !== "function") {
-    throw new TypeError("First argument to doesNotThrow must be a function");
+  if (expected instanceof RegExp) {
+    if (typeof actual !== "string") {
+      actual = String(actual);
+    }
+
+    assert.doesNotMatch(actual, expected, message);
+    return;
   }
 
   try {
-    args[0]();
-  } catch (err) {
-    assert.fail(
-      `Unexpected exception thrown: ${err.message ?? err.toString()}`
-    );
+    assert.partialDeepStrictEqual(actual, expected);
+  } catch {
+    // If they are not deeply equal, the assertion will throw, which means the test should pass
+    return;
   }
+
+  assert.fail(message || "Values are deeply equal");
 }

@@ -47,6 +47,7 @@ export function createGraphQLTests(pkgName: string) {
         configUpdatedAt: 0,
         heartbeatIntervalInMS: 10 * 60 * 1000,
         blockedUserIds: [],
+        excludedUserIdsFromRateLimiting: [],
       }),
       token: new Token("123"),
       wrappers: [new GraphQL()],
@@ -57,7 +58,7 @@ export function createGraphQLTests(pkgName: string) {
 
     const { graphql, buildSchema } = require(
       pkgName
-    ) as typeof import("graphql");
+    ) as typeof import("graphql-v17");
 
     const schema = buildSchema(`
         type Query {

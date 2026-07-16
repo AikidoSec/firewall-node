@@ -1,4 +1,5 @@
 import * as t from "tap";
+import * as FakeTimers from "@sinonjs/fake-timers";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { EndpointConfig } from "../agent/Config";
@@ -51,6 +52,7 @@ async function createAgent(
       blockedUserIds: [],
       configUpdatedAt: 0,
       endpoints: endpoints,
+      excludedUserIdsFromRateLimiting: ["excluded-user-id"],
     }),
   });
 
@@ -179,37 +181,6 @@ t.test("it rate limits localhost when not in production mode", async (t) => {
   t.match(shouldRateLimitRequest(createContext("::1"), agent), {
     block: true,
     trigger: "ip",
-  });
-});
-
-t.test("it does not rate limit when the IP is allowed", async (t) => {
-  const agent = await createAgent(
-    [
-      {
-        method: "POST",
-        route: "/login",
-        forceProtectionOff: false,
-        rateLimiting: {
-          enabled: true,
-          maxRequests: 3,
-          windowSizeInMS: 1000,
-        },
-      },
-    ],
-    ["1.2.3.4"]
-  );
-
-  t.same(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
-    block: false,
-  });
-  t.same(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
-    block: false,
-  });
-  t.same(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
-    block: false,
-  });
-  t.same(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
-    block: false,
   });
 });
 
@@ -432,40 +403,6 @@ t.test(
       block: false,
     });
     t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123456"), agent), {
-      block: false,
-    });
-  }
-);
-
-t.test(
-  "it does not rate limit requests from allowed ip with user",
-  async (t) => {
-    const agent = await createAgent(
-      [
-        {
-          method: "POST",
-          route: "/login",
-          forceProtectionOff: false,
-          rateLimiting: {
-            enabled: true,
-            maxRequests: 3,
-            windowSizeInMS: 1000,
-          },
-        },
-      ],
-      ["1.2.3.4"]
-    );
-
-    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
-      block: false,
-    });
-    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
-      block: false,
-    });
-    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
-      block: false,
-    });
-    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
       block: false,
     });
   }
@@ -750,4 +687,105 @@ t.test("it rate limits by group if user is not set", async (t) => {
       trigger: "group",
     }
   );
+});
+
+t.test("it does not rate limit excluded users", async (t) => {
+  const agent = await createAgent([
+    {
+      method: "POST",
+      route: "/login",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 1000,
+      },
+    },
+  ]);
+
+  for (let i = 0; i < 5; i++) {
+    t.same(
+      shouldRateLimitRequest(
+        createContext(
+          "4.3.2.1",
+          "excluded-user-id",
+          "/login",
+          "POST",
+          undefined
+        ),
+        agent
+      ),
+      {
+        block: false,
+      }
+    );
+  }
+});
+
+t.test(
+  "it does not rate limit users if they are part of a rate limit group",
+  async (t) => {
+    const agent = await createAgent([
+      {
+        method: "POST",
+        route: "/login",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 2,
+          windowSizeInMS: 1000,
+        },
+      },
+    ]);
+
+    for (let i = 0; i < 5; i++) {
+      t.same(
+        shouldRateLimitRequest(
+          createContext(
+            "4.3.2.1",
+            "excluded-user-id",
+            "/login",
+            "POST",
+            "group1"
+          ),
+          agent
+        ),
+        {
+          block: false,
+        }
+      );
+    }
+  }
+);
+
+t.test("it includes retryAfterSeconds when rate limited", async (t) => {
+  const agent = await createAgent([
+    {
+      method: "POST",
+      route: "/login",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 1,
+        windowSizeInMS: 60000,
+      },
+    },
+  ]);
+
+  const clock = FakeTimers.install();
+
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
+    block: false,
+  });
+
+  clock.tick(10000);
+
+  const result = shouldRateLimitRequest(createContext("1.2.3.4"), agent);
+  t.equal(result.block, true);
+  if (result.block) {
+    t.equal(result.trigger, "ip");
+    t.equal(result.retryAfterSeconds, 50);
+  }
+
+  clock.uninstall();
 });

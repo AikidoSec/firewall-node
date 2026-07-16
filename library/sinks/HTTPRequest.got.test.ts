@@ -51,9 +51,7 @@ t.before(async () => {
 });
 
 t.test("it works", opts, async (t) => {
-  const agent = createTestAgent({
-    token: new Token("123"),
-  });
+  const agent = createTestAgent();
   agent.start([new HTTPRequest()]);
 
   t.same(agent.getHostnames().asArray(), []);

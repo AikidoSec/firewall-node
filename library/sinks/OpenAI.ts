@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";

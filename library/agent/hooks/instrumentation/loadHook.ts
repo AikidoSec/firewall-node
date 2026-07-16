@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import type { LoadFunction } from "./types";
 import { getModuleInfoFromPath } from "../getModuleInfoFromPath";
 import { isBuiltinModule } from "../isBuiltinModule";

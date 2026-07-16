@@ -1,6 +1,7 @@
 import { isPlainObject } from "./isPlainObject";
 import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
+import { tryParseURL } from "./tryParseURL";
 
 type UserString = string;
 
@@ -9,6 +10,8 @@ type UserString = string;
 // extractStringsFromUserInput will trigger a max call stack size,
 // the error will be caught, but it stops our inspection
 const MAX_DEPTH = 1024;
+
+const MAX_URL_DECODE_DEPTH = 5;
 
 export function extractStringsFromUserInput(
   obj: unknown,
@@ -39,20 +42,17 @@ export function extractStringsFromUserInput(
     // This prevents bypassing the firewall by HTTP Parameter Pollution
     // Example: ?param=value1&param=value2 will be treated as array by express
     // If its used inside a string, it will be converted to a comma separated string
-    results.add(obj.join());
+    try {
+      results.add(obj.join());
+    } catch {
+      // Ignore deeply nested/cyclic arrays that can overflow during native join recursion.
+      // We still keep strings gathered from traversed elements above.
+    }
   }
 
   if (typeof obj === "string" && obj.length > 0) {
     results.add(obj);
-
-    if (obj.includes("%") && obj.length >= 3) {
-      const r = safeDecodeURIComponent(obj);
-      if (r && r !== obj) {
-        // Only add if the decoded value is different from the original, to avoid duplicates in results
-        // This improves the performance of all injection tests
-        results.add(r);
-      }
-    }
+    addURLDecodedVariants(obj, results);
 
     const jwt = tryDecodeAsJWT(obj);
     if (jwt.jwt) {
@@ -61,10 +61,33 @@ export function extractStringsFromUserInput(
         delete jwt.object.iss;
       }
       extractStringsFromUserInput(jwt.object, depth + 1).forEach((value) => {
+        if (value.startsWith("http") && tryParseURL(value)) {
+          // Do not add URLs as strings because they can contain domains and produce false positives
+          return;
+        }
+
         results.add(value);
       });
     }
   }
 
   return results;
+}
+
+function addURLDecodedVariants(str: string, results: Set<UserString>) {
+  let current = str;
+  for (let i = 0; i < MAX_URL_DECODE_DEPTH; i++) {
+    if (current.length < 3 || !current.includes("%")) {
+      break;
+    }
+
+    const decoded = safeDecodeURIComponent(current);
+    if (!decoded || decoded === current) {
+      // If decoding fails or doesn't change the string, stop further attempts to decode
+      break;
+    }
+
+    results.add(decoded);
+    current = decoded;
+  }
 }

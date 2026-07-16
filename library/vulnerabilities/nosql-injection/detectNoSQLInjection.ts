@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { isDeepStrictEqual } from "util";
 import { Context } from "../../agent/Context";
 import { Source, SOURCES } from "../../agent/Source";
@@ -7,11 +6,19 @@ import { isPlainObject } from "../../helpers/isPlainObject";
 import { tryDecodeAsJWT } from "../../helpers/tryDecodeAsJWT";
 import { detectDbJsInjection } from "../js-injection/detectDbJsInjection";
 
+// Matches the depth limit used by extractStringsFromUserInput
+const MAX_DEPTH = 1024;
+
 function matchFilterPartInUser(
   userInput: unknown,
   filterPart: Record<string, unknown>,
-  pathToPayload: PathPart[] = []
+  pathToPayload: PathPart[] = [],
+  depth = 0
 ): { match: false } | { match: true; pathToPayload: string } {
+  if (depth > MAX_DEPTH) {
+    return { match: false };
+  }
+
   if (typeof userInput === "string") {
     // Check for js injection in $where
     if (detectDbJsInjection(userInput, filterPart)) {
@@ -26,14 +33,15 @@ function matchFilterPartInUser(
       return matchFilterPartInUser(
         jwt.object,
         filterPart,
-        pathToPayload.concat([{ type: "jwt" }])
+        pathToPayload.concat([{ type: "jwt" }]),
+        depth + 1
       );
     }
   }
 
   if (isPlainObject(userInput)) {
     const filteredInput = removeKeysThatDontStartWithDollarSign(userInput);
-    if (isDeepStrictEqual(filteredInput, filterPart)) {
+    if (isUserOperatorsSubsetOf(filteredInput, filterPart)) {
       return { match: true, pathToPayload: buildPathToPayload(pathToPayload) };
     }
 
@@ -41,7 +49,8 @@ function matchFilterPartInUser(
       const match = matchFilterPartInUser(
         userInput[key],
         filterPart,
-        pathToPayload.concat([{ type: "object", key: key }])
+        pathToPayload.concat([{ type: "object", key: key }]),
+        depth + 1
       );
 
       if (match.match) {
@@ -55,12 +64,24 @@ function matchFilterPartInUser(
       const match = matchFilterPartInUser(
         userInput[index],
         filterPart,
-        pathToPayload.concat([{ type: "array", index: index }])
+        pathToPayload.concat([{ type: "array", index: index }]),
+        depth + 1
       );
 
       if (match.match) {
         return match;
       }
+    }
+
+    try {
+      return matchFilterPartInUser(
+        userInput.join(),
+        filterPart,
+        pathToPayload,
+        depth + 1
+      );
+    } catch {
+      // Ignore deeply nested arrays that overflow during native join recursion.
     }
   }
 
@@ -79,6 +100,28 @@ function removeKeysThatDontStartWithDollarSign(
 
     return acc;
   }, {});
+}
+
+// Returns true if every operator in userOperators is present in filterOperators
+// with the same value — i.e. the user-supplied operators are a subset of the
+// filter. An empty userOperators object never matches (no operators = no injection).
+function isUserOperatorsSubsetOf(
+  userOperators: Record<string, unknown>,
+  filterOperators: Record<string, unknown>
+): boolean {
+  let hasKeys = false;
+  for (const key in userOperators) {
+    // Any missing key or value mismatch means the user input wasn't used as-is.
+    if (
+      !(key in filterOperators) ||
+      !isDeepStrictEqual(userOperators[key], filterOperators[key])
+    ) {
+      return false;
+    }
+    // Only count the key as seen after it passes the check above.
+    hasKeys = true;
+  }
+  return hasKeys;
 }
 
 function findFilterPartWithOperators(

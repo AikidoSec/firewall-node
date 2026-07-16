@@ -7,6 +7,7 @@ t.test(
     t.ok(isPlainObject(Object.create({})));
     t.ok(isPlainObject(Object.create(Object.prototype)));
     t.ok(isPlainObject({ foo: "bar" }));
+    t.ok(isPlainObject({ constructor: "foo" }));
     t.ok(isPlainObject({}));
     t.ok(isPlainObject(Object.create(null)));
   }
@@ -20,6 +21,8 @@ t.test(
       this.abc = {};
     }
 
+    class Bar {}
+
     t.notOk(isPlainObject(/foo/));
     t.notOk(isPlainObject(function myFunc() {}));
     t.notOk(isPlainObject(1));
@@ -29,6 +32,7 @@ t.test(
     t.notOk(isPlainObject(new Foo()));
     t.notOk(isPlainObject(null));
     t.notOk(isPlainObject(undefined));
+    t.notOk(isPlainObject(new Bar()));
   }
 );
 

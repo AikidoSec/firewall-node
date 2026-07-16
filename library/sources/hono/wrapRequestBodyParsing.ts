@@ -17,7 +17,6 @@ function wrapBodyParsingFunction<T extends Function>(func: T) {
   return createWrappedFunction(func, function parse(parser) {
     return async function wrap() {
       // @ts-expect-error No type for arguments
-      // eslint-disable-next-line prefer-rest-params
       const returnValue = await parser.apply(this, arguments);
 
       if (returnValue) {

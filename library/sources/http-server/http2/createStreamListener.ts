@@ -89,7 +89,7 @@ function discoverRouteFromStream(
 
       if (
         context.remoteAddress &&
-        agent.getAttackWaveDetector().check(context)
+        agent.getAttackWaveDetector().check(context, statusCode)
       ) {
         agent.onDetectedAttackWave({
           request: context,
@@ -105,13 +105,11 @@ function discoverRouteFromStream(
  */
 function wrapStreamEvent(orig: Function) {
   return function wrap() {
-    // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
     if (args.length < 2 || typeof args[1] !== "function") {
       return orig.apply(
         // @ts-expect-error We don't know the type of `this`
         this,
-        // eslint-disable-next-line prefer-rest-params
         arguments
       );
     }

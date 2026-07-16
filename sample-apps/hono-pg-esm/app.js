@@ -3,9 +3,31 @@ import { serve } from "@hono/node-server";
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { createConnection } from "./db.js";
+import Zen from "@aikidosec/firewall";
+
+Zen.enableIdorProtection({
+  tenantColumnName: "user_id",
+  excludedTables: ["cats_6"],
+  // Off by default; the e2e tests flip this on to check the requireTenantId path.
+  requireTenantId: process.env.IDOR_REQUIRE_TENANT_ID === "true",
+});
 
 const app = new Hono();
 const db = await createConnection();
+
+app.use(async (c, next) => {
+  const userId = c.req.header("x-user-id") || 1;
+
+  // Allows IDOR test, because SQL queries always use user ID 1
+  c.set("userId", 1);
+
+  Zen.setUser({ id: userId });
+  Zen.setTenantId(userId);
+
+  await next();
+});
+
+Zen.addHonoMiddleware(app);
 
 app.get("/", async (c) => {
   return c.text("Hello, World!");
@@ -27,13 +49,18 @@ app.post("/add", async (c) => {
     return c.status(400).text("Name is required");
   }
 
+  const table =
+    json.withIdorProtection === true ? "cats_6_with_idor" : "cats_6";
+
   // Insecure
-  await db.query(`INSERT INTO cats_3 (petname) VALUES ('${name}');`);
+  await db.query(
+    `INSERT INTO ${table} (petname, user_id) VALUES ('${name}', ${c.get("userId")});`
+  );
   return c.text("OK");
 });
 
 app.get("/clear", async (c) => {
-  await db.query("DELETE FROM cats_3;");
+  await db.query(`DELETE FROM cats_6 WHERE user_id = ${c.get("userId")};`);
   return c.text("Table cleared");
 });
 
@@ -46,6 +73,26 @@ app.get("/fetch", async (c) => {
   const text = await response.text();
   return c.json({ success: true, status: response.status, body: text });
 });
+
+if (process.env.IDOR_BACKGROUND_TEST === "true") {
+  const runQuery = async () => {
+    try {
+      await db.query("SELECT petname FROM cats_6_with_idor WHERE user_id = 1;");
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
+
+  const interval = setInterval(async () => {
+    if (process.env.IDOR_BACKGROUND_WITH_TENANT === "true") {
+      await Zen.runWithTenant(2, runQuery);
+    } else {
+      await runQuery();
+    }
+  }, 500);
+
+  interval.unref();
+}
 
 function getPort() {
   const port = parseInt(process.argv[2], 10) || 4000;

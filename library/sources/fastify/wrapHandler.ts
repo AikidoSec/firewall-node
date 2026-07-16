@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import { runWithContext } from "../../agent/Context";
 import type { FastifyRequest } from "fastify";
 import { contextFromRequest } from "./contextFromRequest";
