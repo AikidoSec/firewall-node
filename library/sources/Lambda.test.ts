@@ -710,7 +710,7 @@ t.test("it detects attack waves", async (t) => {
   agent.start([]);
 
   const handler = createLambdaWrapper(async (event, context) => {
-    return getContext();
+    return { body: JSON.stringify(getContext()), statusCode: 404 };
   });
 
   const paths = [
@@ -752,13 +752,16 @@ t.test("it detects attack waves", async (t) => {
       },
     };
 
-    const result = await handler(attackWaveEvent, lambdaContext, () => {});
+    const result = (await handler(
+      attackWaveEvent,
+      lambdaContext,
+      () => {}
+    )) as unknown as { body: string };
 
-    t.same(result, {
+    t.same(JSON.parse(result.body), {
       url: path,
       method: "GET",
       remoteAddress: "4.3.2.1",
-      body: undefined,
       headers: {},
       query: {},
       cookies: {},
@@ -802,7 +805,7 @@ t.test("it detects attack waves using Gateway Event v2", async (t) => {
   agent.start([]);
 
   const handler = createLambdaWrapper(async (event, context) => {
-    return getContext();
+    return { body: JSON.stringify(getContext()), statusCode: 404 };
   });
 
   const paths = [
@@ -847,13 +850,16 @@ t.test("it detects attack waves using Gateway Event v2", async (t) => {
       },
     };
 
-    const result = await handler(attackWaveEvent, lambdaContext, () => {});
+    const result = (await handler(
+      attackWaveEvent,
+      lambdaContext,
+      () => {}
+    )) as unknown as { body: string };
 
-    t.match(result, {
+    t.match(JSON.parse(result.body), {
       url: path,
       method: "GET",
       remoteAddress: "4.3.2.2",
-      body: undefined,
       headers: {},
       query: {},
       cookies: {},
