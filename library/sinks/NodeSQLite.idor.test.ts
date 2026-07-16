@@ -68,6 +68,7 @@ t.test(
       agent.setIdorProtectionConfig({
         tenantColumnName: "tenant_id",
         excludedTables: ["migrations"],
+        requireTenantId: true,
       });
 
       await t.test(
@@ -278,7 +279,7 @@ t.test(
         if (error instanceof Error) {
           t.match(
             error.message,
-            "setTenantId() was not called for this request. Every request must have a tenant ID when IDOR protection is enabled."
+            "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
           );
         }
       });
@@ -424,10 +425,22 @@ t.test(
       if (typeof db.createTagStore === "function") {
         const tagStore = db.createTagStore();
 
-        await t.test("allows tagged query with no context", async () => {
-          const result = tagStore.get`SELECT petname FROM cats_idor_sqlite WHERE tenant_id = ${"org_123"}`;
-          t.same(result, undefined);
-        });
+        await t.test(
+          "blocks tagged query with no tenant (requireTenantId)",
+          async () => {
+            const error = t.throws(() => {
+              return tagStore.get`SELECT petname FROM cats_idor_sqlite WHERE tenant_id = ${"org_123"}`;
+            });
+
+            t.ok(error instanceof Error);
+            if (error instanceof Error) {
+              t.match(
+                error.message,
+                "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+              );
+            }
+          }
+        );
 
         await t.test(
           "allows tagged query with tenant filter using template literal",
@@ -531,7 +544,7 @@ t.test(
           if (error instanceof Error) {
             t.match(
               error.message,
-              "setTenantId() was not called for this request. Every request must have a tenant ID when IDOR protection is enabled."
+              "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
             );
           }
         });

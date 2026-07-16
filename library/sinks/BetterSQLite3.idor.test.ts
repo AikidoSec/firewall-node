@@ -62,6 +62,7 @@ t.test("IDOR protection for BetterSQLite3", async (t) => {
     agent.setIdorProtectionConfig({
       tenantColumnName: "tenant_id",
       excludedTables: ["migrations"],
+      requireTenantId: false,
     });
 
     await t.test(
@@ -205,7 +206,10 @@ t.test("IDOR protection for BetterSQLite3", async (t) => {
 
       t.ok(error instanceof Error);
       if (error instanceof Error) {
-        t.match(error.message, "setTenantId() was not called");
+        t.match(
+          error.message,
+          "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+        );
       }
     });
 
