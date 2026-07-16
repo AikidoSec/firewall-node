@@ -5,15 +5,18 @@ import { Token } from "../api/Token";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
 import { connectToSSE } from "./connectToSSE";
 import type { EventSourceMessage } from "../../helpers/eventsource-parser/types";
+import { getAgentVersion } from "../../helpers/getAgentVersion";
 
 t.test(
   "it connects with auth header and receives events, ignoring pings",
   async (t) => {
-    let receivedAuth: string | undefined;
     let sseRes: ServerResponse | null = null;
+    let receivedHeaders:
+      | Record<string, string | string[] | undefined>
+      | undefined = undefined;
 
     const server = createServer((req, res) => {
-      receivedAuth = req.headers.authorization;
+      receivedHeaders = req.headers;
       sseRes = res;
       res.writeHead(200, {
         "Content-Type": "text/event-stream",
@@ -46,7 +49,11 @@ t.test(
 
       await setTimeout(200);
 
-      t.equal(receivedAuth, "my-secret-token");
+      t.equal(receivedHeaders?.["authorization"], "my-secret-token");
+      t.equal(receivedHeaders?.["accept"], "text/event-stream");
+      t.equal(receivedHeaders?.["cache-control"], "no-cache");
+      t.equal(receivedHeaders?.["x-agent-platform"], "node");
+      t.equal(receivedHeaders?.["x-agent-version"], getAgentVersion());
       t.equal(events.length, 1);
       t.equal(events[0].event, "config-updated");
       t.same(JSON.parse(events[0].data), {

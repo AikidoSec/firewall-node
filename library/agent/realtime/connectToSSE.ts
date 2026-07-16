@@ -7,6 +7,7 @@ import { isDebuggingSSE } from "../../helpers/isDebuggingSSE";
 import { Token } from "../api/Token";
 import { Logger } from "../logger/Logger";
 import { getRealtimeURL } from "./getRealtimeURL";
+import { getAgentVersion } from "../../helpers/getAgentVersion";
 
 const INITIAL_RECONNECT_MS = 5000;
 const MAX_RECONNECT_MS = 60 * 1000;
@@ -53,6 +54,8 @@ function connect({
           Authorization: token.asString(),
           Accept: "text/event-stream",
           "Cache-Control": "no-cache",
+          "X-Agent-Platform": "node",
+          "X-Agent-Version": getAgentVersion(),
         },
       },
       (response) => {
