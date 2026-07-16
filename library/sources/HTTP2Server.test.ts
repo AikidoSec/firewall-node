@@ -568,6 +568,49 @@ t.test("it wraps the createSecureServer stream event", async () => {
   });
 });
 
+t.test("it does not interfere with non-stream session listeners", async (t) => {
+  const server = http2.createSecureServer({
+    key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+    cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+  });
+
+  let sessionClosed = false;
+
+  server.on("session", (session) => {
+    session.on("close", () => {
+      sessionClosed = true;
+    });
+    session.once("close", () => {});
+    session.addListener("close", () => {});
+    session.prependListener("close", () => {});
+    session.prependOnceListener("close", () => {});
+
+    session.on("stream", (stream) => {
+      stream.respond({ ":status": 200 });
+      stream.end("ok");
+    });
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3430, () => {
+      http2Request(new URL("https://localhost:3430"), "GET", {}).then(
+        ({ body }) => {
+          t.same(body, "ok");
+          server.close();
+          resolve();
+        }
+      );
+    });
+  });
+
+  await new Promise<void>((resolve) => {
+    setTimeout(() => {
+      t.ok(sessionClosed);
+      resolve();
+    }, 100);
+  });
+});
+
 t.test("real injection test", async (t) => {
   const server = http2.createServer();
   server.on("stream", (stream, headers) => {
