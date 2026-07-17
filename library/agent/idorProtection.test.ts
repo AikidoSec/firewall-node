@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { enableIdorProtection } from "./idorProtection";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { LoggerForTesting } from "./logger/LoggerForTesting";

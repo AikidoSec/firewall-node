@@ -1,7 +1,7 @@
-import * as t from "tap";
+import t from "tap";
 import { wrap } from "../../../helpers/wrap";
 import { registerNodeHooks } from "./index";
-import * as mod from "node:module";
+import mod from "node:module";
 
 const logs: string[] = [];
 wrap(console, "warn", function warn() {

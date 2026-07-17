@@ -1,11 +1,11 @@
-import * as t from "tap";
+import t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Hono as HonoInternal } from "./Hono";
 import { HTTPServer } from "./HTTPServer";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { createTestAgent } from "../helpers/createTestAgent";
-import * as fetch from "../helpers/fetch";
+import { fetch } from "../helpers/fetch";
 import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 
 const agent = createTestAgent({
@@ -84,7 +84,7 @@ t.test("test access only allowed for some IP addresses", opts, async (t) => {
     port: 8768,
   });
 
-  const response = await fetch.fetch({
+  const response = await fetch({
     url: new URL("http://127.0.0.1:8768/"),
     headers: {
       "X-Forwarded-For": "1.3.2.4",
@@ -96,7 +96,7 @@ t.test("test access only allowed for some IP addresses", opts, async (t) => {
     "Your IP address is not allowed to access this resource. (Your IP: 1.3.2.4)"
   );
 
-  const response2 = await fetch.fetch({
+  const response2 = await fetch({
     url: new URL("http://127.0.0.1:8768/"),
     headers: {
       "X-Forwarded-For": "4.3.2.1",
@@ -105,7 +105,7 @@ t.test("test access only allowed for some IP addresses", opts, async (t) => {
   t.equal(response2.statusCode, 200);
 
   // Always allow localhost
-  const response3 = await fetch.fetch({
+  const response3 = await fetch({
     url: new URL("http://127.0.0.1:8768/"),
     headers: {
       "X-Forwarded-For": "127.0.0.1",
@@ -114,7 +114,7 @@ t.test("test access only allowed for some IP addresses", opts, async (t) => {
   t.equal(response3.statusCode, 200);
 
   // Allow private IP ranges
-  const response4 = await fetch.fetch({
+  const response4 = await fetch({
     url: new URL("http://127.0.0.1:8768/"),
     headers: {
       "X-Forwarded-For": "10.0.2.4",
@@ -122,7 +122,7 @@ t.test("test access only allowed for some IP addresses", opts, async (t) => {
   });
   t.equal(response4.statusCode, 200);
 
-  const response5 = await fetch.fetch({
+  const response5 = await fetch({
     url: new URL("http://127.0.0.1:8768/"),
     headers: {
       "X-Forwarded-For": "11.9.8.7",
@@ -135,7 +135,7 @@ t.test("test access only allowed for some IP addresses", opts, async (t) => {
   );
 
   // Allow bypased IP addresses
-  const response6 = await fetch.fetch({
+  const response6 = await fetch({
     url: new URL("http://127.0.0.1:8768/"),
     headers: {
       "X-Forwarded-For": "5.6.7.8",

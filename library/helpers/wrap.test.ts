@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isWrapped, originalSymbol, wrap, wrappedSymbol } from "./wrap";
 
 class MyClass {

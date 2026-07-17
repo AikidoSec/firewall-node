@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getHostnameAndPortFromArgs as get } from "./getHostnameAndPortFromArgs";
 import { parse as parseUrl } from "url";
 

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { Context, getContext } from "../agent/Context";
 import { PubSub as PubSubWrapper } from "./PubSub";
 import { createTestAgent } from "../helpers/createTestAgent";

@@ -1,5 +1,5 @@
 // oxlint-disable no-console
-import * as t from "tap";
+import t from "tap";
 import { warnIfUsingTurbopackWithOldSystem } from "./warnIfUsingTurbopackWithOldSystem";
 
 const originalEnv = {

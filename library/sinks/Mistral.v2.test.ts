@@ -1,6 +1,6 @@
 import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 import { createMistralTests } from "./Mistral.tests";
-import * as t from "tap";
+import t from "tap";
 
 if (isEsmUnitTest()) {
   createMistralTests("mistralai-v2");

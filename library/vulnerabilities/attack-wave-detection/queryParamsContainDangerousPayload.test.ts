@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { queryParamsContainDangerousPayload } from "./queryParamsContainDangerousPayload";
 import type { Context } from "../../agent/Context";
 

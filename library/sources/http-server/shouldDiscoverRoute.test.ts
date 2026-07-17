@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
 
 t.test("it rejects invalid status codes", async () => {

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { shouldBlockRequest } from "./shouldBlockRequest";
 import { runWithContext, type Context } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";

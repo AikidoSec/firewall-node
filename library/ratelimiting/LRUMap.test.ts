@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { LRUMap } from "./LRUMap";
 
 t.test("it creates LRUMap", async (t) => {

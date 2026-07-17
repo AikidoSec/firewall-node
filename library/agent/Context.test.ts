@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { sep } from "node:path";
 import { extractStringsFromUserInputCached } from "../helpers/extractStringsFromUserInputCached";
 import { extractPathStringsFromUserInputCached } from "../helpers/extractPathStringsFromUserInputCached";

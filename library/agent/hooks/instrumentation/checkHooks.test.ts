@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { checkHooks } from "./checkHooks";
 import { wrap } from "../../../helpers/wrap";
 
@@ -10,7 +10,7 @@ wrap(console, "warn", function warn() {
 });
 
 t.test("it works", async (t) => {
-  await checkHooks();
+  checkHooks();
 
   t.same(logs, [
     "AIKIDO: A self check of the code instrumentation failed. This means that the protection might not work as expected.",

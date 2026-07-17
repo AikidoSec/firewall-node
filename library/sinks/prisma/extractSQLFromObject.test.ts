@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { extractSQLFromObject } from "./extractSQLFromObject";
 import { SQLDialectPostgres } from "../../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
 import { SQLDialectGeneric } from "../../vulnerabilities/sql-injection/dialects/SQLDialectGeneric";

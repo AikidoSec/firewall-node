@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isRequestToServiceHostname } from "./isRequestToServiceHostname";
 
 t.test("returns true for valid service hostnames", async (t) => {

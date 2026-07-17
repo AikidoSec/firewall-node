@@ -1,4 +1,4 @@
-import * as mod from "module";
+import mod from "module";
 import { removeNodePrefix } from "../../helpers/removeNodePrefix";
 
 // Added in Node.js v9.3.0, v8.10.0, v6.13.0

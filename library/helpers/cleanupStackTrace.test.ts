@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { cleanupStackTrace } from "./cleanupStackTrace";
 
 t.test("it works", async () => {

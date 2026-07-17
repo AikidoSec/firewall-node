@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import shouldEnableFirewall from "./shouldEnableFirewall";
 
 t.test("disabled by default", async () => {

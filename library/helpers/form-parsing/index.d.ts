@@ -4,7 +4,7 @@
 
 /// <reference types="node" />
 
-import * as http from "node:http";
+import http from "node:http";
 import { Readable, Writable } from "node:stream";
 export { Dicer } from "./deps/dicer/lib/Dicer";
 

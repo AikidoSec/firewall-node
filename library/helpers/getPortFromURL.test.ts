@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getPortFromURL } from "./getPortFromURL";
 
 t.test("it works", async (t) => {

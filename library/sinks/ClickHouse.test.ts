@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { ClickHouse } from "./ClickHouse";
 import { createTestAgent } from "../helpers/createTestAgent";

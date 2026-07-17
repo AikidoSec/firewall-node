@@ -1,4 +1,4 @@
-import * as os from "os";
+import os from "os";
 
 /**
  * Get the IP Address of the machine running this code

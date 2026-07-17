@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isAikidoDASTRequest } from "./AikidoDAST";
 import type { Context } from "./Context";
 

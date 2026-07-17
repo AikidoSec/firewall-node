@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getSourceType } from "./getSourceType";
 
 t.test("getSourceType works", async (t) => {

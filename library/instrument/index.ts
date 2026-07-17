@@ -1,6 +1,6 @@
 /* oxlint-disable no-console */
 
-import * as mod from "node:module";
+import mod from "node:module";
 import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 import isFirewallSupported from "../helpers/isFirewallSupported";
 import { protectWithNewInstrumentation } from "../agent/protect";

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isAnyPkgAlreadyRequired } from "./isAnyPkgAlreadyRequired";
 import { Hooks } from "../agent/hooks/Hooks";
 

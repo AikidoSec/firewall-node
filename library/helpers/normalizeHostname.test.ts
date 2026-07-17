@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { normalizeHostname } from "./normalizeHostname";
 
 t.test("strips trailing dot", async (t) => {

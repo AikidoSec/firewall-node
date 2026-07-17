@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { startTestAgent } from "../helpers/startTestAgent";
@@ -7,8 +7,8 @@ import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
 import { fetch } from "../helpers/fetch";
 import type { Request, Response, NextFunction } from "express";
-import * as request from "supertest";
-import * as cookieParser from "cookie-parser";
+import request from "supertest";
+import cookieParser from "cookie-parser";
 import { getContext } from "../agent/Context";
 import { setUser } from "../agent/context/user";
 import { addExpressMiddleware } from "../middleware/express";

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { warnBox } from "./warnBox";
 
 t.test("it wraps a short message in a box", async () => {

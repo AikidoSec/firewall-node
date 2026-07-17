@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { setTimeout } from "node:timers/promises";
 import { createServer, type ServerResponse } from "http";
 import { Token } from "../api/Token";
