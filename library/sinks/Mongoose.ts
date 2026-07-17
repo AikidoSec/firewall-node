@@ -3,6 +3,7 @@ import type { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { clone } from "../helpers/clone";
+import { notNormalizedNoSqlFilterSymbol } from "./MongoDB";
 
 export class Mongoose implements Wrapper {
   #inspectFilter(args: unknown[]): void {
@@ -17,12 +18,16 @@ export class Mongoose implements Wrapper {
       return;
     }
 
-    // We need to clone the filter because mongoose modifies it in place
-    const filter = clone(args[1]);
+    const filter = args[1];
 
     // Save the original, not normalized filter in the context, as we might not be able to match the normalized filter with the payload
-    // It is then also checked in the MongoDB sink when we inspect the filter
-    updateContext(context, "notNormalizedNoSqlFilter", filter);
+    // It is then checked in the MongoDB sink when we inspect the filter
+    Object.defineProperty(filter, notNormalizedNoSqlFilterSymbol, {
+      value: clone(filter),
+      writable: false,
+      enumerable: false,
+      configurable: true,
+    });
   }
 
   wrap(hooks: Hooks) {

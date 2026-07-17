@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { Mongoose as MongooseSink } from "./Mongoose";
 import { startTestAgent } from "../helpers/startTestAgent";
-import { getContext, runWithContext, type Context } from "../agent/Context";
+import { runWithContext, type Context } from "../agent/Context";
 import { MongoDB as MongoDBSink } from "./MongoDB";
 
 const dbUrl =
@@ -57,17 +57,6 @@ t.test("it works", async (t) => {
     const foundPost = await BlogPost.findOne({ title: { $in: "Test" } });
     t.match(foundPost?.title, "Test");
     t.match(foundPost?.body, "This is a test");
-
-    await runWithContext(getTestContext({ foo: "bar" }), async () => {
-      // @ts-expect-error Pass string instead of array
-      const foundPost2 = await BlogPost.findOne({ title: { $in: "Test" } });
-      t.match(foundPost2?.title, "Test");
-      t.match(foundPost2?.body, "This is a test");
-
-      t.same(getContext()?.notNormalizedNoSqlFilter, {
-        title: { $in: "Test" },
-      });
-    });
 
     await runWithContext(
       getTestContext({ title: { $in: "Test" } }),

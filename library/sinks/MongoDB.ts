@@ -9,6 +9,10 @@ import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";
 
+export const notNormalizedNoSqlFilterSymbol = Symbol(
+  "__zen_notNormalizedNoSqlFilter__"
+);
+
 const OPERATIONS_WITH_FILTER = [
   "count",
   "countDocuments",
@@ -62,11 +66,18 @@ export class MongoDB implements Wrapper {
   ): InterceptorResult {
     let result = detectNoSQLInjection(context, filter);
 
-    if (!result.injection && context.notNormalizedNoSqlFilter) {
+    if (!result.injection) {
       // Also check the original, not normalized filter in the context, if set
       // Mongoose modifies the filter object in-place and we might not be able to match the normalized filter
       // with the payload, so we need to check the original filter as well
-      result = detectNoSQLInjection(context, context.notNormalizedNoSqlFilter);
+
+      const notNormalizedFilter = (filter as any)[
+        notNormalizedNoSqlFilterSymbol
+      ];
+
+      if (notNormalizedFilter) {
+        result = detectNoSQLInjection(context, notNormalizedFilter);
+      }
     }
 
     if (result.injection) {
