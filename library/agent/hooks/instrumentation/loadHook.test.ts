@@ -6,7 +6,6 @@ import mod from "node:module";
 import { registerNodeHooks } from "./index";
 import { Agent } from "../../Agent";
 import { onModuleLoad } from "./loadHook";
-import { envToBool } from "../../../helpers/envToBool";
 import { isEsmUnitTest } from "../../../helpers/isEsmUnitTest";
 
 const isESMTest = isEsmUnitTest();
@@ -212,11 +211,11 @@ t.test(
       t.same(esmPkgInspectArgs[1][1], "/test2");
       t.same(typeof esmPkgInspectArgs[1][2], "function");
     } else {
-      t.same(esmPkgInspectArgs.length, 0);
-      t.same(cjsPkgInspectArgs.length, 2);
-      t.same(cjsPkgInspectArgs[1][0], "post");
-      t.same(cjsPkgInspectArgs[1][1], "/test2");
-      t.same(typeof cjsPkgInspectArgs[1][2], "function");
+      t.same(esmPkgInspectArgs.length, 1);
+      t.same(cjsPkgInspectArgs.length, 1);
+      t.same(esmPkgInspectArgs[0][0], "post");
+      t.same(esmPkgInspectArgs[0][1], "/test2");
+      t.same(typeof esmPkgInspectArgs[0][2], "function");
     }
 
     t.same(httpOnRequireCount, 0);
@@ -241,7 +240,7 @@ t.test(
 
       // Load user code
       const userCode = await import("./getSourceType.js");
-      t.same(typeof userCode.getSourceType, "function");
+      t.same(typeof userCode.default.getSourceType, "function");
     }
 
     // Should not patch package
