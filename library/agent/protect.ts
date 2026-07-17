@@ -63,6 +63,7 @@ import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
 import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 import { Mongoose } from "../sinks/Mongoose";
+import { NodeVm } from "../sinks/NodeVm";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -180,6 +181,7 @@ export function getWrappers() {
     new AiSDK(),
     new GoogleGenAi(),
     new Mongoose(),
+    new NodeVm(),
   ];
 }
 
