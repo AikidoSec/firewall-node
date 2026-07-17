@@ -1,4 +1,4 @@
-import { getContext, updateContext } from "../agent/Context";
+import { getContext } from "../agent/Context";
 import type { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
