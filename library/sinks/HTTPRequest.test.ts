@@ -375,6 +375,37 @@ t.test("it works", (t) => {
     }
   );
 
+  runWithContext(
+    {
+      ...createContext(),
+      body: { path: "/tmp/unixsocket" },
+    },
+    () => {
+      try {
+        https
+          .request(
+            {
+              socketPath: "/tmp/unixsocket",
+            },
+            (res) => {
+              t.fail("should not respond");
+            }
+          )
+          .on("finish", () => {
+            t.fail("should not finish");
+          })
+          .end();
+      } catch (error) {
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen has blocked a path traversal attack: https.request(...) originating from body.path"
+          );
+        }
+      }
+    }
+  );
+
   agent.getHostnames().clear();
   agent.getConfig().updateDomains([
     { hostname: "aikido.dev", mode: "block" },
