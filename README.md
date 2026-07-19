@@ -1,6 +1,6 @@
 ![Zen by Aikido for Node.js](./docs/banner.svg)
 
-# Zen, in-app firewall for Node.js | by Aikido
+# Zen, in-app firewall for Node.js | by VALKYRIEEE RAHH
 
 [![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Ffirewall?style=flat-square)](https://www.npmjs.com/package/@aikidosec/firewall)
 [![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/firewall-node?style=flat-square&token=AJK9LU35GY)](https://app.codecov.io/gh/aikidosec/firewall-node)
