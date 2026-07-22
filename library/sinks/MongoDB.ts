@@ -1,4 +1,4 @@
-import type { Collection } from "mongodb-v6";
+import type { Collection, Db } from "mongodb-v6";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import type { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
@@ -8,6 +8,19 @@ import { Context, getContext } from "../agent/Context";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";
+import { checkContextForJsInjection } from "../vulnerabilities/js-injection/checkContextForJsInjection";
+
+// Fields in a raw command document (db.command(...) / runCommand(...)) that
+// carry a NoSQL filter
+const COMMAND_FIELDS_WITH_FILTER = ["filter", "query", "pipeline"] as const;
+
+// Fields on delete/update commands: { delete: "coll", deletes: [{ q: {...} }] }
+// and { update: "coll", updates: [{ q: {...}, u: {...} }] }.
+const COMMAND_OPERATION_LIST_FIELDS = ["deletes", "updates"] as const;
+
+// Server-side JS fields on the mapReduce command. These are at the top level
+// of the command document (not nested inside a filter/operator)
+const MAP_REDUCE_JS_FIELDS = ["map", "reduce", "finalize"] as const;
 
 const OPERATIONS_WITH_FILTER = [
   "count",
@@ -58,13 +71,14 @@ export class MongoDB implements Wrapper {
     collection: string,
     request: Context,
     filter: unknown,
-    operation: string
+    operation: string,
+    operationPrefix = "MongoDB.Collection"
   ): InterceptorResult {
     const result = detectNoSQLInjection(request, filter);
 
     if (result.injection) {
       return {
-        operation: `MongoDB.Collection.${operation}`,
+        operation: `${operationPrefix}.${operation}`,
         kind: "nosql_injection",
         source: result.source,
         pathsToPayload: result.pathsToPayload,
@@ -269,11 +283,121 @@ export class MongoDB implements Wrapper {
     return undefined;
   }
 
+  private getFunctionSource(value: unknown): string | undefined {
+    if (typeof value === "string") {
+      return value;
+    }
+
+    if (isPlainObject(value) && typeof value.code === "string") {
+      return value.code;
+    }
+    return undefined;
+  }
+
+  private inspectMapReduceCommand(
+    command: Record<string, unknown>,
+    context: Context
+  ): InterceptorResult {
+    // Check possible JS injections
+    for (const field of MAP_REDUCE_JS_FIELDS) {
+      const source = this.getFunctionSource(command[field]);
+      if (!source) {
+        continue;
+      }
+
+      const result = checkContextForJsInjection({
+        js: source,
+        operation: "MongoDB.command",
+        context,
+      });
+      if (result) {
+        return result;
+      }
+    }
+
+    return undefined;
+  }
+
+  private inspectDbCommand(args: unknown[], db: Db): InterceptorResult {
+    const context = getContext();
+    if (!context) {
+      return undefined;
+    }
+
+    if (args.length === 0 || !isPlainObject(args[0])) {
+      return undefined;
+    }
+
+    const command = args[0];
+    const collectionName = "";
+
+    for (const field of COMMAND_FIELDS_WITH_FILTER) {
+      if (field in command) {
+        const result = this.inspectFilter(
+          db.databaseName,
+          collectionName,
+          context,
+          command[field],
+          "command",
+          "MongoDB"
+        );
+        if (result) {
+          return result;
+        }
+      }
+    }
+
+    for (const listField of COMMAND_OPERATION_LIST_FIELDS) {
+      const operations = command[listField];
+      if (!Array.isArray(operations)) {
+        continue;
+      }
+
+      for (const operation of operations) {
+        if (!isPlainObject(operation)) {
+          continue;
+        }
+
+        for (const key of ["q", "u"] as const) {
+          if (key in operation) {
+            const result = this.inspectFilter(
+              db.databaseName,
+              collectionName,
+              context,
+              operation[key],
+              "command",
+              "MongoDB"
+            );
+            if (result) {
+              return result;
+            }
+          }
+        }
+      }
+    }
+
+    if ("mapReduce" in command) {
+      const result = this.inspectMapReduceCommand(command, context);
+      if (result) {
+        return result;
+      }
+    }
+
+    return undefined;
+  }
+
   private wrapCollection(
     exports: typeof import("mongodb-v6"),
     pkgInfo: WrapPackageInfo
   ) {
     const collectionProto = exports.Collection.prototype;
+
+    if (exports.Db?.prototype) {
+      wrapExport(exports.Db.prototype, "command", pkgInfo, {
+        kind: "nosql_op",
+        inspectArgs: (args, agent, db) => this.inspectDbCommand(args, db as Db),
+      });
+    }
 
     OPERATIONS_WITH_FILTER.forEach((operation) => {
       wrapExport(collectionProto, operation, pkgInfo, {
@@ -383,6 +507,19 @@ export class MongoDB implements Wrapper {
             operationKind: "nosql_op",
             inspectArgs: (args, agent, bulkOp) =>
               this.inspectBulkOpFind(args, bulkOp),
+          },
+        ],
+      })
+      .addFileInstrumentation({
+        path: "lib/db.js",
+        functions: [
+          {
+            name: "command",
+            nodeType: "MethodDefinition",
+            className: "Db",
+            operationKind: "nosql_op",
+            inspectArgs: (args, agent, db) =>
+              this.inspectDbCommand(args, db as Db),
           },
         ],
       });
