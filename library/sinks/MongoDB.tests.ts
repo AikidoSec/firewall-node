@@ -454,6 +454,67 @@ export function createMongoDBTests(
           "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
         );
       }
+
+      const numberOfQueries = 200;
+
+      const results = await Promise.allSettled(
+        Array.from({ length: numberOfQueries }, (_, index) => {
+          const contextKey = `myTitle${index}`;
+          const injection = { $ne: null };
+
+          return runWithContext(
+            {
+              remoteAddress: "::1",
+              method: "POST",
+              url: "http://localhost:4000",
+              query: {},
+              headers: {},
+              body: {
+                [contextKey]: injection,
+              },
+              cookies: {},
+              routeParams: {},
+              source: "hono",
+              route: "/posts/:id",
+            },
+            async () => {
+              try {
+                await db
+                  .collection(`${collectionName}_users`)
+                  .findOne({ name: injection });
+
+                return {
+                  index,
+                  error: null,
+                };
+              } catch (error: any) {
+                return {
+                  index,
+                  error,
+                };
+              }
+            }
+          );
+        })
+      );
+
+      t.equal(results.length, numberOfQueries);
+
+      for (const result of results) {
+        t.equal(result.status, "fulfilled");
+
+        if (result.status === "fulfilled") {
+          const { index, error } = result.value;
+          t.ok(error instanceof Error);
+
+          if (error instanceof Error) {
+            t.same(
+              error.message,
+              `Zen has blocked a NoSQL injection: MongoDB.Collection.findOne(...) originating from body.myTitle${index}`
+            );
+          }
+        }
+      }
     } catch (error: any) {
       t.fail(error.message);
     } finally {
