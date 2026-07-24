@@ -25,6 +25,9 @@ if (process.argv.includes("--test-new-instrumentation")) {
   }
 }
 
+// Allows memory tests to access the garbage collector
+args += " --node-arg=--expose-gc";
+
 execSync(`tap run ${args}`, {
   stdio: "inherit",
   env: {
