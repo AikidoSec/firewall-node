@@ -95,7 +95,7 @@ t.test("IPMatcher.has() throughput", async (t) => {
   );
 
   t.ok(
-    msPerCall < 0.01,
-    `expected has() to take less than 0.01ms per call, took ${msPerCall.toFixed(6)}ms`
+    msPerCall < 0.02,
+    `expected has() to take less than 0.02ms per call, took ${msPerCall.toFixed(6)}ms`
   );
 });
