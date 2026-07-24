@@ -25,13 +25,19 @@ if (process.argv.includes("--test-new-instrumentation")) {
   }
 }
 
+// Allows memory tests to access the garbage collector
+const nodeOptions = ["--expose-gc"];
+if (major === 24) {
+  // In v24 some sub-dependencies are calling require on a esm module triggering an experimental warning
+  nodeOptions.push("--disable-warning=ExperimentalWarning");
+}
+
 execSync(`tap run ${args}`, {
   stdio: "inherit",
   env: {
     ...process.env,
     AIKIDO_CI: "true",
-    // In v24 some sub-dependencies are calling require on a esm module triggering an experimental warning
-    NODE_OPTIONS: major === 24 ? "--disable-warning=ExperimentalWarning" : "",
+    NODE_OPTIONS: nodeOptions.join(" "),
     AIKIDO_UNIT_TESTS: "1",
   },
 });
