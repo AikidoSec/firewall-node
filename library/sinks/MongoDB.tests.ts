@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { Context, runWithContext } from "../agent/Context";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { MongoDB } from "./MongoDB";

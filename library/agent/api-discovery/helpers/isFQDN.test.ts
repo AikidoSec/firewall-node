@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import isFQDN from "./isFQDN";
 
 t.test("is a valid domain", async (t) => {

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isWebScanPath } from "./isWebScanPath";
 import { fileNames } from "./paths/fileNames";
 import { directoryNames } from "./paths/directoryNames";

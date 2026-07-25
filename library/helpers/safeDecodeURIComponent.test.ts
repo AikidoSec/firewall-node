@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 
 t.setTimeout(60000);

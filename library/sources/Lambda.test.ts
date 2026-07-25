@@ -1,6 +1,6 @@
-import * as FakeTimers from "@sinonjs/fake-timers";
+import FakeTimers from "@sinonjs/fake-timers";
 import type { Context } from "aws-lambda";
-import * as t from "tap";
+import t from "tap";
 import { setTimeout } from "timers/promises";
 import type { Event } from "../agent/api/Event";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { createKoaTests } from "./Koa.tests";
 

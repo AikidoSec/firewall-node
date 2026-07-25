@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { transformCode } from "./codeTransformation";
 import { readFile } from "fs/promises";
 import { join } from "path";

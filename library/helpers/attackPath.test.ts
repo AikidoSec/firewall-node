@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getPathsToPayload as get } from "./attackPath";
 
 t.test("it throws error if max matches is less than 1", async (t) => {

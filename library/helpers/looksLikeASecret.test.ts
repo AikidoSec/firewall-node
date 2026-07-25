@@ -1,5 +1,5 @@
 import { randomInt } from "crypto";
-import * as t from "tap";
+import t from "tap";
 import { looksLikeASecret } from "./looksLikeASecret";
 
 const lower = "abcdefghijklmnopqrstuvwxyz";

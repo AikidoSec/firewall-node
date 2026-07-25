@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { limitLengthMetadata } from "./limitLengthMetadata";
 
 t.test("it limits metadata length", async () => {

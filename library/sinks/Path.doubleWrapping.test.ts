@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isWindows } from "../helpers/isWindows";
 import { isWrapped, originalSymbol } from "../helpers/wrap";
 import { Path } from "./Path";

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { cleanError } from "./cleanError";
 
 // @esm-tests-skip - Different directory structure (not inside lib dir)

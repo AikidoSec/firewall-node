@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { escapeLog } from "./escapeLog";
 
 t.test("it escapes log messages", async (t) => {

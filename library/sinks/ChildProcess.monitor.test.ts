@@ -1,10 +1,10 @@
-import * as t from "tap";
+import t from "tap";
 import { Context, runWithContext } from "../agent/Context";
 import { ChildProcess } from "./ChildProcess";
 import { execFile, execFileSync } from "child_process";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import * as FakeTimers from "@sinonjs/fake-timers";
+import FakeTimers from "@sinonjs/fake-timers";
 import { Token } from "../agent/api/Token";
 
 const unsafeContext: Context = {

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
@@ -6,7 +6,7 @@ import { addRestifyMiddleware } from "../middleware/restify";
 import { Restify } from "./Restify";
 import { HTTPServer } from "./HTTPServer";
 import { FileSystem } from "../sinks/FileSystem";
-import * as request from "supertest";
+import request from "supertest";
 import { getContext } from "../agent/Context";
 import { startTestAgent } from "../helpers/startTestAgent";
 

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { createServer, Server } from "http";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";

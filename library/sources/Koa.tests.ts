@@ -1,11 +1,11 @@
-import * as t from "tap";
+import t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
 import { Koa } from "./Koa";
 import { HTTPServer } from "./HTTPServer";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
-import * as request from "supertest";
+import request from "supertest";
 import { getContext } from "../agent/Context";
 import { addKoaMiddleware } from "../middleware/koa";
 import { startTestAgent } from "../helpers/startTestAgent";

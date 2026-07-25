@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { checkContextForIdor } from "./checkContextForIdor";
 import { createTestAgent } from "../../helpers/createTestAgent";
 import { runWithContext, type Context } from "../../agent/Context";

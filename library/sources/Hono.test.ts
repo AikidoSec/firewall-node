@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
@@ -9,7 +9,7 @@ import { getContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { addHonoMiddleware } from "../middleware/hono";
-import * as fetch from "../helpers/fetch";
+import { fetch } from "../helpers/fetch";
 import { setRateLimitGroup } from "../ratelimiting/group";
 import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 
@@ -377,7 +377,7 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
     fetch: (await getApp()).fetch,
     port: 8765,
   });
-  const response = await fetch.fetch({
+  const response = await fetch({
     url: new URL("http://127.0.0.1:8765/?abc=test"),
     method: "GET",
     headers: {},
@@ -406,7 +406,7 @@ t.test("ip and bot blocking works (real socket)", opts, async (t) => {
   });
 
   // Test blocked IP (IPv4)
-  const response = await fetch.fetch({
+  const response = await fetch({
     url: new URL("http://127.0.0.1:8766/"),
     headers: {
       "X-Forwarded-For": "1.3.2.4", // Blocked IP
@@ -419,7 +419,7 @@ t.test("ip and bot blocking works (real socket)", opts, async (t) => {
   );
 
   // Test blocked IP (IPv6)
-  const response2 = await fetch.fetch({
+  const response2 = await fetch({
     url: new URL("http://127.0.0.1:8766/"),
     headers: {
       "X-Forwarded-For": "e98c:a7ba:2329:8c69:a13a:8aff:a932:13f2", // Blocked IP
@@ -432,7 +432,7 @@ t.test("ip and bot blocking works (real socket)", opts, async (t) => {
   );
 
   // Test allowed IP
-  const response3 = await fetch.fetch({
+  const response3 = await fetch({
     url: new URL("http://127.0.0.1:8766/"),
     headers: {
       "X-Forwarded-For": "9.8.7.6", // Allowed IP
@@ -441,7 +441,7 @@ t.test("ip and bot blocking works (real socket)", opts, async (t) => {
   t.equal(response3.statusCode, 200);
 
   // Test blocked user agent
-  const response4 = await fetch.fetch({
+  const response4 = await fetch({
     url: new URL("http://127.0.0.1:8766/"),
     headers: {
       "User-Agent": "hacker",
@@ -511,7 +511,7 @@ t.test("Proxy request", opts, async (t) => {
     hostname: "127.0.0.1",
   });
 
-  const response = await fetch.fetch({
+  const response = await fetch({
     url: new URL("http://127.0.0.1:8767/proxy"),
     method: "POST",
     headers: {
@@ -584,7 +584,7 @@ t.test("bypass list works", opts, async (t) => {
   });
 
   // It blocks bot
-  const response = await fetch.fetch({
+  const response = await fetch({
     url: new URL("http://127.0.0.1:8769/"),
     headers: {
       "X-Forwarded-For": "123.2.2.2",
@@ -598,7 +598,7 @@ t.test("bypass list works", opts, async (t) => {
   );
 
   // It does not block bypassed IP
-  const response2 = await fetch.fetch({
+  const response2 = await fetch({
     url: new URL("http://127.0.0.1:8769/"),
     headers: {
       "X-Forwarded-For": "4.3.2.1",
@@ -607,7 +607,7 @@ t.test("bypass list works", opts, async (t) => {
   });
   t.equal(response2.statusCode, 200);
 
-  const response3 = await fetch.fetch({
+  const response3 = await fetch({
     url: new URL("http://127.0.0.1:8769/"),
     headers: {
       "X-Forwarded-For": "123.1.2.2",
@@ -616,7 +616,7 @@ t.test("bypass list works", opts, async (t) => {
   });
   t.equal(response3.statusCode, 200);
 
-  const response4 = await fetch.fetch({
+  const response4 = await fetch({
     url: new URL("http://127.0.0.1:8769/"),
     headers: {
       "X-Forwarded-For": "123.1.2.254",

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { checkContextForJsInjection } from "./checkContextForJsInjection";
 
 t.test("it returns correct path", async () => {

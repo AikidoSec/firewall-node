@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import mapIPv4ToIPv6 from "./mapIPv4ToIPv6";
 
 t.test("it works", async (t) => {

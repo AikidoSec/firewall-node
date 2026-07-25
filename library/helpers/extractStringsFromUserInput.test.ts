@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { extractStringsFromUserInput } from "./extractStringsFromUserInput";
 
 function fromArr(arr: string[]): Set<string> {

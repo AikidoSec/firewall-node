@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { OpenAI as OpenAISink } from "./OpenAI";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";

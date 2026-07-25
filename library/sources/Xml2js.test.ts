@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { Context, getContext, runWithContext } from "../agent/Context";
 import { Xml2js } from "./Xml2js";
 import { createTestAgent } from "../helpers/createTestAgent";

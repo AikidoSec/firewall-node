@@ -1,5 +1,5 @@
 /* oxlint-disable no-console */
-import * as t from "tap";
+import t from "tap";
 import { EventEmitter } from "events";
 import { setTimeout as sleep } from "node:timers/promises";
 import {

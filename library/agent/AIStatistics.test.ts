@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { AIStatistics } from "./AIStatistics";
 
 t.test("it initializes with empty state", async () => {

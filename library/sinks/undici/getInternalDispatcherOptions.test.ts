@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getInternalDispatcherOptions } from "./getInternalDispatcherOptions";
 
 async function getUndiciAgentForNodeVersion() {

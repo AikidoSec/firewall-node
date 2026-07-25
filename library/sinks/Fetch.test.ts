@@ -1,10 +1,10 @@
-import * as t from "tap";
+import t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { wrap } from "../helpers/wrap";
 import { Fetch } from "./Fetch";
-import * as dns from "dns";
+import dns from "dns";
 import { createTestAgent } from "../helpers/createTestAgent";
 
 const calls: Record<string, number> = {};

@@ -1,5 +1,5 @@
-import * as mod from "node:module";
-import * as t from "tap";
+import mod from "node:module";
+import t from "tap";
 import { createTestAgent } from "../../../helpers/createTestAgent";
 import { ReportingAPIForTesting } from "../../api/ReportingAPIForTesting";
 import { Token } from "../../api/Token";

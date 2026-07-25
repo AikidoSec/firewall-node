@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isMainJsFile } from "./isMainJsFile";
 import type { PackageJson } from "type-fest";
 

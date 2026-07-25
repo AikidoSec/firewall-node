@@ -1,7 +1,7 @@
-import * as t from "tap";
+import t from "tap";
 import { AttackWaveDetector } from "./AttackWaveDetector";
 import type { Context } from "../../agent/Context";
-import * as FakeTimers from "@sinonjs/fake-timers";
+import FakeTimers from "@sinonjs/fake-timers";
 
 function getTestContext(
   ip: string | undefined,

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { createTestAgent } from "../../../helpers/createTestAgent";
 import { Hooks } from "../Hooks";
 import {

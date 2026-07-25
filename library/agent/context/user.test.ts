@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { wrap } from "../../helpers/wrap";
 import {
   type Context,

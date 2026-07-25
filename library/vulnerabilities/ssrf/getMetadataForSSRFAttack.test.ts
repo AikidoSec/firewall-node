@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
 
 t.test("port is undefined", async () => {

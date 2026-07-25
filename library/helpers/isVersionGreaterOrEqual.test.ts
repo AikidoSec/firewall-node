@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isVersionGreaterOrEqual } from "./isVersionGreaterOrEqual";
 
 t.test("invalid versions", async (t) => {

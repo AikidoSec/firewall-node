@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { RateLimiter } from "./RateLimiter";
 
 const ttl = 60000; // 1 minute in milliseconds

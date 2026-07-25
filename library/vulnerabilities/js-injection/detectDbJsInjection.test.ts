@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { detectDbJsInjection } from "./detectDbJsInjection";
 
 t.test("detects injection in $where operator", async (t) => {

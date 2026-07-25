@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { detectNoSQLInjection } from "./detectNoSQLInjection";
 import { Context } from "../../agent/Context";
 

@@ -1,5 +1,5 @@
 import { join } from "path";
-import * as t from "tap";
+import t from "tap";
 import { getContext, runWithContext } from "../agent/Context";
 import { XmlMinusJs } from "./XmlMinusJs";
 import { readFile } from "fs/promises";

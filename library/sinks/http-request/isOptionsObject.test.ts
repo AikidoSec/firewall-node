@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isOptionsObject } from "./isOptionsObject";
 
 t.test("it works with objects", async (t) => {

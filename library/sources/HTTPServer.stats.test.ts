@@ -1,5 +1,5 @@
 import { Token } from "../agent/api/Token";
-import * as t from "tap";
+import t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { fetch } from "../helpers/fetch";
 import { HTTPServer } from "./HTTPServer";

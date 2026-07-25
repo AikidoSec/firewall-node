@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { extractRegionFromToken } from "./extractRegionFromToken";
 
 t.test("should return EU for empty token", async (t) => {

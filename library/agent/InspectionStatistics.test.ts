@@ -1,5 +1,5 @@
-import * as FakeTimers from "@sinonjs/fake-timers";
-import * as t from "tap";
+import FakeTimers from "@sinonjs/fake-timers";
+import t from "tap";
 import { InspectionStatistics } from "./InspectionStatistics";
 
 t.test("it resets stats", async () => {

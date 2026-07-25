@@ -1,6 +1,6 @@
-import * as t from "tap";
-import * as express from "express";
-import * as request from "supertest";
+import t from "tap";
+import express from "express";
+import request from "supertest";
 import { setTimeout } from "timers/promises";
 import type { DetectedAttackWave, Event } from "../agent/api/Event";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
@@ -11,7 +11,7 @@ import {
   getFlushEveryMS,
   getTimeoutInMS,
 } from "./FunctionsFramework";
-import * as asyncHandler from "express-async-handler";
+import asyncHandler from "express-async-handler";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { Token } from "../agent/api/Token";
 import { getInstance } from "../agent/AgentSingleton";

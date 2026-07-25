@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { tryParseJSON } from "./tryParseJSON";
 
 t.test("tryParseJSON", async (t) => {

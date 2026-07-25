@@ -1,5 +1,5 @@
 import { onModuleLoad } from "./loadHook";
-import * as mod from "node:module";
+import mod from "node:module";
 import type { RegisterHookFunction } from "./types";
 import { patchProcessGetBuiltinModule } from "./processGetBuiltin";
 import { checkHooks } from "./checkHooks";

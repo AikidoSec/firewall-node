@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { looksLikeModuleSyntax } from "./looksLikeModuleSyntax";
 import { mkdir, rm, writeFile } from "fs/promises";
 import { join } from "path";

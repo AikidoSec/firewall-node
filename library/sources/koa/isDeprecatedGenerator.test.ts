@@ -1,6 +1,6 @@
 /* oxlint-disable func-names */
 
-import * as t from "tap";
+import t from "tap";
 import { isDeprecatedGenerator } from "./isDeprecatedGenerator";
 
 t.test("should return true for generator functions", async (t) => {

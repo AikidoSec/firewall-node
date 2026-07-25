@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { detectShellInjection } from "./detectShellInjection";
 import { quote } from "shell-quote";
 

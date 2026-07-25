@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
@@ -7,7 +7,7 @@ import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Agent } from "../agent/Agent";
 import { Koa } from "./Koa";
 import { HTTPServer } from "./HTTPServer";
-import * as request from "supertest";
+import request from "supertest";
 import { getContext } from "../agent/Context";
 import { addKoaMiddleware } from "../middleware/koa";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";

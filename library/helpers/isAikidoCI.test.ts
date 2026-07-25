@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isAikidoCI } from "./isAikidoCI";
 
 t.test("get aikido ci env", async (t) => {

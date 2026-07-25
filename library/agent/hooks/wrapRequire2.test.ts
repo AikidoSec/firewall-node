@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { startTestAgent } from "../../helpers/startTestAgent";
 import { Hono as HonoSink } from "../../sources/Hono";
 import { LoggerForTesting } from "../logger/LoggerForTesting";

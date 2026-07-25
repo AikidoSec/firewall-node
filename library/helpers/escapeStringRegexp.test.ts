@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { escapeStringRegexp } from "./escapeStringRegexp";
 
 const isUsingBuiltIn = typeof (globalThis as any).RegExp?.escape === "function";

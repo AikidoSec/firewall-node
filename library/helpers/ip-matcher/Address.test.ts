@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { Address } from "./Address";
 
 t.test("it works", async (t) => {

@@ -1,6 +1,6 @@
 /* oxlint-disable no-implied-eval */
 /* oxlint-disable no-eval */
-import * as t from "tap";
+import t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { FunctionSink } from "./FunctionSink";

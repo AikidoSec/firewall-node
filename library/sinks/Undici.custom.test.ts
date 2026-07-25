@@ -1,5 +1,5 @@
-import * as dns from "dns";
-import * as t from "tap";
+import dns from "dns";
+import t from "tap";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { startTestAgent } from "../helpers/startTestAgent";

@@ -1,6 +1,6 @@
-import * as express from "express";
-import * as asyncHandler from "express-async-handler";
-import * as t from "tap";
+import express from "express";
+import asyncHandler from "express-async-handler";
+import t from "tap";
 import { Token } from "./Token";
 import { FetchListsAPINodeHTTP } from "./FetchListsAPINodeHTTP";
 import { FetchListsAPIResponse } from "./FetchListsAPI";

@@ -1,6 +1,6 @@
 import { Token } from "../agent/api/Token";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
-import * as t from "tap";
+import t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { fetch } from "../helpers/fetch";

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { detectPathTraversal } from "./detectPathTraversal";
 
 t.test("empty user input", async () => {

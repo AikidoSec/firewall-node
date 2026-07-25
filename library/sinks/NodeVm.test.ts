@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { Context, runWithContext } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { NodeVm } from "./NodeVm";

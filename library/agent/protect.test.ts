@@ -1,6 +1,6 @@
 import { readdir, readFile } from "fs/promises";
 import { join } from "path";
-import * as t from "tap";
+import t from "tap";
 
 // @esm-tests-skip
 

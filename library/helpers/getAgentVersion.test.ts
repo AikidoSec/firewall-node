@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getAgentVersion } from "./getAgentVersion";
 
 t.test("it returns the current library version", async () => {
