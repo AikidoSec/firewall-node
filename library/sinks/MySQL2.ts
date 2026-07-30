@@ -40,7 +40,10 @@ export class MySQL2 implements Wrapper {
     return undefined;
   }
 
-  private getSQLStringFromArgs(args: unknown[]): {
+  private getSQLStringFromArgs(
+    operation: string,
+    args: unknown[]
+  ): {
     sql: string | undefined;
     params: unknown[] | undefined;
   } {
@@ -67,9 +70,25 @@ export class MySQL2 implements Wrapper {
     ) {
       const sql = args[0].sql;
 
+      const objectValues =
+        "values" in args[0] && Array.isArray(args[0].values)
+          ? args[0].values
+          : undefined;
+      const argValues = this.findParams(args);
+
+      // mysql2's query() lets the second argument's values override the object's
+      // values, while execute() (and prepare()) prefer the object's values over
+      // the second argument's values.
+      let params: unknown[] | undefined;
+      if (operation === "mysql2.query") {
+        params = argValues ?? objectValues;
+      } else {
+        params = objectValues ?? argValues;
+      }
+
       return {
         sql,
-        params: this.findParams(args),
+        params,
       };
     }
 
@@ -79,7 +98,7 @@ export class MySQL2 implements Wrapper {
   private inspectQuery(operation: string, args: unknown[]): InterceptorResult {
     const context = getContext();
 
-    const { sql, params } = this.getSQLStringFromArgs(args);
+    const { sql, params } = this.getSQLStringFromArgs(operation, args);
 
     if (!sql) {
       return undefined;
