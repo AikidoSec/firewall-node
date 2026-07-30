@@ -35,7 +35,7 @@ export class ServiceConfig {
 
   private excludedUserIdsFromRateLimiting = new Set<string>();
 
-  private realtimeUpdatesEnabled = false;
+  private enabledFeatures = new Set<string>();
 
   constructor(
     endpoints: EndpointConfig[],
@@ -322,11 +322,11 @@ export class ServiceConfig {
     return this.excludedUserIdsFromRateLimiting.has(userId);
   }
 
-  updateRealtimeUpdatesEnabled(enabled: boolean) {
-    this.realtimeUpdatesEnabled = enabled;
+  updateEnabledFeatures(features: string[]) {
+    this.enabledFeatures = new Set(features);
   }
 
   isRealtimeUpdatesEnabled(): boolean {
-    return this.realtimeUpdatesEnabled;
+    return this.enabledFeatures.has("runtime_updates");
   }
 }

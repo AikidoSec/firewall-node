@@ -1067,7 +1067,7 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       excludedUserIdsFromRateLimiting: [],
-      realtimeUpdatesEnabled: true,
+      enabledFeatures: ["runtime_updates"],
     });
     const agent = createTestAgent({
       token: new Token("123"),
@@ -1129,7 +1129,7 @@ t.test(
     process.env.AIKIDO_REALTIME_ENDPOINT = `http://localhost:${port}/`;
 
     // isFeatureEnabled("sse") is forced true in unit tests unless we opt out,
-    // which would mask the effect of realtimeUpdatesEnabled being false
+    // which would mask the effect of enabledFeatures not including runtime_updates
     process.env.AIKIDO_UNIT_TESTS = "0";
     delete process.env.AIKIDO_FEATURE_SSE;
 
@@ -1143,7 +1143,7 @@ t.test(
         blockedUserIds: [],
         allowedIPAddresses: [],
         excludedUserIdsFromRateLimiting: [],
-        realtimeUpdatesEnabled: false,
+        enabledFeatures: [],
       });
       const agent = createTestAgent({
         token: new Token("123"),
@@ -1192,7 +1192,7 @@ t.test(
         blockedUserIds: [],
         allowedIPAddresses: [],
         excludedUserIdsFromRateLimiting: [],
-        realtimeUpdatesEnabled: true,
+        enabledFeatures: ["runtime_updates"],
       });
       const agent = createTestAgent({
         token: new Token("123"),

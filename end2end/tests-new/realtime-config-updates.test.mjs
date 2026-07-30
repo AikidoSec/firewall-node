@@ -223,7 +223,7 @@ test("it stops SSE reconnect on 401", async () => {
   }
 });
 
-test("it connects via SSE when only realtimeUpdatesEnabled is set, without the local feature flag", async () => {
+test("it connects via SSE when only enabledFeatures includes runtime_updates, without the local feature flag", async () => {
   const response = await fetch(`${testServerUrl}/api/runtime/apps`, {
     method: "POST",
   });
@@ -238,7 +238,7 @@ test("it connects via SSE when only realtimeUpdatesEnabled is set, without the l
       "Content-Type": "application/json",
       Authorization: token,
     },
-    body: JSON.stringify({ realtimeUpdatesEnabled: true }),
+    body: JSON.stringify({ enabledFeatures: ["runtime_updates"] }),
   });
 
   const server = spawnApp(token, port, { enableSSEFeatureFlag: false });

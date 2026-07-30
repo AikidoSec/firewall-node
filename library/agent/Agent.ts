@@ -350,10 +350,8 @@ export class Agent {
         );
       }
 
-      if (typeof response.realtimeUpdatesEnabled === "boolean") {
-        this.serviceConfig.updateRealtimeUpdatesEnabled(
-          response.realtimeUpdatesEnabled
-        );
+      if (Array.isArray(response.enabledFeatures)) {
+        this.serviceConfig.updateEnabledFeatures(response.enabledFeatures);
       }
     }
   }

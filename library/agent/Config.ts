@@ -32,5 +32,5 @@ export type Config = {
   block?: boolean;
   blockNewOutgoingRequests?: boolean;
   domains?: Domain[];
-  realtimeUpdatesEnabled?: boolean;
+  enabledFeatures?: string[];
 };
