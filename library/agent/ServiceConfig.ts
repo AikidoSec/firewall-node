@@ -35,6 +35,8 @@ export class ServiceConfig {
 
   private excludedUserIdsFromRateLimiting = new Set<string>();
 
+  private realtimeUpdatesEnabled = false;
+
   constructor(
     endpoints: EndpointConfig[],
     private lastUpdatedAt: number,
@@ -318,5 +320,13 @@ export class ServiceConfig {
 
   isUserExcludedFromRateLimiting(userId: string): boolean {
     return this.excludedUserIdsFromRateLimiting.has(userId);
+  }
+
+  updateRealtimeUpdatesEnabled(enabled: boolean) {
+    this.realtimeUpdatesEnabled = enabled;
+  }
+
+  isRealtimeUpdatesEnabled(): boolean {
+    return this.realtimeUpdatesEnabled;
   }
 }
