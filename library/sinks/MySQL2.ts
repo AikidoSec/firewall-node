@@ -79,10 +79,12 @@ export class MySQL2 implements Wrapper {
       // mysql2's query() lets the second argument's values override the object's
       // values, while execute() (and prepare()) prefer the object's values over
       // the second argument's values.
-      const params =
-        operation === "mysql2.query"
-          ? (argValues ?? objectValues)
-          : (objectValues ?? argValues);
+      let params: unknown[] | undefined;
+      if (operation === "mysql2.query") {
+        params = argValues ?? objectValues;
+      } else {
+        params = objectValues ?? argValues;
+      }
 
       return {
         sql,
