@@ -33,7 +33,7 @@ export function generateConfig(app: App): AppConfig {
     blockNewOutgoingRequests: false,
     domains: [],
     excludedUserIdsFromRateLimiting: [],
-    realtimeUpdatesEnabled: true,
+    realtimeUpdatesEnabled: false,
   };
 }
 
