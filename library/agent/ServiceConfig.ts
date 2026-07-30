@@ -35,6 +35,8 @@ export class ServiceConfig {
 
   private excludedUserIdsFromRateLimiting = new Set<string>();
 
+  private enabledFeatures = new Set<string>();
+
   constructor(
     endpoints: EndpointConfig[],
     private lastUpdatedAt: number,
@@ -318,5 +320,13 @@ export class ServiceConfig {
 
   isUserExcludedFromRateLimiting(userId: string): boolean {
     return this.excludedUserIdsFromRateLimiting.has(userId);
+  }
+
+  updateEnabledFeatures(features: string[]) {
+    this.enabledFeatures = new Set(features);
+  }
+
+  isRealtimeUpdatesEnabled(): boolean {
+    return this.enabledFeatures.has("runtime_updates");
   }
 }

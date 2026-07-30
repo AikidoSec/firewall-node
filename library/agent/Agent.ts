@@ -349,6 +349,10 @@ export class Agent {
           response.excludedUserIdsFromRateLimiting
         );
       }
+
+      if (Array.isArray(response.enabledFeatures)) {
+        this.serviceConfig.updateEnabledFeatures(response.enabledFeatures);
+      }
     }
   }
 
@@ -467,7 +471,10 @@ export class Agent {
 
     const lastUpdatedAt = this.serviceConfig.getLastUpdatedAt();
 
-    if (isFeatureEnabled("sse")) {
+    if (
+      isFeatureEnabled("sse") ||
+      this.serviceConfig.isRealtimeUpdatesEnabled()
+    ) {
       listenForConfigUpdates({
         token: this.token,
         logger: this.logger,
