@@ -138,6 +138,20 @@ export function createMySQL2IdorTests(versionPkgName: string) {
       );
 
       await t.test(
+        "execute() falls back to the second argument's values when the object has no values",
+        async () => {
+          const [rows] = await runWithContext(context, () => {
+            return withoutIdorProtection(() => {
+              return connection.execute({ sql: "SELECT ? as val" }, [
+                "fromSecondArg",
+              ]);
+            });
+          });
+          t.equal((rows as { val: string }[])[0].val, "fromSecondArg");
+        }
+      );
+
+      await t.test(
         "blocks query() with wrong tenant filter when values are passed as second argument",
         async () => {
           const error = await t.rejects(async () => {
