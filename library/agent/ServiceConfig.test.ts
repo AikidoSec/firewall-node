@@ -24,7 +24,7 @@ t.test("realtime updates enabled defaults to false", async (t) => {
 t.test("it updates realtime updates enabled", async (t) => {
   const config = new ServiceConfig([], 0, [], [], [], []);
 
-  config.updateEnabledFeatures(["runtime_updates"]);
+  config.updateEnabledFeatures(["realtime_updates"]);
   t.same(config.isRealtimeUpdatesEnabled(), true);
 
   config.updateEnabledFeatures([]);

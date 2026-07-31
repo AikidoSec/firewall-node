@@ -327,6 +327,6 @@ export class ServiceConfig {
   }
 
   isRealtimeUpdatesEnabled(): boolean {
-    return this.enabledFeatures.has("runtime_updates");
+    return this.enabledFeatures.has("realtime_updates");
   }
 }
