@@ -11,7 +11,7 @@ export function warnIfReactRouterServeIsUsed() {
     colorText(
       "red",
       warnBox(
-        "Zen does NOT protect your application when using @react-router/serve. This framework is not supported yet. Normal Express apps are supported. Reach out if you need support."
+        "Zen does NOT protect your application when using @react-router/serve. This framework is not supported yet. Normal Express apps are supported. Reach out if you need support for it."
       )
     )
   );
