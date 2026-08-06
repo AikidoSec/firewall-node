@@ -728,7 +728,7 @@ t.test("it works with query method", opts, async (t) => {
   t.match(body, {
     method: "QUERY",
     source: "hono",
-    route: "/query",
+    route: "/query/testkey",
     routeParams: { key: "testkey" },
   });
 });
