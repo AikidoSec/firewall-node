@@ -11,7 +11,7 @@ if (process.argv.includes("--ci")) {
 }
 
 if (process.env.CI) {
-  args += " --coverage-report=lcov";
+  args += " --coverage-report=lcov --bail";
 }
 
 if (process.argv.includes("--test-new-instrumentation")) {
