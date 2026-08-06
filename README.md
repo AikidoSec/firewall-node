@@ -65,7 +65,7 @@ Zen for Node.js 16+ is compatible with:
 - ✅ [`mariadb`](https://www.npmjs.com/package/mariadb) 3.x (3.5+ requires ESM instrumentation)
 - ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 6.x and 5.x
 - ✅ [`node:sqlite`](https://nodejs.org/api/sqlite.html)
-- ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 12.x, 11.x, 10.x, 9.x and 8.x
+- ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 13.x, 12.x, 11.x, 10.x, 9.x and 8.x
 - ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
 - ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
 - ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 6.x and 5.x
