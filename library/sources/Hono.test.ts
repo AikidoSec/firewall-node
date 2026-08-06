@@ -168,6 +168,10 @@ async function getApp() {
     return c.text(getTestProp());
   });
 
+  app.query("/query/:key", (c) => {
+    return c.json(getContext());
+  });
+
   return app;
 }
 
@@ -711,4 +715,20 @@ t.test("it does not rate limit excluded users", opts, async (t) => {
     t.match(response.status, 200);
     t.match(await response.text(), "OK");
   }
+});
+
+t.test("it works with query method", opts, async (t) => {
+  const app = await getApp();
+  const response = await app.request("/query/testkey", {
+    method: "QUERY",
+    body: "test",
+  });
+
+  const body = await response.json();
+  t.match(body, {
+    method: "QUERY",
+    source: "hono",
+    route: "/query",
+    routeParams: { key: "testkey" },
+  });
 });
