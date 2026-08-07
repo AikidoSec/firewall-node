@@ -74,7 +74,7 @@ Zen for Node.js 16+ is compatible with:
 ### Cloud providers
 
 - ✅ [`@google-cloud/functions-framework`](https://www.npmjs.com/package/@google-cloud/functions-framework) 5.x, 4.x and 3.x
-- ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 5.x, 4.x
+- ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 6.x, 5.x, 4.x
 - ✅ Google Cloud Functions
 - ✅ AWS Lambda
 

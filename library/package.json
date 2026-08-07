@@ -62,7 +62,7 @@
     "@elysia/node": "^1.4.6",
     "@fastify/cookie": "^11.0.2",
     "@google-cloud/functions-framework": "^5.0.0",
-    "@google-cloud/pubsub": "^5.0.0",
+    "@google-cloud/pubsub": "^6.0.0",
     "@google/genai-v1": "npm:@google/genai@1.52.0",
     "@google/genai-v2": "npm:@google/genai@2.4.0",
     "@graphql-tools/executor": "^1.3.2",
