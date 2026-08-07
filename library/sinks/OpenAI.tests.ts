@@ -23,7 +23,7 @@ export function createOpenAITests(openAiPkgName: string) {
         },
       });
 
-      const { OpenAI } = require(openAiPkgName) as typeof import("openai-v5");
+      const { OpenAI } = require(openAiPkgName) as typeof import("openai-v7");
 
       const client = new OpenAI();
 
@@ -91,6 +91,9 @@ export function createOpenAITests(openAiPkgName: string) {
 
   t.test(
     "It reports Azure OpenAI calls under the azure provider, not openai",
+    {
+      skip: getMajorNodeVersion() < 22 ? "Node version < 22" : undefined,
+    },
     async (t) => {
       const agent = startTestAgent({
         wrappers: [new OpenAISink()],
