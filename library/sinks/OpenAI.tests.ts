@@ -25,7 +25,7 @@ export function createOpenAITests(openAiPkgName: string) {
 
       const client = new OpenAI();
 
-      const model = "gpt-4.1-nano";
+      const model = "gpt-5.4-nano";
 
       const response = await client.responses.create({
         model: model,
@@ -40,9 +40,9 @@ export function createOpenAITests(openAiPkgName: string) {
           provider: "openai",
           calls: 1,
           tokens: {
-            input: 23,
-            output: 3,
-            total: 26,
+            input: 22,
+            output: 6,
+            total: 28,
           },
         },
       ]);
@@ -66,14 +66,14 @@ export function createOpenAITests(openAiPkgName: string) {
           provider: "openai",
           calls: 2,
           tokens: {
-            input: 46,
+            input: 44,
           },
         },
       ]);
 
       // Test streaming responses work (we don't count the tokens atm)
       const stream = await client.responses.create({
-        model: "gpt-4o",
+        model: "gpt-5.4-mini",
         input: 'Say "Sheep sleep deep" ten times fast!',
         stream: true,
       });
