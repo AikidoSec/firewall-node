@@ -6,7 +6,7 @@ import * as sort from "./sort";
 import { Network } from "./Network";
 
 export class IPMatcher {
-  private readonly sorted = [] as Network[];
+  private sorted = [] as Network[];
 
   public constructor(networks?: string[]) {
     const subnets = [] as Network[];
@@ -20,6 +20,20 @@ export class IPMatcher {
       shared.sortNetworks(subnets);
       this.sorted = shared.summarizeSortedNetworks(subnets);
     }
+  }
+
+  // Same result as `new IPMatcher(networks)`, but parsing and summarizing
+  // yield periodically instead of blocking the event loop for the whole
+  // duration.
+  public static async createAsync(networks: string[]): Promise<IPMatcher> {
+    const matcher = new IPMatcher();
+    if (networks.length === 0) {
+      return matcher;
+    }
+    const subnets = await shared.parseNetworksAsync(networks);
+    shared.sortNetworks(subnets);
+    matcher.sorted = await shared.summarizeSortedNetworksAsync(subnets);
+    return matcher;
   }
 
   // Checks if the given IP address is in the list of networks.

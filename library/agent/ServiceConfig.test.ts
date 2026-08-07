@@ -192,7 +192,7 @@ t.test("restricting access to some ips", async () => {
   t.same(config.isAllowedIPAddress("4.3.2.1").allowed, false);
   t.same(config.isAllowedIPAddress("127.0.0.1").allowed, true); // Always allow private ips
 
-  config.updateAllowedIPAddresses([]);
+  await config.updateAllowedIPAddresses([]);
   t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
   t.same(config.isAllowedIPAddress("127.0.0.1").allowed, true);
   t.same(config.isAllowedIPAddress("4.3.2.1").allowed, true);
@@ -271,7 +271,7 @@ t.test("it sets and updates monitored IP lists", async (t) => {
   t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), []);
   t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), []);
 
-  config.updateMonitoredIPAddresses([
+  await config.updateMonitoredIPAddresses([
     {
       key: "tor/exit_nodes",
       source: "tor",
@@ -283,7 +283,7 @@ t.test("it sets and updates monitored IP lists", async (t) => {
   t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), ["tor/exit_nodes"]);
   t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), ["tor/exit_nodes"]);
 
-  config.updateMonitoredIPAddresses([]);
+  await config.updateMonitoredIPAddresses([]);
 
   t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), []);
   t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), []);
@@ -292,7 +292,7 @@ t.test("it sets and updates monitored IP lists", async (t) => {
 t.test("it returns matching IP lists keys", async (t) => {
   const config = new ServiceConfig([], 0, [], [], [], []);
 
-  config.updateMonitoredIPAddresses([
+  await config.updateMonitoredIPAddresses([
     {
       key: "tor/exit_nodes",
       source: "tor",
@@ -307,7 +307,7 @@ t.test("it returns matching IP lists keys", async (t) => {
     },
   ]);
 
-  config.updateBlockedIPAddresses([
+  await config.updateBlockedIPAddresses([
     {
       key: "geoip/Belgium;BE",
       source: "geoip",
@@ -322,7 +322,7 @@ t.test("it returns matching IP lists keys", async (t) => {
     },
   ]);
 
-  config.updateAllowedIPAddresses([
+  await config.updateAllowedIPAddresses([
     {
       key: "geoip/Belgium;BE",
       source: "geoip",

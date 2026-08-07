@@ -156,20 +156,33 @@ export class ServiceConfig {
     }
   }
 
-  updateBlockedIPAddresses(blockedIPAddresses: IPList[]) {
-    this.setBlockedIPAddresses(blockedIPAddresses);
-  }
+  async updateBlockedIPAddresses(blockedIPAddresses: IPList[]) {
+    const built: typeof this.blockedIPAddresses = [];
 
-  updateMonitoredIPAddresses(monitoredIPAddresses: IPList[]) {
-    this.monitoredIPAddresses = [];
-
-    for (const source of monitoredIPAddresses) {
-      this.monitoredIPAddresses.push({
+    for (const source of blockedIPAddresses) {
+      built.push({
         key: source.key,
         // Large list: IPv4-mapped checked at lookup time to save memory
-        list: new IPMatcher(source.ips),
+        blocklist: await IPMatcher.createAsync(source.ips),
+        description: source.description,
       });
     }
+
+    this.blockedIPAddresses = built;
+  }
+
+  async updateMonitoredIPAddresses(monitoredIPAddresses: IPList[]) {
+    const built: typeof this.monitoredIPAddresses = [];
+
+    for (const source of monitoredIPAddresses) {
+      built.push({
+        key: source.key,
+        // Large list: IPv4-mapped checked at lookup time to save memory
+        list: await IPMatcher.createAsync(source.ips),
+      });
+    }
+
+    this.monitoredIPAddresses = built;
   }
 
   updateBlockedUserAgents(blockedUserAgents: string) {
@@ -254,8 +267,22 @@ export class ServiceConfig {
     }
   }
 
-  updateAllowedIPAddresses(ipAddresses: IPList[]) {
-    this.setAllowedIPAddresses(ipAddresses);
+  async updateAllowedIPAddresses(ipAddresses: IPList[]) {
+    const built: typeof this.allowedIPAddresses = [];
+
+    for (const source of ipAddresses) {
+      // Skip empty allowlists
+      if (source.ips.length === 0) {
+        continue;
+      }
+      built.push({
+        // Large list: IPv4-mapped checked at lookup time to save memory
+        allowlist: await IPMatcher.createAsync(source.ips),
+        description: source.description,
+      });
+    }
+
+    this.allowedIPAddresses = built;
   }
 
   isAllowedIPAddress(ip: string): { allowed: boolean } {

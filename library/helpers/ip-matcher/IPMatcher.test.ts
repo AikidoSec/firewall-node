@@ -254,3 +254,64 @@ t.test("hasWithMappedCheck matches explicit IPv4-mapped in list", async (t) => {
   const matcher = new IPMatcher(["::ffff:192.0.2.1"]);
   t.same(matcher.hasWithMappedCheck("::ffff:192.0.2.1"), true);
 });
+
+t.test(
+  "createAsync produces an equivalent matcher to the constructor",
+  async (t) => {
+    const input = [
+      "192.168.0.0/24",
+      "192.168.0.3/32",
+      "224.0.0.0/4",
+      "240.0.0.0/4",
+      "foobar",
+      "2001:db8::1/128",
+    ];
+
+    const matcher = await IPMatcher.createAsync(input);
+    t.same(matcher.has("192.168.0.254"), true);
+    t.same(matcher.has("10.0.0.1"), false);
+    t.same(matcher.has("224.0.0.1"), true);
+    t.same(matcher.has("255.255.255.255"), true);
+    t.same(matcher.has("223.255.255.255"), false);
+    t.same(matcher.has("2001:db8::1"), true);
+    t.same(matcher.has("foobar"), false);
+  }
+);
+
+t.test("createAsync with an empty list matches nothing", async (t) => {
+  const matcher = await IPMatcher.createAsync([]);
+  t.same(matcher.has("192.168.2.1"), false);
+  t.same(matcher.has("foobar"), false);
+});
+
+t.test("createAsync supports hasWithMappedCheck", async (t) => {
+  const matcher = await IPMatcher.createAsync(["192.0.2.0/24"]);
+  t.same(matcher.hasWithMappedCheck("::ffff:192.0.2.1"), true);
+  t.same(matcher.hasWithMappedCheck("::ffff:192.0.3.1"), false);
+});
+
+t.test(
+  "createAsync matches the sync constructor across a list large enough to cross yield boundaries",
+  async (t) => {
+    const count = 12001;
+    const input = Array.from(
+      { length: count },
+      (_, i) => `10.0.${Math.floor(i / 256)}.${i % 256}/32`
+    );
+
+    const sync = new IPMatcher(input);
+    const asyncMatcher = await IPMatcher.createAsync(input);
+
+    const testIps = [
+      "10.0.0.0",
+      "10.0.0.1",
+      "10.0.23.111",
+      "10.0.46.161",
+      "10.1.0.0",
+      "192.168.0.1",
+    ];
+    for (const ip of testIps) {
+      t.same(asyncMatcher.has(ip), sync.has(ip), `mismatch for ${ip}`);
+    }
+  }
+);

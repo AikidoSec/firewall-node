@@ -446,10 +446,10 @@ export class Agent {
         monitoredUserAgents,
         userAgentDetails,
       } = await this.fetchListsAPI.getLists(this.token);
-      this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
+      await this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
-      this.serviceConfig.updateAllowedIPAddresses(allowedIPAddresses);
-      this.serviceConfig.updateMonitoredIPAddresses(monitoredIPAddresses);
+      await this.serviceConfig.updateAllowedIPAddresses(allowedIPAddresses);
+      await this.serviceConfig.updateMonitoredIPAddresses(monitoredIPAddresses);
       this.serviceConfig.updateMonitoredUserAgents(monitoredUserAgents);
       this.serviceConfig.updateUserAgentDetails(userAgentDetails);
     } catch (error: any) {
