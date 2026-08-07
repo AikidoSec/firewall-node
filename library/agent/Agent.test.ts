@@ -450,7 +450,7 @@ t.test(
     agent.getInspectionStatistics().onRequest();
 
     // After 5 seconds, nothing should happen
-    clock.tick(1000 * 5);
+    await clock.tickAsync(1000 * 5);
     t.match(api.getEvents(), [
       {
         type: "started",
@@ -459,8 +459,7 @@ t.test(
 
     // After a minute, we'll see that the dashboard didn't receive any stats yet
     // And then send a heartbeat
-    clock.tick(60 * 1000);
-    await clock.nextAsync();
+    await clock.tickAsync(60 * 1000);
     t.match(api.getEvents(), [
       {
         type: "started",
@@ -471,8 +470,7 @@ t.test(
     ]);
 
     // We already reported initial stats, so we won't send another heartbeat
-    clock.tick(60 * 1000);
-    await clock.nextAsync();
+    await clock.tickAsync(60 * 1000);
     t.match(api.getEvents(), [
       {
         type: "started",
