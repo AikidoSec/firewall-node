@@ -1,4 +1,6 @@
 import * as t from "tap";
+import { createServer } from "http";
+import type { AddressInfo } from "net";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { OpenAI as OpenAISink } from "./OpenAI";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
@@ -21,7 +23,7 @@ export function createOpenAITests(openAiPkgName: string) {
         },
       });
 
-      const { OpenAI } = require(openAiPkgName) as typeof import("openai-v5");
+      const { OpenAI } = require(openAiPkgName) as typeof import("openai-v7");
 
       const client = new OpenAI();
 
@@ -84,6 +86,75 @@ export function createOpenAITests(openAiPkgName: string) {
       }
 
       t.ok(eventCount > 0, "Should receive at least one event from the stream");
+    }
+  );
+
+  t.test(
+    "It reports Azure OpenAI calls under the azure provider, not openai",
+    {
+      skip: getMajorNodeVersion() < 22 ? "Node version < 22" : undefined,
+    },
+    async (t) => {
+      const agent = startTestAgent({
+        wrappers: [new OpenAISink()],
+        rewrite: {
+          openai: openAiPkgName,
+        },
+      });
+
+      const { OpenAI, AzureOpenAI } = require(
+        openAiPkgName
+      ) as typeof import("openai-v5");
+
+      const chatCompletion = {
+        id: "chatcmpl-test",
+        object: "chat.completion",
+        created: 0,
+        model: "gpt-5-mini",
+        choices: [
+          {
+            index: 0,
+            message: { role: "assistant", content: "Hi" },
+            finish_reason: "stop",
+          },
+        ],
+        usage: { prompt_tokens: 5, completion_tokens: 1, total_tokens: 6 },
+      };
+
+      const server = createServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(chatCompletion));
+      });
+
+      await new Promise<void>((resolve) => server.listen(0, resolve));
+      t.teardown(() => server.close());
+
+      const baseURL = `http://localhost:${
+        (server.address() as AddressInfo).port
+      }/v1`;
+
+      const openaiClient = new OpenAI({ apiKey: "test", baseURL });
+      await openaiClient.chat.completions.create({
+        model: "gpt-5-mini",
+        messages: [{ role: "user", content: "Hi" }],
+      });
+
+      const azureClient = new AzureOpenAI({
+        apiKey: "test",
+        apiVersion: "2024-02-01",
+        baseURL,
+      });
+      await azureClient.chat.completions.create({
+        model: "gpt-5-mini",
+        messages: [{ role: "user", content: "Hi" }],
+      });
+
+      await setTimeout(100);
+
+      t.match(agent.getAIStatistics().getStats(), [
+        { provider: "openai", model: "gpt-5-mini", calls: 1 },
+        { provider: "azure", model: "gpt-5-mini", calls: 1 },
+      ]);
     }
   );
 }
