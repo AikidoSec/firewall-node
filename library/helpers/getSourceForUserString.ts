@@ -18,5 +18,11 @@ export function getSourceForUserString(
     }
   }
 
+  // Check taint tracking map (for transformed user input values)
+  const taintInfo = context.taintTracking?.get(str);
+  if (taintInfo) {
+    return taintInfo.source;
+  }
+
   return undefined;
 }
