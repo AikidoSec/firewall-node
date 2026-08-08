@@ -1,4 +1,5 @@
 import { addIPv4MappedAddresses } from "../../helpers/addIPv4MappedAddresses";
+import { addIPv4TransitionAddresses } from "../../helpers/addIPv4TransitionAddresses";
 import { IPMatcher } from "../../helpers/ip-matcher/IPMatcher";
 
 const PRIVATE_IP_RANGES = [
@@ -36,6 +37,7 @@ const PRIVATE_IPV6_RANGES = [
 // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
 const privateIp = new IPMatcher([
   ...addIPv4MappedAddresses(PRIVATE_IP_RANGES),
+  ...addIPv4TransitionAddresses(PRIVATE_IP_RANGES),
   ...PRIVATE_IPV6_RANGES,
 ]);
 
