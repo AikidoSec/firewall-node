@@ -38,6 +38,7 @@ pub fn insert_instrument_method_calls<'a>(
             pkg_version,
             body,
             is_constructor,
+            instruction.callback_on_block,
         );
     }
 

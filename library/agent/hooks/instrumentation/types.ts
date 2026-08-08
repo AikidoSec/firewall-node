@@ -60,6 +60,7 @@ export type IntereptorFunctionsObj = {
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;
   bindContext: boolean;
+  callbackOnBlock: boolean;
 };
 
 export type IntereptorCallbackInfoObj = {
@@ -116,6 +117,11 @@ export type PackageFunctionInstrumentationInstruction = {
    * If enabled, the bindContext function will be called for all callbacks that are passed to the function.
    */
   bindContext?: boolean;
+  /**
+   * If true, when a block occurs the last function argument is called with the error instead of throwing.
+   * Useful for libraries that use error-first callbacks instead of promises/throws.
+   */
+  callbackOnBlock?: boolean;
 
   /**
    * Can be used to specify the class name to limit the instrumentation to a specific method of a class.
@@ -150,6 +156,7 @@ export type PackageFileInstrumentationInstructionJSON = {
     modifyArgs: boolean;
     modifyReturnValue: boolean;
     modifyArgumentsObject: boolean;
+    callbackOnBlock: boolean;
     className?: string;
   }[];
 };

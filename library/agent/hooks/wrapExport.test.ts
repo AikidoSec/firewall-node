@@ -2,7 +2,7 @@ import * as t from "tap";
 import { wrapExport } from "./wrapExport";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
 import { Token } from "../api/Token";
-import { bindContext } from "../Context";
+import { bindContext, runWithContext } from "../Context";
 import { createTestAgent } from "../../helpers/createTestAgent";
 
 const logger = new LoggerForTesting();
@@ -10,6 +10,7 @@ const logger = new LoggerForTesting();
 createTestAgent({
   logger,
   token: new Token("123"),
+  block: true,
 });
 
 t.test("Inspect args", async (t) => {
@@ -204,4 +205,61 @@ t.test("Wrap default export", async (t) => {
 
   t.same(patched("input"), "input");
   t.ok(executedCallback);
+});
+
+t.test("it calls callback on block if callbackOnBlock is set", async (t) => {
+  const toWrap = {
+    test(input: string, callback: (err: Error | null) => void) {
+      callback(null);
+    },
+  };
+
+  wrapExport(
+    toWrap,
+    "test",
+    { name: "test", type: "external" },
+    {
+      kind: "outgoing_http_op",
+      inspectArgs: () => {
+        return {
+          operation: "http.get",
+          kind: "ssrf",
+          source: "body",
+          pathsToPayload: [""],
+          metadata: {},
+          payload: "foo",
+        };
+      },
+      callbackOnBlock: true,
+    }
+  );
+
+  await runWithContext(
+    {
+      remoteAddress: "::1",
+      method: "POST",
+      url: "http://localhost:4000",
+      query: {},
+      body: undefined,
+      headers: {},
+      cookies: {},
+      routeParams: {},
+      source: "express",
+      route: "/posts/:id",
+    },
+    async () => {
+      await new Promise((resolve) => {
+        toWrap.test("input", (err) => {
+          t.ok(err instanceof Error);
+          if (err instanceof Error) {
+            t.match(
+              err.message,
+              "Zen has blocked a server-side request forgery: http.get(...)"
+            );
+          }
+          resolve(null);
+        });
+      });
+    }
+  );
 });
