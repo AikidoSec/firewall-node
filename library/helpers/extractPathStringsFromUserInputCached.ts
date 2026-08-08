@@ -1,7 +1,6 @@
 import { Context } from "../agent/Context";
 import { SOURCES } from "../agent/Source";
 import { extractStringsFromUserInput } from "./extractStringsFromUserInput";
-import { sep } from "node:path";
 
 type ReturnValue = ReturnType<typeof extractStringsFromUserInput>;
 
@@ -23,7 +22,9 @@ export function extractPathStringsFromUserInputCached(
       // Performance optimization: only keep strings that contain a path separator
       // as only those can be used for path traversal
       // keeps the set smaller and speeds up `fs` and `path` operations
-      if (item.includes(sep)) {
+      // Check both separators: attackers may send backslash-only payloads on POSIX
+      // that the application normalizes to forward slashes before reaching the sink.
+      if (item.includes("/") || item.includes("\\")) {
         userStrings.add(item);
       }
     }
