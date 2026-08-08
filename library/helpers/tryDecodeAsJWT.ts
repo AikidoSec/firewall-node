@@ -8,7 +8,9 @@
 export function tryDecodeAsJWT(
   jwt: string
 ): { jwt: true; object: unknown } | { jwt: false } {
-  if (!jwt.includes(".")) {
+  // The minimum JWT length is 26 characters
+  // See https://datatracker.ietf.org/doc/html/rfc7519#section-6.1
+  if (jwt.length < 26 || !jwt.includes(".")) {
     return { jwt: false };
   }
 
