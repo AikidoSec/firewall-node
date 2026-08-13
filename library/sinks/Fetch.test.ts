@@ -75,6 +75,8 @@ const redirectUrl = {
   domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
   ipv6: `${redirectTestUrl}/ssrf-test-ipv6`, // Redirects to http://[::1]/test
   ipv6Twice: `${redirectTestUrl}/ssrf-test-ipv6-twice`, // Redirects to /ssrf-test-ipv6
+  protocolRelative: `${redirectTestUrl}/ssrf-test-protocol-relative`, // Redirects to //127.0.0.1/test
+  protocolRelativeTwice: `${redirectTestUrl}/ssrf-test-protocol-relative-twice`, // Redirects to /ssrf-test-protocol-relative
 };
 
 t.test(
@@ -307,6 +309,44 @@ t.test(
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ipTwice));
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { image: redirectUrl.protocolRelative },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(redirectUrl.protocolRelative)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { image: redirectUrl.protocolRelativeTwice },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(redirectUrl.protocolRelativeTwice)
+        );
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined

@@ -29,7 +29,12 @@ export function wrapOnHeaders(
           // Get redirect location
           const headers = parseHeaders(args[1]);
           if (typeof headers.location === "string") {
-            const destinationUrl = new URL(headers.location);
+            let destinationUrl: URL;
+            if (requestContext) {
+              destinationUrl = new URL(headers.location, requestContext.url);
+            } else {
+              destinationUrl = new URL(headers.location);
+            }
 
             onRedirect(destinationUrl, requestContext, context);
           }
@@ -64,7 +69,12 @@ export function wrapOnResponseStart(
       try {
         const location = headers?.location;
         if (typeof location === "string") {
-          const destinationUrl = new URL(location);
+          let destinationUrl: URL;
+          if (requestContext) {
+            destinationUrl = new URL(location, requestContext.url);
+          } else {
+            destinationUrl = new URL(location);
+          }
           onRedirect(destinationUrl, requestContext, context);
         }
       } catch {
