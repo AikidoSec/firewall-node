@@ -16,6 +16,24 @@ t.test("it returns false if empty rules", async () => {
   );
 });
 
+t.test("realtime updates enabled defaults to false", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], [], []);
+  t.same(config.isRealtimeUpdatesEnabled(), false);
+});
+
+t.test("it updates realtime updates enabled", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], [], []);
+
+  config.updateEnabledFeatures(["realtime_updates"]);
+  t.same(config.isRealtimeUpdatesEnabled(), true);
+
+  config.updateEnabledFeatures([]);
+  t.same(config.isRealtimeUpdatesEnabled(), false);
+
+  config.updateEnabledFeatures(["some_other_feature"]);
+  t.same(config.isRealtimeUpdatesEnabled(), false);
+});
+
 t.test("it works", async () => {
   const config = new ServiceConfig(
     [

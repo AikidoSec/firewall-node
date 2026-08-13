@@ -12,7 +12,7 @@ const pathToAppDir = resolve(
 
 const testServerUrl = "http://localhost:5874";
 
-function spawnApp(token, port) {
+function spawnApp(token, port, { enableSSEFeatureFlag }) {
   return spawn(
     `node`,
     [
@@ -32,7 +32,7 @@ function spawnApp(token, port) {
         AIKIDO_DEBUG: "true",
         AIKIDO_DEBUG_SSE: "true",
         AIKIDO_BLOCK: "true",
-        AIKIDO_FEATURE_SSE: "true",
+        ...(enableSSEFeatureFlag ? { AIKIDO_FEATURE_SSE: "true" } : {}),
       },
     }
   );
@@ -46,7 +46,7 @@ test("it picks up blocked IP via SSE config update", async () => {
   const token = body.token;
   const port = await getRandomPort();
 
-  const server = spawnApp(token, port);
+  const server = spawnApp(token, port, { enableSSEFeatureFlag: true });
 
   try {
     server.on("error", (err) => {
@@ -109,7 +109,7 @@ test("it reconnects SSE after server disconnects", async () => {
   const token = body.token;
   const port = await getRandomPort();
 
-  const server = spawnApp(token, port);
+  const server = spawnApp(token, port, { enableSSEFeatureFlag: true });
 
   try {
     server.on("error", (err) => {
@@ -181,7 +181,7 @@ test("it stops SSE reconnect on 401", async () => {
   const token = body.token;
   const port = await getRandomPort();
 
-  const server = spawnApp(token, port);
+  const server = spawnApp(token, port, { enableSSEFeatureFlag: true });
 
   try {
     server.on("error", (err) => {
@@ -216,6 +216,80 @@ test("it stops SSE reconnect on 401", async () => {
     const rejectedIndex = stdout.indexOf("SSE connection rejected");
     const afterRejected = stdout.slice(rejectedIndex);
     doesNotMatch(afterRejected, /SSE scheduling reconnect/);
+  } catch (err) {
+    fail(err);
+  } finally {
+    server.kill();
+  }
+});
+
+test("it connects via SSE when only enabledFeatures includes realtime_updates, without the local feature flag", async () => {
+  const response = await fetch(`${testServerUrl}/api/runtime/apps`, {
+    method: "POST",
+  });
+  const body = await response.json();
+  const token = body.token;
+  const port = await getRandomPort();
+
+  // Opt in purely via the backend-driven flag, not AIKIDO_FEATURE_SSE
+  await fetch(`${testServerUrl}/api/runtime/config`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token,
+    },
+    body: JSON.stringify({ enabledFeatures: ["realtime_updates"] }),
+  });
+
+  const server = spawnApp(token, port, { enableSSEFeatureFlag: false });
+
+  try {
+    server.on("error", (err) => {
+      fail(err);
+    });
+
+    let stdout = "";
+    server.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    // Wait for the server to start and SSE to connect
+    await timeout(3000);
+    match(stdout, /SSE connected successfully/);
+
+    // Verify request from 5.6.7.8 is allowed before blocking
+    const before = await fetch(`http://127.0.0.1:${port}/`, {
+      headers: { "x-forwarded-for": "5.6.7.8" },
+      signal: AbortSignal.timeout(5000),
+    });
+    equal(before.status, 200);
+
+    // Block IP 5.6.7.8 via the test server API
+    await fetch(`${testServerUrl}/api/runtime/firewall/lists`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+      body: JSON.stringify({
+        blockedIPAddresses: ["5.6.7.8"],
+      }),
+    });
+
+    // Wait for SSE config-updated event to propagate
+    await timeout(2000);
+
+    // Verify request from 5.6.7.8 is now blocked
+    const after = await fetch(`http://127.0.0.1:${port}/`, {
+      headers: { "x-forwarded-for": "5.6.7.8" },
+      signal: AbortSignal.timeout(5000),
+    });
+    equal(after.status, 403);
   } catch (err) {
     fail(err);
   } finally {

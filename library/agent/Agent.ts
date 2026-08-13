@@ -37,6 +37,7 @@ import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
+import { warnIfReactRouterServeIsUsed } from "../helpers/warnIfReactRouterServeIsUsed";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { isFeatureEnabled } from "../helpers/featureFlags";
 
@@ -349,6 +350,10 @@ export class Agent {
           response.excludedUserIdsFromRateLimiting
         );
       }
+
+      if (Array.isArray(response.enabledFeatures)) {
+        this.serviceConfig.updateEnabledFeatures(response.enabledFeatures);
+      }
     }
   }
 
@@ -467,7 +472,10 @@ export class Agent {
 
     const lastUpdatedAt = this.serviceConfig.getLastUpdatedAt();
 
-    if (isFeatureEnabled("sse")) {
+    if (
+      isFeatureEnabled("sse") ||
+      this.serviceConfig.isRealtimeUpdatesEnabled()
+    ) {
       listenForConfigUpdates({
         token: this.token,
         logger: this.logger,
@@ -560,6 +568,7 @@ export class Agent {
     }
 
     warnIfTsxIsUsed();
+    warnIfReactRouterServeIsUsed();
 
     // When our library is required, we are not intercepting `require` calls yet
     // We need to add our library to the list of packages manually

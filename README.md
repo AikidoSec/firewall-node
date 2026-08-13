@@ -65,7 +65,7 @@ Zen for Node.js 16+ is compatible with:
 - ✅ [`mariadb`](https://www.npmjs.com/package/mariadb) 3.x (3.5+ requires ESM instrumentation)
 - ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 6.x and 5.x
 - ✅ [`node:sqlite`](https://nodejs.org/api/sqlite.html)
-- ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 12.x, 11.x, 10.x, 9.x and 8.x
+- ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 13.x, 12.x, 11.x, 10.x, 9.x and 8.x
 - ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
 - ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
 - ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 6.x and 5.x
@@ -74,7 +74,7 @@ Zen for Node.js 16+ is compatible with:
 ### Cloud providers
 
 - ✅ [`@google-cloud/functions-framework`](https://www.npmjs.com/package/@google-cloud/functions-framework) 5.x, 4.x and 3.x
-- ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 5.x, 4.x
+- ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 6.x, 5.x, 4.x
 - ✅ Google Cloud Functions
 - ✅ AWS Lambda
 
@@ -111,7 +111,7 @@ See list above for supported database drivers.
 
 Zen instruments the following AI SDKs to track which models are used and how many tokens are consumed, allowing you to monitor your AI usage and costs:
 
-- ✅ [`openai`](https://www.npmjs.com/package/openai) 6.x, 5.x, 4.x
+- ✅ [`openai`](https://www.npmjs.com/package/openai) 7.x, 6.x, 5.x, 4.x
 - ✅ [`@mistralai/mistralai`](https://www.npmjs.com/package/@mistralai/mistralai) 1.x and 2.x (2.x+ requires ESM instrumentation)
 - ✅ [`@anthropic-ai/sdk`](https://www.npmjs.com/package/@anthropic-ai/sdk) ^0.40.x
 - ✅ [`@aws-sdk/client-bedrock-runtime`](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime) 3.x
