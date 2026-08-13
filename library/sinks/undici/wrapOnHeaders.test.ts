@@ -37,26 +37,23 @@ function callOnHeaders(
   onHeaders(statusCode, headers, () => {}, "");
 }
 
-t.test(
-  "wrapOnHeaders records the hop for an absolute Location",
-  async (t) => {
-    const context = createContext();
-    const requestContext = createRequestContext();
+t.test("wrapOnHeaders records the hop for an absolute Location", async (t) => {
+  const context = createContext();
+  const requestContext = createRequestContext();
 
-    const onHeaders = wrapOnHeaders(undefined, requestContext, context);
-    callOnHeaders(onHeaders, 302, [
-      Buffer.from("location"),
-      Buffer.from("http://127.0.0.1/secret"),
-    ]);
+  const onHeaders = wrapOnHeaders(undefined, requestContext, context);
+  callOnHeaders(onHeaders, 302, [
+    Buffer.from("location"),
+    Buffer.from("http://127.0.0.1/secret"),
+  ]);
 
-    t.same(context.outgoingRequestRedirects, [
-      {
-        source: requestContext.url,
-        destination: new URL("http://127.0.0.1/secret"),
-      },
-    ]);
-  }
-);
+  t.same(context.outgoingRequestRedirects, [
+    {
+      source: requestContext.url,
+      destination: new URL("http://127.0.0.1/secret"),
+    },
+  ]);
+});
 
 t.test(
   "wrapOnHeaders records the hop for a protocol-relative Location",
@@ -79,26 +76,23 @@ t.test(
   }
 );
 
-t.test(
-  "wrapOnHeaders records the hop for a relative Location",
-  async (t) => {
-    const context = createContext();
-    const requestContext = createRequestContext();
+t.test("wrapOnHeaders records the hop for a relative Location", async (t) => {
+  const context = createContext();
+  const requestContext = createRequestContext();
 
-    const onHeaders = wrapOnHeaders(undefined, requestContext, context);
-    callOnHeaders(onHeaders, 302, [
-      Buffer.from("location"),
-      Buffer.from("/secret"),
-    ]);
+  const onHeaders = wrapOnHeaders(undefined, requestContext, context);
+  callOnHeaders(onHeaders, 302, [
+    Buffer.from("location"),
+    Buffer.from("/secret"),
+  ]);
 
-    t.same(context.outgoingRequestRedirects, [
-      {
-        source: requestContext.url,
-        destination: new URL("http://attacker.example.com/secret"),
-      },
-    ]);
-  }
-);
+  t.same(context.outgoingRequestRedirects, [
+    {
+      source: requestContext.url,
+      destination: new URL("http://attacker.example.com/secret"),
+    },
+  ]);
+});
 
 t.test(
   "wrapOnHeaders does not record a relative Location without a request context",
