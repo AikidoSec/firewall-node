@@ -21,6 +21,13 @@ import { setTimeout } from "node:timers/promises";
 import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
 import { colorText } from "../helpers/colorText";
 import { shutdown } from "./shutdown";
+import { yieldToEventLoop } from "../helpers/yieldToEventLoop";
+
+async function waitForListsToBeApplied() {
+  for (let i = 0; i < 5; i++) {
+    await yieldToEventLoop();
+  }
+}
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_INSTANCE_NAME;
@@ -1250,7 +1257,7 @@ t.test("it fetches blocked lists", async () => {
 
   agent.start([]);
 
-  await setTimeout(0);
+  await waitForListsToBeApplied();
 
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: true,
@@ -1354,7 +1361,7 @@ t.test("it only allows some IP addresses", async () => {
 
   agent.start([]);
 
-  await setTimeout(0);
+  await waitForListsToBeApplied();
 
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: true,
