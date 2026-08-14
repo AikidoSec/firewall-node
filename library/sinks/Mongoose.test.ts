@@ -42,14 +42,19 @@ t.test("it works", async (t) => {
       title: String,
       body: String,
       date: Date,
+      views: Number,
+      isPublished: Boolean,
     });
 
     const BlogPost = mongoose.model("BlogPost", BlogPostSchema);
 
     const post = new BlogPost({
+      author: new mongoose.Types.ObjectId(),
       title: "Test",
       body: "This is a test",
       date: new Date(),
+      views: 42,
+      isPublished: true,
     });
     await post.save();
 
@@ -154,6 +159,97 @@ t.test("it works", async (t) => {
         );
       }
     });
+
+    await runWithContext(
+      getTestContext({ id: { $ne: "000000000000000000000000" } }),
+      async () => {
+        const error = await t.rejects(async () => {
+          await BlogPost.findOne({
+            _id: { $ne: "000000000000000000000000" },
+          });
+        });
+        t.ok(error instanceof Error);
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen has blocked a NoSQL injection: MongoDB.Collection.findOne(...) originating from body.id"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      getTestContext({ author: { $ne: "000000000000000000000000" } }),
+      async () => {
+        const error = await t.rejects(async () => {
+          await BlogPost.findOne({
+            author: { $ne: "000000000000000000000000" },
+          });
+        });
+        t.ok(error instanceof Error);
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen has blocked a NoSQL injection: MongoDB.Collection.findOne(...) originating from body.author"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      getTestContext({ isPublished: { $ne: "false" } }),
+      async () => {
+        const error = await t.rejects(async () => {
+          await BlogPost.findOne({
+            // @ts-expect-error Pass string instead of boolean
+            isPublished: { $ne: "false" },
+          });
+        });
+        t.ok(error instanceof Error);
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen has blocked a NoSQL injection: MongoDB.Collection.findOne(...) originating from body.isPublished"
+          );
+        }
+      }
+    );
+
+    // Number schema path
+    await runWithContext(getTestContext({ views: { $ne: "42" } }), async () => {
+      const error = await t.rejects(async () => {
+        await BlogPost.findOne({
+          // @ts-expect-error Pass string instead of number
+          views: { $ne: "42" },
+        });
+      });
+      t.ok(error instanceof Error);
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.findOne(...) originating from body.views"
+        );
+      }
+    });
+
+    const dateStr = post.date!.toISOString();
+    await runWithContext(
+      getTestContext({ date: { $ne: dateStr } }),
+      async () => {
+        const error = await t.rejects(async () => {
+          await BlogPost.findOne({
+            date: { $ne: dateStr },
+          });
+        });
+        t.ok(error instanceof Error);
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen has blocked a NoSQL injection: MongoDB.Collection.findOne(...) originating from body.date"
+          );
+        }
+      }
+    );
   } catch (err: any) {
     t.fail(err);
   } finally {
