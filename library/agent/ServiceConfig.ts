@@ -7,6 +7,7 @@ import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig, Domain } from "./Config";
 import type { IPList, UserAgentDetails } from "./api/FetchListsAPI";
 import { safeCreateRegExp } from "./safeCreateRegExp";
+import type { Context } from "./Context";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -114,7 +115,23 @@ export class ServiceConfig {
     );
   }
 
-  isBypassedIP(ip: string) {
+  isBypassedRequest(context: Context | undefined): boolean {
+    if (!context) {
+      return false;
+    }
+
+    if (context.bypassRequest) {
+      return true;
+    }
+
+    if (!context.remoteAddress) {
+      return false;
+    }
+
+    return this.isBypassedIP(context.remoteAddress);
+  }
+
+  isBypassedIP(ip: string): boolean {
     return this.bypassedIPAddresses ? this.bypassedIPAddresses.has(ip) : false;
   }
 

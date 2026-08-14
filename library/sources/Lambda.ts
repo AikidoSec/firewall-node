@@ -186,10 +186,7 @@ function incrementStatsAndDiscoverAPISpec(
   event: unknown,
   result: unknown
 ) {
-  if (
-    agentContext.remoteAddress &&
-    agent.getConfig().isBypassedIP(agentContext.remoteAddress)
-  ) {
+  if (agent.getConfig().isBypassedRequest(agentContext)) {
     return;
   }
 
