@@ -1,3 +1,4 @@
+import * as FakeTimers from "@sinonjs/fake-timers";
 import * as t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
 
@@ -192,7 +193,7 @@ t.test("restricting access to some ips", async () => {
   t.same(config.isAllowedIPAddress("4.3.2.1").allowed, false);
   t.same(config.isAllowedIPAddress("127.0.0.1").allowed, true); // Always allow private ips
 
-  config.updateAllowedIPAddresses([]);
+  await config.updateAllowedIPAddresses([]);
   t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
   t.same(config.isAllowedIPAddress("127.0.0.1").allowed, true);
   t.same(config.isAllowedIPAddress("4.3.2.1").allowed, true);
@@ -271,7 +272,7 @@ t.test("it sets and updates monitored IP lists", async (t) => {
   t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), []);
   t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), []);
 
-  config.updateMonitoredIPAddresses([
+  await config.updateMonitoredIPAddresses([
     {
       key: "tor/exit_nodes",
       source: "tor",
@@ -283,7 +284,7 @@ t.test("it sets and updates monitored IP lists", async (t) => {
   t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), ["tor/exit_nodes"]);
   t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), ["tor/exit_nodes"]);
 
-  config.updateMonitoredIPAddresses([]);
+  await config.updateMonitoredIPAddresses([]);
 
   t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), []);
   t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), []);
@@ -292,7 +293,7 @@ t.test("it sets and updates monitored IP lists", async (t) => {
 t.test("it returns matching IP lists keys", async (t) => {
   const config = new ServiceConfig([], 0, [], [], [], []);
 
-  config.updateMonitoredIPAddresses([
+  await config.updateMonitoredIPAddresses([
     {
       key: "tor/exit_nodes",
       source: "tor",
@@ -307,7 +308,7 @@ t.test("it returns matching IP lists keys", async (t) => {
     },
   ]);
 
-  config.updateBlockedIPAddresses([
+  await config.updateBlockedIPAddresses([
     {
       key: "geoip/Belgium;BE",
       source: "geoip",
@@ -322,7 +323,7 @@ t.test("it returns matching IP lists keys", async (t) => {
     },
   ]);
 
-  config.updateAllowedIPAddresses([
+  await config.updateAllowedIPAddresses([
     {
       key: "geoip/Belgium;BE",
       source: "geoip",
@@ -344,6 +345,118 @@ t.test("it returns matching IP lists keys", async (t) => {
   t.same(config.getMatchingBlockedIPListKeys("7.7.7.7"), []);
   t.same(config.getMatchingMonitoredIPListKeys("7.7.7.7"), []);
 });
+
+t.test(
+  "it yields to the event loop while updating blocked IP addresses",
+  async (t) => {
+    const clock = FakeTimers.install();
+    const config = new ServiceConfig([], 0, [], [], [], []);
+
+    const promise = config.updateBlockedIPAddresses([
+      {
+        key: "geoip/Belgium;BE",
+        source: "geoip",
+        description: "description",
+        ips: ["1.2.3.4"],
+      },
+      {
+        key: "geoip/Germany;DE",
+        source: "geoip",
+        description: "description",
+        ips: ["5.6.7.8"],
+      },
+    ]);
+
+    // The new list isn't applied yet, because the update is waiting to be
+    // resumed by the event loop
+    t.same(config.getMatchingBlockedIPListKeys("1.2.3.4"), []);
+
+    await clock.runAllAsync();
+    await promise;
+
+    t.same(config.getMatchingBlockedIPListKeys("1.2.3.4"), [
+      "geoip/Belgium;BE",
+    ]);
+    t.same(config.getMatchingBlockedIPListKeys("5.6.7.8"), [
+      "geoip/Germany;DE",
+    ]);
+
+    clock.uninstall();
+  }
+);
+
+t.test(
+  "it yields to the event loop while updating monitored IP addresses",
+  async (t) => {
+    const clock = FakeTimers.install();
+    const config = new ServiceConfig([], 0, [], [], [], []);
+
+    const promise = config.updateMonitoredIPAddresses([
+      {
+        key: "tor/exit_nodes",
+        source: "tor",
+        description: "due to tor usage",
+        ips: ["1.2.3.4"],
+      },
+      {
+        key: "known_threat_actors/public_scanners",
+        source: "tor",
+        description: "due to tor usage",
+        ips: ["5.6.7.8"],
+      },
+    ]);
+
+    t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), []);
+
+    await clock.runAllAsync();
+    await promise;
+
+    t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), [
+      "tor/exit_nodes",
+    ]);
+    t.same(config.getMatchingMonitoredIPListKeys("5.6.7.8"), [
+      "known_threat_actors/public_scanners",
+    ]);
+
+    clock.uninstall();
+  }
+);
+
+t.test(
+  "it yields to the event loop while updating allowed IP addresses",
+  async (t) => {
+    const clock = FakeTimers.install();
+    const config = new ServiceConfig([], 0, [], [], [], []);
+
+    const promise = config.updateAllowedIPAddresses([
+      {
+        key: "geoip/Belgium;BE",
+        source: "geoip",
+        description: "description",
+        ips: ["1.2.3.4"],
+      },
+      {
+        key: "geoip/Germany;DE",
+        source: "geoip",
+        description: "description",
+        ips: ["5.6.7.8"],
+      },
+    ]);
+
+    // Still restricted to the (empty) previous allowlist configuration,
+    // since the update hasn't been applied yet
+    t.same(config.isAllowedIPAddress("9.9.9.9").allowed, true);
+
+    await clock.runAllAsync();
+    await promise;
+
+    t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
+    t.same(config.isAllowedIPAddress("5.6.7.8").allowed, true);
+    t.same(config.isAllowedIPAddress("9.9.9.9").allowed, false);
+
+    clock.uninstall();
+  }
+);
 
 t.test("should return all matching user agent patterns", async (t) => {
   const config = new ServiceConfig([], 0, [], [], [], []);

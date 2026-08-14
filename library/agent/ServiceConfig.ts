@@ -3,6 +3,7 @@ import { hostnameToUnicode } from "../helpers/hostnameToUnicode";
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { normalizeHostname } from "../helpers/normalizeHostname";
+import { yieldToEventLoop } from "../helpers/yieldToEventLoop";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig, Domain } from "./Config";
 import type { IPList, UserAgentDetails } from "./api/FetchListsAPI";
@@ -156,20 +157,35 @@ export class ServiceConfig {
     }
   }
 
-  updateBlockedIPAddresses(blockedIPAddresses: IPList[]) {
-    this.setBlockedIPAddresses(blockedIPAddresses);
+  async updateBlockedIPAddresses(blockedIPAddresses: IPList[]) {
+    const built: typeof this.blockedIPAddresses = [];
+
+    for (const source of blockedIPAddresses) {
+      built.push({
+        key: source.key,
+        // Large list: IPv4-mapped checked at lookup time to save memory
+        blocklist: new IPMatcher(source.ips),
+        description: source.description,
+      });
+      await yieldToEventLoop();
+    }
+
+    this.blockedIPAddresses = built;
   }
 
-  updateMonitoredIPAddresses(monitoredIPAddresses: IPList[]) {
-    this.monitoredIPAddresses = [];
+  async updateMonitoredIPAddresses(monitoredIPAddresses: IPList[]) {
+    const built: typeof this.monitoredIPAddresses = [];
 
     for (const source of monitoredIPAddresses) {
-      this.monitoredIPAddresses.push({
+      built.push({
         key: source.key,
         // Large list: IPv4-mapped checked at lookup time to save memory
         list: new IPMatcher(source.ips),
       });
+      await yieldToEventLoop();
     }
+
+    this.monitoredIPAddresses = built;
   }
 
   updateBlockedUserAgents(blockedUserAgents: string) {
@@ -254,8 +270,24 @@ export class ServiceConfig {
     }
   }
 
-  updateAllowedIPAddresses(ipAddresses: IPList[]) {
-    this.setAllowedIPAddresses(ipAddresses);
+  async updateAllowedIPAddresses(ipAddresses: IPList[]) {
+    const built: typeof this.allowedIPAddresses = [];
+
+    for (const source of ipAddresses) {
+      // Skip empty allowlists
+      if (source.ips.length === 0) {
+        continue;
+      }
+      built.push({
+        // Large list: IPv4-mapped checked at lookup time to save memory
+        allowlist: new IPMatcher(source.ips),
+        description: source.description,
+      });
+
+      await yieldToEventLoop();
+    }
+
+    this.allowedIPAddresses = built;
   }
 
   isAllowedIPAddress(ip: string): { allowed: boolean } {
