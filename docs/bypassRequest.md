@@ -2,7 +2,11 @@
 
 To disable Zen for a specific request, you can use the `bypassRequest` function in a middleware. This allows you to bypass Zen's security checks and stats collection for that request.
 Please note that Zen already has a built-in feature for disabling Zen for IP addresses, but this feature offers greater flexibility, allowing you to disable Zen for specific requests based on any criteria you choose.
-The following example shows how to disable Zen for a specific request in a Hono application:
+
+> [!WARNING]
+> Please use this feature with caution, as it can potentially expose your application to security risks if not used properly.
+
+The following example shows how to disable Zen for a specific request in a Hono application.
 
 ```js
 import { Hono } from "hono";
@@ -27,5 +31,3 @@ app.get("/", async (c) => {
 
 // ...
 ```
-
-Please use this feature with caution, as it can potentially expose your application to security risks if not used properly.
