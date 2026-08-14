@@ -2,8 +2,8 @@ import * as FakeTimers from "@sinonjs/fake-timers";
 import * as t from "tap";
 import { yieldToEventLoop } from "./yieldToEventLoop";
 
-t.test("it resolves", async (t) => {
-  await t.resolves(yieldToEventLoop());
+t.test("it resolves", async () => {
+  await yieldToEventLoop();
 });
 
 t.test("it does not resolve before the immediate fires", async (t) => {
