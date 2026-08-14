@@ -890,3 +890,67 @@ t.test("it detects attack waves using Gateway Event v2", async (t) => {
     "should include one of the attack paths"
   );
 });
+
+t.test("it works with v2 event with removed cookie header", async (t) => {
+  const handler = createLambdaWrapper((event, context, callback) => {
+    callback(null, {
+      body: JSON.stringify(getContext()),
+      statusCode: 200,
+    });
+  });
+
+  const result = (await handler(
+    {
+      rawPath: "/some/path",
+      body: "body",
+      rawQueryString: "query=value",
+      queryStringParameters: {
+        query: "value",
+      },
+      pathParameters: {
+        parameter: "value",
+      },
+      headers: {
+        "content-type": "application/json",
+      },
+      cookies: [
+        "test_cookie_1=apple",
+        "test_cookie_2=banana",
+        "test_cookie_3=cherry",
+      ],
+      requestContext: {
+        http: {
+          path: "/some/path",
+          protocol: "HTTP/1.1",
+          userAgent: "agent",
+          sourceIp: "1.2.3.4",
+          method: "GET",
+        },
+      },
+    },
+    lambdaContext,
+    () => {}
+  )) as unknown as { body: string };
+
+  t.same(JSON.parse(result.body), {
+    method: "GET",
+    url: "/some/path?query=value",
+    remoteAddress: "1.2.3.4",
+    headers: {
+      "content-type": "application/json",
+    },
+    query: {
+      query: "value",
+    },
+    cookies: {
+      test_cookie_1: "apple",
+      test_cookie_2: "banana",
+      test_cookie_3: "cherry",
+    },
+    routeParams: {
+      parameter: "value",
+    },
+    source: "lambda/gateway",
+    route: "/some/path",
+  });
+});
