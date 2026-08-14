@@ -431,6 +431,7 @@ t.test(
     setBuiltinModulesToPatch([module]);
 
     const fs = process.getBuiltinModule("node:fs");
+    // @ts-expect-error Test property added by interceptor
     t.same(fs._test, "aikido");
 
     setBuiltinModulesToPatch([]);
@@ -473,9 +474,11 @@ t.test(
     t.same(fsViaRequire._test, "aikido");
 
     const fsViaGetBuiltinModule = process.getBuiltinModule("fs");
+    // @ts-expect-error Test property added by interceptor
     t.same(fsViaGetBuiltinModule._test, "aikido");
 
     const fsViaGetBuiltinModulePrefixed = process.getBuiltinModule("node:fs");
+    // @ts-expect-error Test property added by interceptor
     t.same(fsViaGetBuiltinModulePrefixed._test, "aikido");
 
     setBuiltinModulesToPatch([]);
