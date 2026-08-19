@@ -33,6 +33,17 @@ export function listenForConfigUpdates({
   }
 
   let currentLastUpdatedAt = lastUpdatedAt;
+  let lastConfigRefreshStartedAt = performance.now() - 9_000;
+
+  function configUpdateArrivedTooFast() {
+    const now = performance.now();
+    if (now - lastConfigRefreshStartedAt < 9_000) {
+      return true;
+    }
+
+    lastConfigRefreshStartedAt = now;
+    return false;
+  }
 
   connectToSSE({
     token,
@@ -50,6 +61,11 @@ export function listenForConfigUpdates({
         }
       } catch {
         logDebug(`SSE config-updated event has invalid payload: ${event.data}`);
+        return;
+      }
+
+      if (configUpdateArrivedTooFast()) {
+        logDebug("SSE config-updated event ignored by refresh throttle");
         return;
       }
 
