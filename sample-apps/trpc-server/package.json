@@ -1,0 +1,20 @@
+{
+  "name": "examples-minimal",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "server": "node -r @aikidosec/firewall/instrument ./server/index.ts",
+    "client": "node ./client/index.ts"
+  },
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@trpc/client": "^11.18.0",
+    "@trpc/server": "^11.18.0",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.9.2"
+  }
+}
