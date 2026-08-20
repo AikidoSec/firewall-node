@@ -142,7 +142,7 @@
     "oxlint": "^1.50.0",
     "oxlint-tsgolint": "^0.16.0",
     "percentile": "^1.6.0",
-    "pg": "^8.11.3",
+    "pg": "^8.23.0",
     "postgres": "^3.4.4",
     "prisma": "^5.22.0",
     "raw-body-v2": "npm:raw-body@^2.0.0",
