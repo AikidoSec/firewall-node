@@ -654,6 +654,7 @@ export class Agent {
       "@nestjs/core",
       "micro",
       "nuxt",
+      "@trpc/server",
     ];
 
     return webFrameworks.some(
