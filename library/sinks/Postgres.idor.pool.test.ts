@@ -116,7 +116,7 @@ t.test("IDOR protection for Postgres Pool (pg)", async (t) => {
       if (error instanceof Error) {
         t.match(
           error.message,
-          "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+          "Zen IDOR protection: query on table 'cats_pg_idor_pool' requires a tenant ID, but setTenantId() was not called (use runWithTenant(...) for background work)"
         );
       }
     });

@@ -273,8 +273,67 @@ t.test("checkContextForIdor", async (t) => {
     t.ok(result);
     t.match(
       result?.message,
-      "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+      "query on table 'orders' requires a tenant ID, but setTenantId() was not called"
     );
+  });
+
+  await t.test(
+    "allows a request without a tenant if it only touches excluded tables",
+    async () => {
+      agent.setIdorProtectionConfig({
+        tenantColumnName: "tenant_id",
+        excludedTables: ["migrations"],
+        requireTenantId: false,
+      });
+
+      const result = runWithContext(contextWithoutTenantId, () =>
+        checkContextForIdor({
+          sql: "SELECT * FROM migrations",
+          dialect: sqlite,
+          resolvePlaceholder: () => undefined,
+        })
+      );
+
+      t.equal(result, undefined);
+    }
+  );
+
+  await t.test(
+    "blocks a request without a tenant and lists every table that needs one",
+    async () => {
+      agent.setIdorProtectionConfig({
+        tenantColumnName: "tenant_id",
+        excludedTables: ["migrations"],
+        requireTenantId: false,
+      });
+
+      const result = runWithContext(contextWithoutTenantId, () =>
+        checkContextForIdor({
+          sql: "SELECT * FROM orders o JOIN customers c ON o.customer_id = c.id JOIN migrations m ON m.id = o.migration_id",
+          dialect: sqlite,
+          resolvePlaceholder: () => undefined,
+        })
+      );
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "query on tables 'orders, customers' requires a tenant ID"
+      );
+    }
+  );
+
+  await t.test("shortens a long table list with '...'", async () => {
+    const result = runWithContext(contextWithoutTenantId, () =>
+      checkContextForIdor({
+        sql: "SELECT * FROM a JOIN b ON true JOIN c ON true JOIN d ON true JOIN e ON true JOIN f ON true",
+        dialect: sqlite,
+        resolvePlaceholder: () => undefined,
+      })
+    );
+
+    t.ok(result);
+    t.match(result?.message, "query on tables 'a, b, c, d, e, ...' requires");
   });
 
   await t.test(
@@ -308,7 +367,7 @@ t.test("checkContextForIdor", async (t) => {
       t.ok(result);
       t.match(
         result?.message,
-        "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+        "query on table 'orders' requires a tenant ID, but setTenantId() was not called"
       );
 
       // Restore the default (no enforcement) for any later tests.
@@ -317,6 +376,25 @@ t.test("checkContextForIdor", async (t) => {
         excludedTables: [],
         requireTenantId: false,
       });
+    }
+  );
+
+  await t.test(
+    "still skips a query with requireTenantId enabled if it only touches excluded tables",
+    async () => {
+      agent.setIdorProtectionConfig({
+        tenantColumnName: "tenant_id",
+        excludedTables: ["migrations"],
+        requireTenantId: true,
+      });
+
+      const result = checkContextForIdor({
+        sql: "SELECT * FROM migrations",
+        dialect: sqlite,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.equal(result, undefined);
     }
   );
 });

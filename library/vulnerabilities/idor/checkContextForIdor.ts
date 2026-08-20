@@ -38,18 +38,6 @@ export function checkContextForIdor({
     return undefined;
   }
 
-  const tenant = getTenantContext();
-  if (!tenant) {
-    // A request always needs a tenant. Background work (no request) only needs one
-    // when the app opts in with requireTenantId; otherwise we skip the query.
-    if (getContext() || config.requireTenantId) {
-      return violation(
-        "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
-      );
-    }
-    return undefined;
-  }
-
   const analysis = getAnalysisResults(sql, dialect);
 
   if (!analysis) {
@@ -58,6 +46,25 @@ export function checkContextForIdor({
 
   if ("error" in analysis) {
     return violation(`Zen IDOR protection: ${analysis.error}`);
+  }
+
+  const tenant = getTenantContext();
+  if (!tenant) {
+    // A tenant is always required when we know it's a request.
+    // Otherwise (e.g. background work), we only require one if requireTenantId is on.
+    if (getContext() || config.requireTenantId) {
+      for (const queryResult of analysis.results) {
+        const tables = nonExcludedTables(queryResult, config.excludedTables);
+        // If the query only touches excluded tables, we don't care whether a tenant ID was set.
+        if (tables.length > 0) {
+          const noun = tables.length > 1 ? "tables" : "table";
+          return violation(
+            `Zen IDOR protection: query on ${noun} '${joinWithLimit(tables)}' requires a tenant ID, but setTenantId() was not called (use runWithTenant(...) for background work)`
+          );
+        }
+      }
+    }
+    return undefined;
   }
 
   for (const queryResult of analysis.results) {
@@ -85,6 +92,23 @@ export function checkContextForIdor({
   }
 
   return undefined;
+}
+
+function joinWithLimit(items: string[], limit = 5): string {
+  if (items.length <= limit) {
+    return items.join(", ");
+  }
+
+  return `${items.slice(0, limit).join(", ")}, ...`;
+}
+
+function nonExcludedTables(
+  queryResult: SqlQueryResult,
+  excludedTables: string[]
+): string[] {
+  return queryResult.tables
+    .filter((table) => !excludedTables.includes(table.name))
+    .map((table) => table.name);
 }
 
 function checkWhereFilters(
