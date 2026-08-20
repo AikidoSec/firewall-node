@@ -384,6 +384,64 @@ t.test(
 );
 
 t.test(
+  "it captures input before a middleware running after .input() can read it",
+  async (t) => {
+    const { initTRPC } =
+      require("@trpc/server") as typeof import("@trpc/server");
+    const trpc = initTRPC.create();
+
+    let trpcContextInMiddleware: unknown;
+
+    const proc = trpc.procedure
+      .input(z.string())
+      .use(async (opts) => {
+        trpcContextInMiddleware = getContext()?.trpc;
+        return opts.next();
+      })
+      .query(({ input }) => `cat:${input}`);
+
+    const router = trpc.router({ byName: proc });
+    const caller = trpc.createCallerFactory(router)({});
+
+    await runWithContext(getTestContext(), async () => {
+      await caller.byName("Felix");
+    });
+
+    t.same(trpcContextInMiddleware, ["Felix"]);
+  }
+);
+
+t.test(
+  "it captures input before a t.middleware()-built middleware running after .input() can read it",
+  async (t) => {
+    const { initTRPC } =
+      require("@trpc/server") as typeof import("@trpc/server");
+    const trpc = initTRPC.create();
+
+    let trpcContextInMiddleware: unknown;
+
+    const readsInput = trpc.middleware(async (opts) => {
+      trpcContextInMiddleware = getContext()?.trpc;
+      return opts.next();
+    });
+
+    const proc = trpc.procedure
+      .input(z.string())
+      .use(readsInput)
+      .query(({ input }) => `cat:${input}`);
+
+    const router = trpc.router({ byName: proc });
+    const caller = trpc.createCallerFactory(router)({});
+
+    await runWithContext(getTestContext(), async () => {
+      await caller.byName("Felix");
+    });
+
+    t.same(trpcContextInMiddleware, ["Felix"]);
+  }
+);
+
+t.test(
   "it does not capture input when a middleware short-circuits before the resolver",
   async (t) => {
     const { initTRPC, TRPCError } =

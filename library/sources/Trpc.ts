@@ -45,25 +45,58 @@ function captureInput(context: Context, input: unknown) {
   }
 
   const current = Array.isArray(context.trpc) ? context.trpc : [];
+
+  if (current.includes(value)) {
+    return;
+  }
+
   updateContext(context, "trpc", current.concat([value]));
 }
 
 export class Trpc implements Wrapper {
-  private wrapResolver(resolver: unknown) {
-    if (typeof resolver !== "function") {
-      return resolver;
+  private wrapInputConsumer(fn: unknown) {
+    if (typeof fn !== "function") {
+      return fn;
     }
 
-    return function wrappedResolver(this: unknown, ...args: unknown[]) {
+    return function wrappedInputConsumer(this: unknown, ...args: unknown[]) {
       const opts = args[0] as ResolverOpts;
       const context = getContext();
 
-      if (context && opts && typeof opts === "object" && "input" in opts) {
+      if (
+        context &&
+        opts &&
+        typeof opts === "object" &&
+        opts.input !== undefined
+      ) {
         captureInput(context, opts.input);
       }
 
-      return resolver.apply(this, args);
+      return fn.apply(this, args);
     };
+  }
+
+  private wrapMiddlewareArg(arg: unknown): unknown {
+    if (typeof arg === "function") {
+      return this.wrapInputConsumer(arg);
+    }
+
+    if (
+      arg &&
+      typeof arg === "object" &&
+      "_middlewares" in arg &&
+      Array.isArray(arg._middlewares)
+    ) {
+      const original = arg as { _middlewares: unknown[] };
+      return {
+        ...original,
+        _middlewares: original._middlewares.map((fn) =>
+          this.wrapInputConsumer(fn)
+        ),
+      };
+    }
+
+    return arg;
   }
 
   private wrapProcedureBuilder(builder: unknown): unknown {
@@ -78,15 +111,23 @@ export class Trpc implements Wrapper {
       if (typeof original[method] === "function") {
         const origFunc = original[method];
         wrapped[method] = (resolver: unknown, ...rest: unknown[]) =>
-          origFunc(this.wrapResolver(resolver), ...rest);
+          origFunc(this.wrapInputConsumer(resolver), ...rest);
       }
     }
 
     for (const method of CHAIN_METHODS) {
       if (typeof original[method] === "function") {
         const origFunc = original[method];
-        wrapped[method] = (...args: unknown[]) =>
-          this.wrapProcedureBuilder(origFunc(...args));
+
+        if (method === "use") {
+          wrapped[method] = (arg: unknown, ...rest: unknown[]) =>
+            this.wrapProcedureBuilder(
+              origFunc(this.wrapMiddlewareArg(arg), ...rest)
+            );
+        } else {
+          wrapped[method] = (...args: unknown[]) =>
+            this.wrapProcedureBuilder(origFunc(...args));
+        }
       }
     }
 
