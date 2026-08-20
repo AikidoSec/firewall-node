@@ -254,3 +254,11 @@ t.test("hasWithMappedCheck matches explicit IPv4-mapped in list", async (t) => {
   const matcher = new IPMatcher(["::ffff:192.0.2.1"]);
   t.same(matcher.hasWithMappedCheck("::ffff:192.0.2.1"), true);
 });
+
+t.test("it works for non CIDR IPv4 addresses", async (t) => {
+  const input = ["1.2.3.4"];
+
+  const matcher = new IPMatcher(input);
+  t.same(matcher.has("1.2.3.4"), true);
+  t.same(matcher.has("2.3.4.5 "), false);
+});
