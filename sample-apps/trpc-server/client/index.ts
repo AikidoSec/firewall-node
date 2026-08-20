@@ -5,10 +5,11 @@ import {
   splitLink,
 } from "@trpc/client";
 
-import type { AppRouter } from "../server/index.js";
+import type { AppRouter } from "../server/router.js";
 import { deepEqual, rejects } from "assert/strict";
 
 const port = process.env.PORT || "4000";
+const path = process.env.PATH || "";
 
 const trpc = createTRPCClient<AppRouter>({
   links: [

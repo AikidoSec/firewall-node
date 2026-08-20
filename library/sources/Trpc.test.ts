@@ -129,26 +129,33 @@ t.test("it does not throw without a context", async (t) => {
   t.equal(result, "cat:Tom");
 });
 
-t.test("it captures FormData input", async (t) => {
-  const { initTRPC } = require("@trpc/server") as typeof import("@trpc/server");
-  const trpc = initTRPC.create();
+t.test(
+  "it captures FormData input",
+  {
+    skip: !globalThis.FormData, // skip if FormData is not available (e.g. Node 16)
+  },
+  async (t) => {
+    const { initTRPC } =
+      require("@trpc/server") as typeof import("@trpc/server");
+    const trpc = initTRPC.create();
 
-  const proc = trpc.procedure
-    .input(z.instanceof(FormData))
-    .mutation(({ input }) => input.get("name"));
+    const proc = trpc.procedure
+      .input(z.instanceof(FormData))
+      .mutation(({ input }) => input.get("name"));
 
-  const router = trpc.router({ upload: proc });
-  const caller = trpc.createCallerFactory(router)({});
+    const router = trpc.router({ upload: proc });
+    const caller = trpc.createCallerFactory(router)({});
 
-  const formData = new FormData();
-  formData.append("name", "Felix");
+    const formData = new FormData();
+    formData.append("name", "Felix");
 
-  await runWithContext(getTestContext(), async () => {
-    const result = await caller.upload(formData);
-    t.equal(result, "Felix");
-    t.same(getContext()?.trpc, [{ name: "Felix" }]);
-  });
-});
+    await runWithContext(getTestContext(), async () => {
+      const result = await caller.upload(formData);
+      t.equal(result, "Felix");
+      t.same(getContext()?.trpc, [{ name: "Felix" }]);
+    });
+  }
+);
 
 t.test("it also wraps builders created via initTRPC.context()", async (t) => {
   const { initTRPC } = require("@trpc/server") as typeof import("@trpc/server");

@@ -7,7 +7,15 @@ import { Wrapper } from "../agent/Wrapper";
 // Methods that produce a new builder
 // We need to keep wrapping builder objects they return so that `.query()/.mutation()/.subscription()`
 // stays intercepted on chain calls
-const CHAIN_METHODS = ["input", "output", "meta", "use", "concat"] as const;
+const CHAIN_METHODS = [
+  "input",
+  "output",
+  "meta",
+  "use",
+  "concat",
+  "unstable_concat",
+  "experimental_caller",
+] as const;
 
 // Methods that turn a builder into a procedure. The function passed here
 // is the resolver that receives the fully parsed input.
