@@ -662,7 +662,7 @@ test("requireTenantId blocks background work that forgot runWithTenant", async (
     // requireTenantId on, Zen blocks it instead of letting it run unchecked.
     match(
       stderr,
-      /Zen IDOR protection: setTenantId\(\) was not called for this request \(use runWithTenant\(\.\.\.\) for background work\)\. A tenant ID is required for every query\./
+      /Zen IDOR protection: query on table 'cats_6_with_idor' requires a tenant ID, but setTenantId\(\) was not called \(use runWithTenant\(\.\.\.\) for background work\)/
     );
   } catch (err) {
     fail(err);
