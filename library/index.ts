@@ -27,6 +27,7 @@ import { warnBox } from "./helpers/warnBox";
 import { isPreloaded } from "./helpers/isPreloaded";
 import { warnIfEntrypointIsModule } from "./helpers/warnIfEntrypointIsModule";
 import { elysiaHandler } from "./middleware/elysia";
+import { bypassRequest } from "./agent/context/bypassRequest";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -86,6 +87,7 @@ export {
   getTenantId,
   enableIdorProtection,
   withoutIdorProtection,
+  bypassRequest,
 };
 
 // Required for ESM / TypeScript default export support
@@ -109,4 +111,5 @@ export default {
   getTenantId,
   enableIdorProtection,
   withoutIdorProtection,
+  bypassRequest,
 };

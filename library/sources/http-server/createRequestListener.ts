@@ -142,10 +142,7 @@ function onFinishRequestHandler(
   // Mark the request as counted
   req[countedRequest] = true;
 
-  if (
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress)
-  ) {
+  if (agent.getConfig().isBypassedRequest(context)) {
     return;
   }
 
