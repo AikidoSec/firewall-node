@@ -111,8 +111,8 @@ export function createMySQL2IdorTests(versionPkgName: string) {
         "query() prefers the second argument's values over the object's values when both are provided",
         async () => {
           const [rows] = await runWithContext(context, () => {
-            return withoutIdorProtection(() => {
-              return connection.query(
+            return withoutIdorProtection(async () => {
+              return await connection.query(
                 { sql: "SELECT ? as val", values: ["fromObject"] },
                 ["fromSecondArg"]
               );
@@ -126,8 +126,8 @@ export function createMySQL2IdorTests(versionPkgName: string) {
         "execute() prefers the object's values over the second argument's values when both are provided",
         async () => {
           const [rows] = await runWithContext(context, () => {
-            return withoutIdorProtection(() => {
-              return connection.execute(
+            return withoutIdorProtection(async () => {
+              return await connection.execute(
                 { sql: "SELECT ? as val", values: ["fromObject"] },
                 ["fromSecondArg"]
               );
@@ -141,8 +141,8 @@ export function createMySQL2IdorTests(versionPkgName: string) {
         "execute() falls back to the second argument's values when the object has no values",
         async () => {
           const [rows] = await runWithContext(context, () => {
-            return withoutIdorProtection(() => {
-              return connection.execute({ sql: "SELECT ? as val" }, [
+            return withoutIdorProtection(async () => {
+              return await connection.execute({ sql: "SELECT ? as val" }, [
                 "fromSecondArg",
               ]);
             });
