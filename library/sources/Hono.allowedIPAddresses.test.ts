@@ -7,6 +7,7 @@ import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { createTestAgent } from "../helpers/createTestAgent";
 import * as fetch from "../helpers/fetch";
 import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
+import { yieldToEventLoop } from "../helpers/yieldToEventLoop";
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -83,6 +84,14 @@ t.test("test access only allowed for some IP addresses", opts, async (t) => {
     fetch: app.fetch,
     port: 8768,
   });
+
+  // Blocked/allowed IP lists are applied asynchronously on startup, yielding
+  // to the event loop once per list entry. Wait for them to be applied
+  // before sending requests, otherwise the allowlist restriction may not be
+  // active yet.
+  for (let i = 0; i < 5; i++) {
+    await yieldToEventLoop();
+  }
 
   const response = await fetch.fetch({
     url: new URL("http://127.0.0.1:8768/"),

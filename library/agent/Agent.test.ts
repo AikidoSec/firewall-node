@@ -21,6 +21,13 @@ import { setTimeout } from "node:timers/promises";
 import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
 import { colorText } from "../helpers/colorText";
 import { shutdown } from "./shutdown";
+import { yieldToEventLoop } from "../helpers/yieldToEventLoop";
+
+async function waitForListsToBeApplied() {
+  for (let i = 0; i < 5; i++) {
+    await yieldToEventLoop();
+  }
+}
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_INSTANCE_NAME;
@@ -450,7 +457,7 @@ t.test(
     agent.getInspectionStatistics().onRequest();
 
     // After 5 seconds, nothing should happen
-    clock.tick(1000 * 5);
+    await clock.tickAsync(1000 * 5);
     t.match(api.getEvents(), [
       {
         type: "started",
@@ -459,8 +466,7 @@ t.test(
 
     // After a minute, we'll see that the dashboard didn't receive any stats yet
     // And then send a heartbeat
-    clock.tick(60 * 1000);
-    await clock.nextAsync();
+    await clock.tickAsync(60 * 1000);
     t.match(api.getEvents(), [
       {
         type: "started",
@@ -471,8 +477,7 @@ t.test(
     ]);
 
     // We already reported initial stats, so we won't send another heartbeat
-    clock.tick(60 * 1000);
-    await clock.nextAsync();
+    await clock.tickAsync(60 * 1000);
     t.match(api.getEvents(), [
       {
         type: "started",
@@ -1252,7 +1257,7 @@ t.test("it fetches blocked lists", async () => {
 
   agent.start([]);
 
-  await setTimeout(0);
+  await waitForListsToBeApplied();
 
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: true,
@@ -1356,7 +1361,7 @@ t.test("it only allows some IP addresses", async () => {
 
   agent.start([]);
 
-  await setTimeout(0);
+  await waitForListsToBeApplied();
 
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: true,
