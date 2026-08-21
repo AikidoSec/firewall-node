@@ -14,6 +14,7 @@ Call `Zen.bypassRequest()` in a middleware to bypass Zen for this request. A byp
 - **User blocking** — blocked users are not blocked.
 - **Statistics** — the request isn't counted, and doesn't count against your monitored request quota.
 - **Attack wave protection** — the request doesn't count towards wave detection.
+- **IDOR Protection** — SQL queries are not checked for IDOR vulnerabilities
 
 ## Usage
 
