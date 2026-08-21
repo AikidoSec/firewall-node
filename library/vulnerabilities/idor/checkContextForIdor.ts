@@ -50,12 +50,11 @@ export function checkContextForIdor({
 
   const tenant = getTenantContext();
   if (!tenant) {
-    // A tenant is always required when we know it's a request.
-    // Otherwise (e.g. background work), we only require one if requireTenantId is on.
+    // Requests always need a tenant, unless the query only touches excluded tables.
+    // Background work only needs one if requireTenantId is on.
     if (getContext() || config.requireTenantId) {
       for (const queryResult of analysis.results) {
         const tables = nonExcludedTables(queryResult, config.excludedTables);
-        // If the query only touches excluded tables, we don't care whether a tenant ID was set.
         if (tables.length > 0) {
           const noun = tables.length > 1 ? "tables" : "table";
           return violation(
