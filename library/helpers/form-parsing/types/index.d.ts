@@ -3,10 +3,21 @@
 //                 Igor Savin <https://github.com/kibertoad>
 
 /// <reference types="node" />
-
 import * as http from "node:http";
 import { Readable, Writable } from "node:stream";
-export { Dicer } from "./deps/dicer/lib/Dicer";
+
+declare module "stream" {
+  interface Readable {
+    /**
+     * Emitted when the configured file size limit is reached.
+     */
+    on(event: "limit", listener: () => void): this;
+    once(event: "limit", listener: () => void): this;
+    addListener(event: "limit", listener: () => void): this;
+    removeListener(event: "limit", listener: () => void): this;
+  }
+}
+export { Dicer } from "../deps/dicer/lib/Dicer";
 
 export const Busboy: BusboyConstructor;
 export default Busboy;
@@ -113,7 +124,7 @@ export interface BusboyFileStream extends Readable {
   bytesRead: number;
 }
 
-export interface Busboy extends Writable {
+export interface BusboyInstance extends Writable {
   addListener<Event extends keyof BusboyEvents>(
     event: Event,
     listener: BusboyEvents[Event]
@@ -223,7 +234,7 @@ export interface BusboyEvents {
 }
 
 export interface BusboyConstructor {
-  (options: BusboyConfig): Busboy;
+  (options: BusboyConfig): BusboyInstance;
 
-  new (options: BusboyConfig): Busboy;
+  new (options: BusboyConfig): BusboyInstance;
 }
