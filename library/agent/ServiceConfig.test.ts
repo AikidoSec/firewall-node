@@ -1,23 +1,6 @@
 import * as t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
 import type { Context } from "./Context";
-import type { FetchListsAPIResponse } from "./api/FetchListsAPI";
-
-function updateFirewallLists(
-  config: ServiceConfig,
-  lists: Partial<FetchListsAPIResponse>
-): Promise<void> {
-  return config.updateFirewallLists({
-    blockedIPAddresses: [],
-    allowedIPAddresses: [],
-    monitoredIPAddresses: [],
-    blockedUserAgents: "",
-    monitoredUserAgents: "",
-    userAgentDetails: [],
-    ...lists,
-  });
-}
-
 t.test("it returns false if empty rules", async () => {
   const config = new ServiceConfig([], 0, [], []);
   t.same(config.getLastUpdatedAt(), 0);
@@ -122,7 +105,7 @@ t.test("it checks if IP is bypassed", async () => {
 
 t.test("ip blocking works", async () => {
   const config = new ServiceConfig([], 0, [], []);
-  await updateFirewallLists(config, {
+  await config.updateFirewallLists({
     blockedIPAddresses: [
       {
         key: "geoip/Belgium;BE",
@@ -137,6 +120,11 @@ t.test("ip blocking works", async () => {
         ],
       },
     ],
+    allowedIPAddresses: [],
+    monitoredIPAddresses: [],
+    blockedUserAgents: "",
+    monitoredUserAgents: "",
+    userAgentDetails: [],
   });
   t.same(config.isIPAddressBlocked("1.2.3.4"), {
     blocked: true,
@@ -171,22 +159,21 @@ t.test("ip blocking works", async () => {
 
 t.test("it blocks bots", async () => {
   const config = new ServiceConfig([], 0, [], []);
-  await updateFirewallLists(config, {
-    blockedUserAgents: "googlebot|bingbot",
-  });
+  config.updateBlockedUserAgents("googlebot|bingbot");
 
   t.same(config.isUserAgentBlocked("googlebot"), { blocked: true });
   t.same(config.isUserAgentBlocked("123 bingbot abc"), { blocked: true });
   t.same(config.isUserAgentBlocked("bing"), { blocked: false });
 
-  await updateFirewallLists(config, {});
+  config.updateBlockedUserAgents("");
 
   t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
 });
 
 t.test("restricting access to some ips", async () => {
   const config = new ServiceConfig([], 0, [], []);
-  await updateFirewallLists(config, {
+  await config.updateFirewallLists({
+    blockedIPAddresses: [],
     allowedIPAddresses: [
       {
         key: "geoip/Belgium;BE",
@@ -195,13 +182,24 @@ t.test("restricting access to some ips", async () => {
         ips: ["1.2.3.4"],
       },
     ],
+    monitoredIPAddresses: [],
+    blockedUserAgents: "",
+    monitoredUserAgents: "",
+    userAgentDetails: [],
   });
 
   t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
   t.same(config.isAllowedIPAddress("4.3.2.1").allowed, false);
   t.same(config.isAllowedIPAddress("127.0.0.1").allowed, true); // Always allow private ips
 
-  await updateFirewallLists(config, {});
+  await config.updateFirewallLists({
+    blockedIPAddresses: [],
+    allowedIPAddresses: [],
+    monitoredIPAddresses: [],
+    blockedUserAgents: "",
+    monitoredUserAgents: "",
+    userAgentDetails: [],
+  });
   t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
   t.same(config.isAllowedIPAddress("127.0.0.1").allowed, true);
   t.same(config.isAllowedIPAddress("4.3.2.1").allowed, true);
@@ -209,7 +207,8 @@ t.test("restricting access to some ips", async () => {
 
 t.test("only allow some ips: empty list", async () => {
   const config = new ServiceConfig([], 0, [], []);
-  await updateFirewallLists(config, {
+  await config.updateFirewallLists({
+    blockedIPAddresses: [],
     allowedIPAddresses: [
       {
         key: "geoip/Belgium;BE",
@@ -218,6 +217,10 @@ t.test("only allow some ips: empty list", async () => {
         ips: [],
       },
     ],
+    monitoredIPAddresses: [],
+    blockedUserAgents: "",
+    monitoredUserAgents: "",
+    userAgentDetails: [],
   });
 
   t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
@@ -269,7 +272,9 @@ t.test("it sets and updates monitored IP lists", async (t) => {
   t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), []);
   t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), []);
 
-  await updateFirewallLists(config, {
+  await config.updateFirewallLists({
+    blockedIPAddresses: [],
+    allowedIPAddresses: [],
     monitoredIPAddresses: [
       {
         key: "tor/exit_nodes",
@@ -278,12 +283,22 @@ t.test("it sets and updates monitored IP lists", async (t) => {
         ips: ["1.2.3.0/24", "9.9.9.9"],
       },
     ],
+    blockedUserAgents: "",
+    monitoredUserAgents: "",
+    userAgentDetails: [],
   });
 
   t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), ["tor/exit_nodes"]);
   t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), ["tor/exit_nodes"]);
 
-  await updateFirewallLists(config, {});
+  await config.updateFirewallLists({
+    blockedIPAddresses: [],
+    allowedIPAddresses: [],
+    monitoredIPAddresses: [],
+    blockedUserAgents: "",
+    monitoredUserAgents: "",
+    userAgentDetails: [],
+  });
 
   t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), []);
   t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), []);
@@ -292,7 +307,7 @@ t.test("it sets and updates monitored IP lists", async (t) => {
 t.test("it returns matching IP lists keys", async (t) => {
   const config = new ServiceConfig([], 0, [], []);
 
-  await updateFirewallLists(config, {
+  await config.updateFirewallLists({
     monitoredIPAddresses: [
       {
         key: "tor/exit_nodes",
@@ -329,6 +344,9 @@ t.test("it returns matching IP lists keys", async (t) => {
         ips: ["7.7.7.7"],
       },
     ],
+    blockedUserAgents: "",
+    monitoredUserAgents: "",
+    userAgentDetails: [],
   });
 
   t.same(config.getMatchingBlockedIPListKeys("9.9.9.9"), []);
@@ -347,18 +365,16 @@ t.test("it returns matching IP lists keys", async (t) => {
 
 t.test("should return all matching user agent patterns", async (t) => {
   const config = new ServiceConfig([], 0, [], []);
-  await updateFirewallLists(config, {
-    userAgentDetails: [
-      {
-        key: "list1",
-        pattern: "a|b|c",
-      },
-      {
-        key: "list2",
-        pattern: "b",
-      },
-    ],
-  });
+  config.updateUserAgentDetails([
+    {
+      key: "list1",
+      pattern: "a|b|c",
+    },
+    {
+      key: "list2",
+      pattern: "b",
+    },
+  ]);
   t.same(config.getMatchingUserAgentKeys("a"), ["list1"]);
   t.same(config.getMatchingUserAgentKeys("A"), ["list1"]);
   t.same(config.getMatchingUserAgentKeys("b"), ["list1", "list2"]);
@@ -368,18 +384,18 @@ t.test("should return all matching user agent patterns", async (t) => {
 
 t.test("it clears RegExp when updating with empty pattern", async (t) => {
   const config = new ServiceConfig([], 0, [], []);
-  await updateFirewallLists(config, {
-    blockedUserAgents: "googlebot",
-    monitoredUserAgents: "googlebot",
-    userAgentDetails: [
-      {
-        key: "googlebot",
-        pattern: "googlebot",
-      },
-    ],
-  });
+  config.updateBlockedUserAgents("googlebot");
+  config.updateMonitoredUserAgents("googlebot");
+  config.updateUserAgentDetails([
+    {
+      key: "googlebot",
+      pattern: "googlebot",
+    },
+  ]);
 
-  await updateFirewallLists(config, {});
+  config.updateBlockedUserAgents("");
+  config.updateMonitoredUserAgents("");
+  config.updateUserAgentDetails([]);
 
   t.same(config.isMonitoredUserAgent("googlebot"), false);
   t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
@@ -391,27 +407,23 @@ t.test(
   async (t) => {
     const config = new ServiceConfig([], 0, [], []);
 
-    await updateFirewallLists(config, {
-      blockedUserAgents: "googlebot",
-      monitoredUserAgents: "googlebot",
-      userAgentDetails: [
-        {
-          key: "googlebot",
-          pattern: "googlebot",
-        },
-      ],
-    });
+    config.updateBlockedUserAgents("googlebot");
+    config.updateMonitoredUserAgents("googlebot");
+    config.updateUserAgentDetails([
+      {
+        key: "googlebot",
+        pattern: "googlebot",
+      },
+    ]);
 
-    await updateFirewallLists(config, {
-      blockedUserAgents: "[",
-      monitoredUserAgents: "[",
-      userAgentDetails: [
-        {
-          key: "googlebot",
-          pattern: "[",
-        },
-      ],
-    });
+    config.updateBlockedUserAgents("[");
+    config.updateMonitoredUserAgents("[");
+    config.updateUserAgentDetails([
+      {
+        key: "googlebot",
+        pattern: "[",
+      },
+    ]);
 
     t.same(config.isMonitoredUserAgent("googlebot"), false);
     t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
@@ -421,7 +433,7 @@ t.test(
 
 t.test("it atomically updates firewall lists", async (t) => {
   const config = new ServiceConfig([], 0, [], []);
-  await updateFirewallLists(config, {
+  await config.updateFirewallLists({
     blockedIPAddresses: [
       {
         key: "old-blocked",
@@ -508,7 +520,7 @@ t.test(
   "it retains firewall lists when building a replacement fails",
   async (t) => {
     const config = new ServiceConfig([], 0, [], []);
-    await updateFirewallLists(config, {
+    await config.updateFirewallLists({
       blockedIPAddresses: [
         {
           key: "old-blocked",
@@ -517,6 +529,11 @@ t.test(
           ips: ["1.1.1.1"],
         },
       ],
+      allowedIPAddresses: [],
+      monitoredIPAddresses: [],
+      blockedUserAgents: "",
+      monitoredUserAgents: "",
+      userAgentDetails: [],
     });
 
     await t.rejects(
