@@ -1,6 +1,8 @@
 // oxlint-disable no-console
 import * as t from "tap";
 import { IPMatcher } from "./IPMatcher";
+import { createIPMatcher } from "./createIPMatcher";
+import { loadNodeInternals } from "../loadNodeInternals";
 import { BlockList } from "net";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -102,5 +104,43 @@ t.test("IPMatcher.has() throughput", async (t) => {
   t.ok(
     msPerCall < 0.02,
     `expected has() to take less than 0.02ms per call, took ${msPerCall.toFixed(6)}ms`
+  );
+});
+
+t.test("Native IPMatcher.has() throughput", async (t) => {
+  if (!loadNodeInternals().bindings?.createIPMatcher) {
+    t.skip("native IPMatcher is unavailable", () => {});
+    return;
+  }
+
+  const matcher = await createIPMatcher(testIpRanges);
+
+  for (let i = 0; i < 3_000; i++) {
+    for (const { ip } of ipsToCheck) {
+      matcher.has(ip);
+    }
+  }
+
+  const iterations = 50_000;
+  const start = performance.now();
+  for (let i = 0; i < iterations; i++) {
+    for (const { ip } of ipsToCheck) {
+      matcher.has(ip);
+    }
+  }
+  const end = performance.now();
+
+  const totalCalls = iterations * ipsToCheck.length;
+  const msPerCall = (end - start) / totalCalls;
+
+  console.log(
+    `native has() took ${msPerCall.toFixed(6)}ms per call (${totalCalls.toLocaleString()} calls in ${(
+      end - start
+    ).toFixed(1)}ms)`
+  );
+
+  t.ok(
+    msPerCall < 0.02,
+    `expected native has() to take less than 0.02ms per call, took ${msPerCall.toFixed(6)}ms`
   );
 });
