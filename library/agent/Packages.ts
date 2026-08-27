@@ -37,6 +37,10 @@ export class Packages {
     return Array.from(this.packages.values()).flat();
   }
 
+  has(name: string): boolean {
+    return this.packages.has(name);
+  }
+
   clear() {
     this.packages.clear();
   }

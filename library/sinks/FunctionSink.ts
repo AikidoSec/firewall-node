@@ -11,7 +11,9 @@ import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { checkContextForJsInjection } from "../vulnerabilities/js-injection/checkContextForJsInjection";
 import { existsSync } from "node:fs";
 import { colorText } from "../helpers/colorText";
+import { warnBox } from "../helpers/warnBox";
 import { isMusl } from "../helpers/isMusl";
+import { isCodeGenerationFromStringsDisallowed } from "../helpers/isCodeGenerationFromStringsDisallowed";
 
 export class FunctionSink implements Wrapper {
   private inspectFunction(args: unknown[]): InterceptorResult {
@@ -58,7 +60,9 @@ export class FunctionSink implements Wrapper {
       console.warn(
         colorText(
           "red",
-          `AIKIDO: Cannot find native addon for Node.js ${majorVersion} on ${platform}-${arch}. Code injection attacks via eval() and new Function() will not be blocked. You can request support at https://github.com/AikidoSec/firewall-node/issues`
+          warnBox(
+            `Zen will NOT block code injection attacks (eval, new Function). Cannot find native addon for Node.js ${majorVersion} on ${platform}-${arch}. Request support: https://github.com/AikidoSec/firewall-node/issues`
+          )
         )
       );
       return;
@@ -76,7 +80,9 @@ export class FunctionSink implements Wrapper {
       console.warn(
         colorText(
           "red",
-          `AIKIDO: Failed to load native addon for Node.js ${majorVersion} on ${platform}-${arch}: ${(error as Error).message}. Code injection attacks via eval() and new Function() will not be blocked.`
+          warnBox(
+            `Zen will NOT block code injection attacks (eval, new Function). Failed to load native addon for Node.js ${majorVersion} on ${platform}-${arch}: ${(error as Error).message}`
+          )
         )
       );
       return;
@@ -86,7 +92,9 @@ export class FunctionSink implements Wrapper {
       console.warn(
         colorText(
           "red",
-          `AIKIDO: Native addon for Node.js ${majorVersion} on ${platform}-${arch} is invalid. Function sink will not be instrumented.`
+          warnBox(
+            `Zen will NOT block code injection attacks (eval, new Function). Native addon for Node.js ${majorVersion} on ${platform}-${arch} is invalid.`
+          )
         )
       );
       return;
@@ -97,6 +105,16 @@ export class FunctionSink implements Wrapper {
 
   wrap(_: Hooks) {
     if (envToBool(process.env.AIKIDO_DISABLE_CODE_GENERATION_HOOK)) {
+      return;
+    }
+
+    // If Node was started with --disallow-code-generation-from-strings, V8 already
+    // blocks every eval and new Function() call. We use the same V8 hook, so if we
+    // registered our callback it would override that and let eval run again for code
+    // that doesn't come from a request. So we do nothing and let Node keep blocking
+    // everything. No warning needed: we only block eval when the code comes from user
+    // input, and Node already blocks all of it, including those cases.
+    if (isCodeGenerationFromStringsDisallowed()) {
       return;
     }
 

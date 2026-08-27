@@ -36,7 +36,8 @@ export type Context = {
   executedMiddleware?: boolean;
   rateLimitGroup?: string; // Used to apply rate limits to a group of users
   rateLimitedEndpoint?: Endpoint; // The route that was rate limited
-  tenantId?: string; // Used for IDOR protection - set via setTenantId()
+  tenantId?: string; // Used for IDOR protection - set via setTenantId() (runWithTenant() overrides this)
+  bypassRequest?: boolean; // Used to disable protection (like bypassed Ips)
 };
 
 /**
@@ -98,8 +99,12 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.outgoingRequestRedirects = context.outgoingRequestRedirects;
     current.markUnsafe = context.markUnsafe;
 
+    // Only update the bypassRequest flag if it is set in new context
+    current.bypassRequest = context.bypassRequest ?? current.bypassRequest;
+
     // Clear all the cached user input strings
     delete current.cache;
+    delete current.cachePathTraversal;
 
     return fn();
   }

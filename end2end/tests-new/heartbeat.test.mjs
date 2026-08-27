@@ -90,7 +90,7 @@ test("It reports own http requests in heartbeat events", async () => {
           {
             hostname: "localhost",
             port: 5874,
-            hits: 2,
+            hits: 3,
           },
         ],
         agent: {

@@ -1,0 +1,8 @@
+{
+  "name": "eval-on-startup",
+  "main": "app.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build"
+  }
+}

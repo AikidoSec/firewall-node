@@ -76,7 +76,7 @@ test("it blocks request in blocking mode", async () => {
     match(stderr, /Zen has blocked an SQL injection/);
     doesNotMatch(
       stderr,
-      /You are using tsx to run your code. Zen might not fully protect your app when using tsx./
+      /Zen is NOT protecting your application when using tsx/
     );
   } catch (err) {
     fail(err);
@@ -146,10 +146,7 @@ test("it does not block request in monitoring mode", async () => {
     equal(normalAdd.status, 200);
     match(stdout, /Starting agent/);
     doesNotMatch(stderr, /Zen has blocked an SQL injection/);
-    doesNotMatch(
-      stderr,
-      /Your application entrypoint appears to be using ESM syntax. You need to use the new hook system to enable Zen./
-    );
+    doesNotMatch(stderr, /Zen is NOT protecting your application/);
   } catch (err) {
     fail(err);
   } finally {
@@ -196,10 +193,7 @@ test("it prints warning if CJS instrumentation is used with an ESM app", async (
     await timeout(4000);
 
     match(stdout, /Starting agent/);
-    match(
-      stderr,
-      /Your application entrypoint appears to be using ESM syntax. You need to use the new hook system to enable Zen./
-    );
+    match(stderr, /Zen is NOT protecting your application/);
   } catch (err) {
     fail(err);
   } finally {

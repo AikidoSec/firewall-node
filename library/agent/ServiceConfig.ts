@@ -1,10 +1,13 @@
 import { addIPv4MappedAddresses } from "../helpers/addIPv4MappedAddresses";
+import { hostnameToUnicode } from "../helpers/hostnameToUnicode";
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
+import { normalizeHostname } from "../helpers/normalizeHostname";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig, Domain } from "./Config";
 import type { IPList, UserAgentDetails } from "./api/FetchListsAPI";
 import { safeCreateRegExp } from "./safeCreateRegExp";
+import type { Context } from "./Context";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -32,6 +35,8 @@ export class ServiceConfig {
   private domains = new Map<string, Domain["mode"]>();
 
   private excludedUserIdsFromRateLimiting = new Set<string>();
+
+  private enabledFeatures = new Set<string>();
 
   constructor(
     endpoints: EndpointConfig[],
@@ -110,7 +115,23 @@ export class ServiceConfig {
     );
   }
 
-  isBypassedIP(ip: string) {
+  isBypassedRequest(context: Context | undefined): boolean {
+    if (!context) {
+      return false;
+    }
+
+    if (context.bypassRequest) {
+      return true;
+    }
+
+    if (!context.remoteAddress) {
+      return false;
+    }
+
+    return this.isBypassedIP(context.remoteAddress);
+  }
+
+  isBypassedIP(ip: string): boolean {
     return this.bypassedIPAddresses ? this.bypassedIPAddresses.has(ip) : false;
   }
 
@@ -296,7 +317,9 @@ export class ServiceConfig {
   }
 
   shouldBlockOutgoingRequest(hostname: string): boolean {
-    const mode = this.domains.get(hostname);
+    const mode = this.domains.get(
+      hostnameToUnicode(normalizeHostname(hostname))
+    );
 
     if (this.blockNewOutgoingRequests) {
       // Only allow outgoing requests if the mode is "allow"
@@ -314,5 +337,13 @@ export class ServiceConfig {
 
   isUserExcludedFromRateLimiting(userId: string): boolean {
     return this.excludedUserIdsFromRateLimiting.has(userId);
+  }
+
+  updateEnabledFeatures(features: string[]) {
+    this.enabledFeatures = new Set(features);
+  }
+
+  isRealtimeUpdatesEnabled(): boolean {
+    return this.enabledFeatures.has("realtime_updates");
   }
 }

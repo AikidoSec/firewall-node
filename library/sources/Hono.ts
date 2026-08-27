@@ -12,6 +12,7 @@ const METHODS = [
   "delete",
   "options",
   "patch",
+  "query",
   "all",
   "on",
   "use",

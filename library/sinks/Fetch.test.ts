@@ -75,6 +75,8 @@ const redirectUrl = {
   domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
   ipv6: `${redirectTestUrl}/ssrf-test-ipv6`, // Redirects to http://[::1]/test
   ipv6Twice: `${redirectTestUrl}/ssrf-test-ipv6-twice`, // Redirects to /ssrf-test-ipv6
+  protocolRelative: `${redirectTestUrl}/ssrf-test-protocol-relative`, // Redirects to //127.0.0.1/test
+  protocolRelativeTwice: `${redirectTestUrl}/ssrf-test-protocol-relative-twice`, // Redirects to /ssrf-test-protocol-relative
 };
 
 t.test(
@@ -146,11 +148,14 @@ t.test(
         .getEvents()
         .filter((e) => e.type === "detected_attack");
       t.same(events.length, 1);
-      t.same(events[0].attack.metadata, {
-        hostname: "localhost",
-        port: "4000",
-        privateIP: "::1",
-      });
+      t.same(events[0].attack.metadata.hostname, "localhost");
+      t.same(events[0].attack.metadata.port, "4000");
+      // localhost resolves to ::1 on older Node.js and 127.0.0.1 on Node.js v26+
+      t.ok(
+        events[0].attack.metadata.privateIP === "::1" ||
+          events[0].attack.metadata.privateIP === "127.0.0.1",
+        "privateIP should be a localhost address"
+      );
 
       const error2 = await t.rejects(() =>
         fetch(new URL("http://localhost:4000/api/internal"))
@@ -304,6 +309,44 @@ t.test(
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ipTwice));
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { image: redirectUrl.protocolRelative },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(redirectUrl.protocolRelative)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { image: redirectUrl.protocolRelativeTwice },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(redirectUrl.protocolRelativeTwice)
+        );
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined

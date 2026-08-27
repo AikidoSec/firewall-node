@@ -61,6 +61,7 @@ test("it blocks request in blocking mode", async () => {
     equal(normalRequest.status, 200);
     match(stdout, /Starting agent/);
     match(stderr, /Zen has blocked a NoSQL injection/);
+    doesNotMatch(stderr, /@react-router\/serve/);
   } catch (err) {
     fail(err);
   } finally {

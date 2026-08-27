@@ -4,12 +4,20 @@ import { getInstance } from "../agent/AgentSingleton";
 import { getContext, updateContext } from "../agent/Context";
 import { shouldRateLimitRequest } from "../ratelimiting/shouldRateLimitRequest";
 
-type Result = {
-  block: boolean;
-  type?: "ratelimited" | "blocked";
-  trigger?: "ip" | "user" | "group";
-  ip?: string;
-};
+type Result =
+  | { block: false }
+  | {
+      block: true;
+      type: "ratelimited";
+      trigger: "ip" | "user" | "group";
+      ip?: string;
+      retryAfterSeconds: number;
+    }
+  | {
+      block: true;
+      type: "blocked";
+      trigger: "user";
+    };
 
 export function shouldBlockRequest(): Result {
   const context = getContext();
@@ -35,6 +43,12 @@ export function shouldBlockRequest(): Result {
   updateContext(context, "executedMiddleware", true);
   agent.onMiddlewareExecuted();
 
+  const isBypassedRequest = agent.getConfig().isBypassedRequest(context);
+
+  if (isBypassedRequest) {
+    return { block: false };
+  }
+
   if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
     return { block: true, type: "blocked", trigger: "user" };
   }
@@ -49,6 +63,7 @@ export function shouldBlockRequest(): Result {
       type: "ratelimited",
       trigger: rateLimitResult.trigger,
       ip: context.remoteAddress,
+      retryAfterSeconds: rateLimitResult.retryAfterSeconds,
     };
   }
 

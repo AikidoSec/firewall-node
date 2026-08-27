@@ -168,6 +168,10 @@ async function getApp() {
     return c.text(getTestProp());
   });
 
+  app.query("/query/:key", (c) => {
+    return c.json(getContext());
+  });
+
   return app;
 }
 
@@ -333,6 +337,7 @@ t.test("it rate limits based on IP address", opts, async (t) => {
     await response3.text(),
     "You are rate limited by Zen. (Your IP: 1.2.3.4)"
   );
+  t.ok(parseInt(response3.headers.get("retry-after")!) > 0);
 
   const response4 = await app.request("/%72ate-limited", {
     method: "GET",
@@ -710,4 +715,20 @@ t.test("it does not rate limit excluded users", opts, async (t) => {
     t.match(response.status, 200);
     t.match(await response.text(), "OK");
   }
+});
+
+t.test("it works with query method", opts, async (t) => {
+  const app = await getApp();
+  const response = await app.request("/query/testkey", {
+    method: "QUERY",
+    body: "test",
+  });
+
+  const body = await response.json();
+  t.match(body, {
+    method: "QUERY",
+    source: "hono",
+    route: "/query/testkey",
+    routeParams: { key: "testkey" },
+  });
 });

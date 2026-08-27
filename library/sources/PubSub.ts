@@ -23,7 +23,7 @@ export class PubSub implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@google-cloud/pubsub")
-      .withVersion("^5.0.0 || ^4.0.0")
+      .withVersion("^6.0.0 || ^5.0.0 || ^4.0.0")
       .onFileRequire("build/src/subscription.js", (exports, pkgInfo) => {
         wrapExport(exports.Subscription.prototype, "on", pkgInfo, {
           kind: undefined,

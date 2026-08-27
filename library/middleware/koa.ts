@@ -22,6 +22,7 @@ export function addKoaMiddleware(app: Application): void {
         ctx.type = "text/plain";
         ctx.body = message;
         ctx.status = 429;
+        ctx.set("Retry-After", result.retryAfterSeconds.toString());
         return;
       }
 

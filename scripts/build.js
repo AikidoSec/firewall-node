@@ -23,15 +23,15 @@ async function execAsyncWithPipe(command, options) {
 }
 
 // Zen Internals configuration
-const INTERNALS_VERSION = "v0.1.61";
+const INTERNALS_VERSION = "v0.1.69";
 const INTERNALS_URL = `https://github.com/AikidoSec/zen-internals/releases/download/${INTERNALS_VERSION}`;
 // ---
 
 // Node Internals configuration
-const NODE_INTERNALS_VERSION = "1.0.1";
+const NODE_INTERNALS_VERSION = "1.0.4";
 const NODE_INTERNALS_URL = `https://github.com/AikidoSec/zen-internals-node/releases/download/${NODE_INTERNALS_VERSION}`;
 // 17 is not included on purpose
-const NODE_VERSIONS = [16, 18, 19, 20, 21, 22, 23, 24, 25];
+const NODE_VERSIONS = [16, 18, 19, 20, 21, 22, 23, 24, 25, 26];
 // ---
 
 const rootDir = join(__dirname, "..");

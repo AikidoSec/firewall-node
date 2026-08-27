@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
+import type { Context } from "./Context";
 
 t.test("it returns false if empty rules", async () => {
   const config = new ServiceConfig([], 0, [], [], [], []);
@@ -14,6 +15,24 @@ t.test("it returns false if empty rules", async () => {
     }),
     []
   );
+});
+
+t.test("realtime updates enabled defaults to false", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], [], []);
+  t.same(config.isRealtimeUpdatesEnabled(), false);
+});
+
+t.test("it updates realtime updates enabled", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], [], []);
+
+  config.updateEnabledFeatures(["realtime_updates"]);
+  t.same(config.isRealtimeUpdatesEnabled(), true);
+
+  config.updateEnabledFeatures([]);
+  t.same(config.isRealtimeUpdatesEnabled(), false);
+
+  config.updateEnabledFeatures(["some_other_feature"]);
+  t.same(config.isRealtimeUpdatesEnabled(), false);
 });
 
 t.test("it works", async () => {
@@ -424,4 +443,76 @@ t.test("outbound request blocking", async (t) => {
   t.same(config.shouldBlockOutgoingRequest("example.com"), true);
   t.same(config.shouldBlockOutgoingRequest("aikido.dev"), false);
   t.same(config.shouldBlockOutgoingRequest("unknown.com"), false);
+});
+
+t.test("outbound request blocking normalizes trailing dots", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], [], []);
+
+  config.updateDomains([
+    { hostname: "example.com", mode: "block" },
+    { hostname: "aikido.dev", mode: "allow" },
+  ]);
+
+  t.same(config.shouldBlockOutgoingRequest("example.com."), true);
+  t.same(config.shouldBlockOutgoingRequest("aikido.dev."), false);
+
+  config.setBlockNewOutgoingRequests(true);
+  t.same(config.shouldBlockOutgoingRequest("aikido.dev."), false);
+  t.same(config.shouldBlockOutgoingRequest("unknown.com."), true);
+});
+
+t.test("isBypassedRequest works as expected", async () => {
+  const config = new ServiceConfig(
+    [],
+    0,
+    [],
+    ["192.168.2.0/24", "::1"],
+    [],
+    []
+  );
+
+  const getTestContext = (
+    ip: string | undefined,
+    bypassRequest: boolean | undefined
+  ): Context => ({
+    url: "http://example.com",
+    method: "GET",
+    route: "/",
+    remoteAddress: ip,
+    query: {},
+    headers: {},
+    routeParams: {},
+    body: undefined,
+    cookies: {},
+    source: "test",
+    bypassRequest: bypassRequest,
+  });
+
+  t.same(config.isBypassedRequest(getTestContext("192.168.2.32", false)), true);
+  t.same(config.isBypassedRequest(getTestContext("192.168.2.32", true)), true);
+  t.same(config.isBypassedRequest(getTestContext("::1", false)), true);
+  t.same(config.isBypassedRequest(getTestContext("::1", true)), true);
+  t.same(config.isBypassedRequest(getTestContext("::1", undefined)), true);
+  t.same(config.isBypassedRequest(getTestContext("::2", false)), false);
+  t.same(config.isBypassedRequest(getTestContext("::2", true)), true);
+  t.same(config.isBypassedRequest(getTestContext("10.0.0.1", false)), false);
+  t.same(config.isBypassedRequest(getTestContext("10.0.0.1", true)), true);
+  t.same(
+    config.isBypassedRequest(getTestContext("10.0.0.1", undefined)),
+    false
+  );
+
+  config.updateConfig([], 0, [], []);
+
+  t.same(config.isBypassedRequest(getTestContext("::1", false)), false);
+  t.same(config.isBypassedRequest(getTestContext("::1", true)), true);
+
+  t.same(config.isBypassedRequest(getTestContext(undefined, true)), true);
+  t.same(config.isBypassedRequest(getTestContext(undefined, false)), false);
+
+  t.same(config.isBypassedRequest(getTestContext(undefined, undefined)), false);
+
+  t.same(config.isBypassedRequest(undefined), false);
+  // @ts-expect-error Testing with an empty object
+  t.same(config.isBypassedRequest({}), false);
 });

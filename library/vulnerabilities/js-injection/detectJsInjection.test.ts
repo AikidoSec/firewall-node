@@ -72,6 +72,22 @@ t.test("does not detect JS injections", async (t) => {
   );
 });
 
+t.test("it allows unary +/- numbers", async (t) => {
+  t.same(detectJsInjection("const test = -10;", "-10"), false);
+  t.same(detectJsInjection("const test = +5;", "+5"), false);
+  t.same(detectJsInjection("const test = -3.14;", "-3.14"), false);
+  t.same(detectJsInjection("if (x > -10) { return true; }", "-10"), false);
+  t.same(detectJsInjection("const test = 1 + -2;", "1 + -2"), false);
+  // Still an injection: a negative number followed by injected code.
+  t.same(
+    detectJsInjection(
+      "const test = -10; console.log('injected'); //;",
+      "-10; console.log('injected'); //"
+    ),
+    true
+  );
+});
+
 t.test("test source type", async (t) => {
   t.same(
     detectJsInjection(

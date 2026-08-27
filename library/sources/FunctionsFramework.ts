@@ -100,10 +100,7 @@ function incrementStatsAndDiscoverAPISpec(
   agent: Agent,
   statusCode: number
 ) {
-  if (
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress)
-  ) {
+  if (agent.getConfig().isBypassedRequest(context)) {
     return;
   }
 
@@ -121,7 +118,7 @@ function incrementStatsAndDiscoverAPISpec(
     if (
       context.remoteAddress &&
       !context.blockedDueToIPOrBot &&
-      agent.getAttackWaveDetector().check(context)
+      agent.getAttackWaveDetector().check(context, statusCode)
     ) {
       agent.onDetectedAttackWave({
         request: context,

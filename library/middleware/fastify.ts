@@ -5,6 +5,7 @@ import type { FastifyInstance } from "fastify";
 
 export type FastifyReply = {
   status(code: number): FastifyReply;
+  header(key: string, value: string): FastifyReply;
   send(payload: string): FastifyReply;
 };
 
@@ -41,7 +42,10 @@ export const fastifyHook: FastifyHookHandler = (_, reply, done) => {
         message += ` (Your IP: ${escapeHTML(result.ip)})`;
       }
 
-      return reply.status(429).send(message);
+      return reply
+        .status(429)
+        .header("Retry-After", result.retryAfterSeconds.toString())
+        .send(message);
     }
 
     if (result.type === "blocked") {

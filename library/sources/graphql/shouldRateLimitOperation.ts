@@ -17,6 +17,7 @@ type Result =
       remoteAddress: string;
       operationType: "query" | "mutation";
       endpoint: Endpoint;
+      retryAfterSeconds: number;
     }
   | {
       block: true;
@@ -25,6 +26,7 @@ type Result =
       userId: string;
       operationType: "query" | "mutation";
       endpoint: Endpoint;
+      retryAfterSeconds: number;
     }
   | {
       block: true;
@@ -33,6 +35,7 @@ type Result =
       groupId: string;
       operationType: "query" | "mutation";
       endpoint: Endpoint;
+      retryAfterSeconds: number;
     };
 
 export function shouldRateLimitOperation(
@@ -58,9 +61,7 @@ export function shouldRateLimitOperation(
     : false;
 
   // Allow requests from allowed IPs, e.g. never rate limit office IPs
-  const isBypassedIP = context.remoteAddress
-    ? agent.getConfig().isBypassedIP(context.remoteAddress)
-    : false;
+  const isBypassedRequest = agent.getConfig().isBypassedRequest(context);
 
   for (const field of topLevelFields.fields) {
     const result = shouldRateLimitField(
@@ -69,7 +70,7 @@ export function shouldRateLimitOperation(
       field,
       topLevelFields.type,
       isFromLocalhostInProduction,
-      isBypassedIP
+      isBypassedRequest
     );
 
     if (result.block) {
@@ -86,7 +87,7 @@ function shouldRateLimitField(
   field: FieldNode,
   operationType: "query" | "mutation",
   isFromLocalhostInProduction: boolean,
-  isBypassedIP: boolean
+  isBypassedRequest: boolean
 ): Result {
   const match = agent
     .getConfig()
@@ -106,8 +107,12 @@ function shouldRateLimitField(
     return { block: false };
   }
 
-  if (context.remoteAddress && !isFromLocalhostInProduction && !isBypassedIP) {
-    const allowed = agent
+  if (
+    context.remoteAddress &&
+    !isFromLocalhostInProduction &&
+    !isBypassedRequest
+  ) {
+    const result = agent
       .getRateLimiter()
       .isAllowed(
         `${context.method}:${context.route}:ip:${context.remoteAddress}:${operationType}:${field.name.value}`,
@@ -115,7 +120,7 @@ function shouldRateLimitField(
         rateLimitedField.rateLimiting.maxRequests
       );
 
-    if (!allowed) {
+    if (!result.allowed) {
       return {
         block: true,
         field: field,
@@ -123,12 +128,13 @@ function shouldRateLimitField(
         remoteAddress: context.remoteAddress,
         operationType: operationType,
         endpoint: match,
+        retryAfterSeconds: result.retryAfterSeconds,
       };
     }
   }
 
   if (context.rateLimitGroup) {
-    const allowed = agent
+    const result = agent
       .getRateLimiter()
       .isAllowed(
         `${context.method}:${context.route}:group:${context.rateLimitGroup}:${operationType}:${field.name.value}`,
@@ -136,7 +142,7 @@ function shouldRateLimitField(
         rateLimitedField.rateLimiting.maxRequests
       );
 
-    if (!allowed) {
+    if (!result.allowed) {
       return {
         block: true,
         field: field,
@@ -144,12 +150,13 @@ function shouldRateLimitField(
         groupId: context.rateLimitGroup,
         operationType: operationType,
         endpoint: match,
+        retryAfterSeconds: result.retryAfterSeconds,
       };
     }
   }
 
   if (context.user) {
-    const allowed = agent
+    const result = agent
       .getRateLimiter()
       .isAllowed(
         `${context.method}:${context.route}:user:${context.user.id}:${operationType}:${field.name.value}`,
@@ -157,7 +164,7 @@ function shouldRateLimitField(
         rateLimitedField.rateLimiting.maxRequests
       );
 
-    if (!allowed) {
+    if (!result.allowed) {
       return {
         block: true,
         field: field,
@@ -165,6 +172,7 @@ function shouldRateLimitField(
         userId: context.user.id,
         operationType: operationType,
         endpoint: match,
+        retryAfterSeconds: result.retryAfterSeconds,
       };
     }
   }

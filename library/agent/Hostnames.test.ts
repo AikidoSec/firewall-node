@@ -80,6 +80,15 @@ t.test("it respects max size", async () => {
   ]);
 });
 
+t.test("it normalizes trailing dots", async () => {
+  const hostnames = new Hostnames(3);
+  hostnames.add("aikido.dev.", 443);
+  t.same(hostnames.asArray(), [{ hostname: "aikido.dev", port: 443, hits: 1 }]);
+
+  hostnames.add("aikido.dev", 443);
+  t.same(hostnames.asArray(), [{ hostname: "aikido.dev", port: 443, hits: 2 }]);
+});
+
 t.test("it tracks hits", async () => {
   const hostnames = new Hostnames(3);
 

@@ -45,3 +45,8 @@ t.test("should respect AIKIDO_ENDPOINT if set", async (t) => {
   process.env.AIKIDO_ENDPOINT = "https://custom-endpoint.example.com";
   t.equal(getAPIURL().href, "https://custom-endpoint.example.com/");
 });
+
+t.test("should return AU for new format token with AU region", async (t) => {
+  process.env.AIKIDO_TOKEN = "AIK_RUNTIME_123_456_AU_randomstring";
+  t.equal(getAPIURL().href, "https://guard.au.aikido.dev/");
+});

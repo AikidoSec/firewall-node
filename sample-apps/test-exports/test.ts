@@ -13,3 +13,4 @@ assert.ok(typeof context.setUser === "function");
 assert.ok(typeof lambda === "function");
 assert.ok(typeof cloudFunction === "function");
 assert.ok(Array.isArray(externals()));
+assert.ok(typeof Zen.bypassRequest === "function");

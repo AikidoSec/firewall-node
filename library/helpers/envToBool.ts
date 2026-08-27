@@ -3,9 +3,9 @@ const trueValues = ["true", "1", "yes", "y", "on"];
 /**
  * Parses the string value of an environment variable to a boolean.
  */
-export function envToBool(envName: string | undefined): boolean {
-  if (!envName) {
+export function envToBool(env: string | undefined): boolean {
+  if (!env) {
     return false;
   }
-  return trueValues.includes(envName.toLowerCase());
+  return trueValues.includes(env.toLowerCase());
 }

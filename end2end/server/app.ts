@@ -10,6 +10,8 @@ import { updateConfig } from "./src/handlers/updateConfig.ts";
 import { lists } from "./src/handlers/lists.ts";
 import { updateIPLists } from "./src/handlers/updateLists.ts";
 import { realtimeConfig } from "./src/handlers/realtimeConfig.ts";
+import { stream, disconnectStreams } from "./src/handlers/stream.ts";
+import { deleteApp } from "./src/handlers/deleteApp.ts";
 
 const app = express();
 app.set("trust proxy", false);
@@ -24,6 +26,8 @@ app.post("/api/runtime/config", checkToken, updateConfig);
 
 // Realtime polling endpoint
 app.get("/config", checkToken, realtimeConfig);
+app.get("/api/runtime/stream", checkToken, stream);
+app.post("/api/runtime/stream/disconnect", checkToken, disconnectStreams);
 
 app.get("/api/runtime/events", checkToken, listEvents);
 app.post("/api/runtime/events", checkToken, captureEvent);
@@ -32,6 +36,7 @@ app.get("/api/runtime/firewall/lists", checkToken, lists);
 app.post("/api/runtime/firewall/lists", checkToken, updateIPLists);
 
 app.post("/api/runtime/apps", createApp);
+app.delete("/api/runtime/apps", checkToken, deleteApp);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
