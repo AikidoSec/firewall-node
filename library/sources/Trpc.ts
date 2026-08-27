@@ -177,6 +177,8 @@ export class Trpc implements Wrapper {
       .addFileInstrumentation({
         path: "dist/index.mjs",
         functions: [],
+        // Not using function wrapping here because the create method is part of a file
+        // with a hash in the name, so we can't rely on the file name to be stable.
         accessLocalVariables: {
           names: ["initTRPC"],
           cb: (vars, pkgInfo) => this.wrapCreate(vars[0], pkgInfo),
