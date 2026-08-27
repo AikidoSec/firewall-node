@@ -4,6 +4,8 @@ import { IPMatcher } from "./IPMatcher";
 import { BlockList } from "net";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { getSemverNodeVersion } from "../getNodeVersion";
+import { isVersionGreaterOrEqual } from "../isVersionGreaterOrEqual";
 
 // @esm-tests-skip
 
@@ -62,8 +64,11 @@ t.test("test performance in comparison to node:net.blocklist", async (t) => {
 
   const percentageDiff = ((blockListMs - ipMatcherMs) / ipMatcherMs) * 100;
 
-  // Expect the IPMatcher to be faster than the BlockList
-  t.same(percentageDiff > 10, true);
+  if (!isVersionGreaterOrEqual("26.8.0", getSemverNodeVersion())) {
+    // Expect the IPMatcher to be faster than the BlockList
+    // On Node.js 26.8.0 and later, the BlockList has been optimized and is now faster than the IPMatcher
+    t.same(percentageDiff > 10, true);
+  }
 });
 
 t.test("IPMatcher.has() throughput", async (t) => {
