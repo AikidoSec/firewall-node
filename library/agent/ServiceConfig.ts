@@ -209,29 +209,22 @@ export class ServiceConfig {
       });
     }
 
-    const nextBlockedUserAgentRegex = blockedUserAgents
-      ? safeCreateRegExp(blockedUserAgents, "i")
-      : undefined;
-    const nextMonitoredUserAgentRegex = monitoredUserAgents
-      ? safeCreateRegExp(monitoredUserAgents, "i")
-      : undefined;
-    const nextUserAgentDetails: { pattern: RegExp; key: string }[] = [];
-    for (const detail of userAgentDetails) {
-      const regex = safeCreateRegExp(detail.pattern, "i");
-      if (regex) {
-        nextUserAgentDetails.push({
-          key: detail.key,
-          pattern: regex,
-        });
-      }
-    }
-
     this.blockedIPAddresses = nextBlockedIPAddresses;
     this.allowedIPAddresses = nextAllowedIPAddresses;
     this.monitoredIPAddresses = nextMonitoredIPAddresses;
-    this.blockedUserAgentRegex = nextBlockedUserAgentRegex;
-    this.monitoredUserAgentRegex = nextMonitoredUserAgentRegex;
-    this.userAgentDetails = nextUserAgentDetails;
+    this.updateBlockedUserAgents(blockedUserAgents);
+    this.updateMonitoredUserAgents(monitoredUserAgents);
+    this.updateUserAgentDetails(userAgentDetails);
+  }
+
+  updateBlockedUserAgents(blockedUserAgents: string) {
+    if (!blockedUserAgents) {
+      // If an empty string is passed, we want to set the regex to undefined
+      // e.g. new RegExp("").test("abc") == true
+      this.blockedUserAgentRegex = undefined;
+      return;
+    }
+    this.blockedUserAgentRegex = safeCreateRegExp(blockedUserAgents, "i");
   }
 
   isUserAgentBlocked(ua: string): { blocked: boolean } {
@@ -256,6 +249,8 @@ export class ServiceConfig {
 
   updateMonitoredUserAgents(monitoredUserAgent: string) {
     if (!monitoredUserAgent) {
+      // If an empty string is passed, we want to set the regex to undefined
+      // e.g. new RegExp("").test("abc") == true
       this.monitoredUserAgentRegex = undefined;
       return;
     }
