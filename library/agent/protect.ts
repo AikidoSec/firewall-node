@@ -64,6 +64,7 @@ import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
 import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 import { Mongoose } from "../sinks/Mongoose";
 import { NodeVm } from "../sinks/NodeVm";
+import { Zlib } from "../sinks/Zlib";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -182,6 +183,7 @@ export function getWrappers() {
     new GoogleGenAi(),
     new Mongoose(),
     new NodeVm(),
+    new Zlib(),
   ];
 }
 
