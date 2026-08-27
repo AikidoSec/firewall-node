@@ -1,11 +1,18 @@
 import { addIPv4MappedAddresses } from "../helpers/addIPv4MappedAddresses";
 import { hostnameToUnicode } from "../helpers/hostnameToUnicode";
-import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
+import { IPMatcher as JavaScriptIPMatcher } from "../helpers/ip-matcher/IPMatcher";
+import {
+  createIPMatcher,
+  type IPMatcher,
+} from "../helpers/ip-matcher/createIPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { normalizeHostname } from "../helpers/normalizeHostname";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig, Domain } from "./Config";
-import type { IPList, UserAgentDetails } from "./api/FetchListsAPI";
+import type {
+  FetchListsAPIResponse,
+  UserAgentDetails,
+} from "./api/FetchListsAPI";
 import { safeCreateRegExp } from "./safeCreateRegExp";
 import type { Context } from "./Context";
 
@@ -42,15 +49,11 @@ export class ServiceConfig {
     endpoints: EndpointConfig[],
     private lastUpdatedAt: number,
     blockedUserIds: string[],
-    bypassedIPAddresses: string[],
-    blockedIPAddresses: IPList[],
-    allowedIPAddresses: IPList[]
+    bypassedIPAddresses: string[]
   ) {
     this.setBlockedUserIds(blockedUserIds);
     this.setBypassedIPAddresses(bypassedIPAddresses);
     this.setEndpoints(endpoints);
-    this.setBlockedIPAddresses(blockedIPAddresses);
-    this.setAllowedIPAddresses(allowedIPAddresses);
   }
 
   private setEndpoints(endpointConfigs: EndpointConfig[]) {
@@ -64,7 +67,7 @@ export class ServiceConfig {
         endpoint.allowedIPAddresses.length > 0
       ) {
         // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
-        allowedIPAddresses = new IPMatcher(
+        allowedIPAddresses = new JavaScriptIPMatcher(
           addIPv4MappedAddresses(endpoint.allowedIPAddresses)
         );
       }
@@ -110,7 +113,7 @@ export class ServiceConfig {
       return;
     }
     // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
-    this.bypassedIPAddresses = new IPMatcher(
+    this.bypassedIPAddresses = new JavaScriptIPMatcher(
       addIPv4MappedAddresses(ipAddresses)
     );
   }
@@ -160,43 +163,75 @@ export class ServiceConfig {
     return { blocked: false };
   }
 
-  private setBlockedIPAddresses(blockedIPAddresses: IPList[]) {
-    this.blockedIPAddresses = [];
-
+  async updateFirewallLists({
+    blockedIPAddresses,
+    blockedUserAgents,
+    allowedIPAddresses,
+    monitoredIPAddresses,
+    monitoredUserAgents,
+    userAgentDetails,
+  }: FetchListsAPIResponse): Promise<void> {
+    const nextBlockedIPAddresses: {
+      blocklist: IPMatcher;
+      description: string;
+      key: string;
+    }[] = [];
     for (const source of blockedIPAddresses) {
-      this.blockedIPAddresses.push({
+      nextBlockedIPAddresses.push({
         key: source.key,
-        // Large list: IPv4-mapped checked at lookup time to save memory
-        blocklist: new IPMatcher(source.ips),
+        blocklist: await createIPMatcher(source.ips),
         description: source.description,
       });
     }
-  }
 
-  updateBlockedIPAddresses(blockedIPAddresses: IPList[]) {
-    this.setBlockedIPAddresses(blockedIPAddresses);
-  }
-
-  updateMonitoredIPAddresses(monitoredIPAddresses: IPList[]) {
-    this.monitoredIPAddresses = [];
-
-    for (const source of monitoredIPAddresses) {
-      this.monitoredIPAddresses.push({
-        key: source.key,
-        // Large list: IPv4-mapped checked at lookup time to save memory
-        list: new IPMatcher(source.ips),
+    const nextAllowedIPAddresses: {
+      allowlist: IPMatcher;
+      description: string;
+    }[] = [];
+    for (const source of allowedIPAddresses) {
+      if (source.ips.length === 0) {
+        continue;
+      }
+      nextAllowedIPAddresses.push({
+        allowlist: await createIPMatcher(source.ips),
+        description: source.description,
       });
     }
-  }
 
-  updateBlockedUserAgents(blockedUserAgents: string) {
-    if (!blockedUserAgents) {
-      // If an empty string is passed, we want to set the regex to undefined
-      // e.g. new RegExp("").test("abc") == true
-      this.blockedUserAgentRegex = undefined;
-      return;
+    const nextMonitoredIPAddresses: {
+      list: IPMatcher;
+      key: string;
+    }[] = [];
+    for (const source of monitoredIPAddresses) {
+      nextMonitoredIPAddresses.push({
+        key: source.key,
+        list: await createIPMatcher(source.ips),
+      });
     }
-    this.blockedUserAgentRegex = safeCreateRegExp(blockedUserAgents, "i");
+
+    const nextBlockedUserAgentRegex = blockedUserAgents
+      ? safeCreateRegExp(blockedUserAgents, "i")
+      : undefined;
+    const nextMonitoredUserAgentRegex = monitoredUserAgents
+      ? safeCreateRegExp(monitoredUserAgents, "i")
+      : undefined;
+    const nextUserAgentDetails: { pattern: RegExp; key: string }[] = [];
+    for (const detail of userAgentDetails) {
+      const regex = safeCreateRegExp(detail.pattern, "i");
+      if (regex) {
+        nextUserAgentDetails.push({
+          key: detail.key,
+          pattern: regex,
+        });
+      }
+    }
+
+    this.blockedIPAddresses = nextBlockedIPAddresses;
+    this.allowedIPAddresses = nextAllowedIPAddresses;
+    this.monitoredIPAddresses = nextMonitoredIPAddresses;
+    this.blockedUserAgentRegex = nextBlockedUserAgentRegex;
+    this.monitoredUserAgentRegex = nextMonitoredUserAgentRegex;
+    this.userAgentDetails = nextUserAgentDetails;
   }
 
   isUserAgentBlocked(ua: string): { blocked: boolean } {
@@ -221,8 +256,6 @@ export class ServiceConfig {
 
   updateMonitoredUserAgents(monitoredUserAgent: string) {
     if (!monitoredUserAgent) {
-      // If an empty string is passed, we want to set the regex to undefined
-      // e.g. new RegExp("").test("abc") == true
       this.monitoredUserAgentRegex = undefined;
       return;
     }
@@ -253,26 +286,6 @@ export class ServiceConfig {
     return this.monitoredIPAddresses
       .filter((list) => list.list.hasWithMappedCheck(ip))
       .map((list) => list.key);
-  }
-
-  private setAllowedIPAddresses(ipAddresses: IPList[]) {
-    this.allowedIPAddresses = [];
-
-    for (const source of ipAddresses) {
-      // Skip empty allowlists
-      if (source.ips.length === 0) {
-        continue;
-      }
-      this.allowedIPAddresses.push({
-        // Large list: IPv4-mapped checked at lookup time to save memory
-        allowlist: new IPMatcher(source.ips),
-        description: source.description,
-      });
-    }
-  }
-
-  updateAllowedIPAddresses(ipAddresses: IPList[]) {
-    this.setAllowedIPAddresses(ipAddresses);
   }
 
   isAllowedIPAddress(ip: string): { allowed: boolean } {

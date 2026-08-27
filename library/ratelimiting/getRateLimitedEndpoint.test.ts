@@ -18,7 +18,7 @@ const context: Context = {
 
 t.test("it returns undefined if no endpoints", async () => {
   t.same(
-    getRateLimitedEndpoint(context, new ServiceConfig([], 0, [], [], [], [])),
+    getRateLimitedEndpoint(context, new ServiceConfig([], 0, [], [])),
     undefined
   );
 });
@@ -42,8 +42,6 @@ t.test("it returns undefined if no matching endpoints", async () => {
           },
         ],
         0,
-        [],
-        [],
         [],
         []
       )
@@ -72,8 +70,6 @@ t.test("it returns undefined if matching but not enabled", async () => {
         ],
         0,
         [],
-        [],
-        [],
         []
       )
     ),
@@ -100,8 +96,6 @@ t.test("it returns endpoint if matching and enabled", async () => {
           },
         ],
         0,
-        [],
-        [],
         [],
         []
       )
@@ -151,8 +145,6 @@ t.test("it returns endpoint with lowest max requests", async () => {
         ],
         0,
         [],
-        [],
-        [],
         []
       )
     ),
@@ -201,8 +193,6 @@ t.test("it returns endpoint with smallest window size", async () => {
         ],
         0,
         [],
-        [],
-        [],
         []
       )
     ),
@@ -250,8 +240,6 @@ t.test("it always returns exact matches first", async () => {
           },
         ],
         0,
-        [],
-        [],
         [],
         []
       )
