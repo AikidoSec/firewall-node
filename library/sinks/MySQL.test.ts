@@ -90,8 +90,10 @@ t.test("it detects SQL injections", async () => {
     t.same(
       await runWithContext(context, () => {
         return new Promise((resolve, reject) => {
+          // @ts-expect-error Wrong types
           const q = mysql.createQuery(
             "SELECT petname FROM `cats`;",
+            // @ts-expect-error Wrong types
             (error, results) => {
               if (error) {
                 return reject(error);
@@ -134,6 +136,7 @@ t.test("it detects SQL injections", async () => {
 
     const error3 = await t.rejects(async () => {
       runWithContext(context, () => {
+        // @ts-expect-error Wrong types
         return connection.query(mysql.createQuery("-- should be blocked"));
       });
     });

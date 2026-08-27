@@ -298,9 +298,11 @@ t.test("IDOR protection for MySQL", async (t) => {
         t.same(
           await runWithContext(context, () => {
             return new Promise((resolve, reject) => {
+              // @ts-expect-error Wrong types
               const q = mysql.createQuery(
                 "SELECT petname FROM cats_idor WHERE tenant_id = ?",
                 ["org_123"],
+                // @ts-expect-error Wrong types
                 (err, results) => {
                   if (err) {
                     return reject(err);
@@ -322,9 +324,11 @@ t.test("IDOR protection for MySQL", async (t) => {
         const error = await t.rejects(async () => {
           await runWithContext(context, () => {
             return new Promise((resolve, reject) => {
+              // @ts-expect-error Wrong types
               const q = mysql.createQuery(
                 "SELECT petname FROM cats_idor WHERE tenant_id = ?",
                 ["org_456"],
+                // @ts-expect-error Wrong types
                 (err, results) => {
                   if (err) {
                     return reject(err);
@@ -352,8 +356,10 @@ t.test("IDOR protection for MySQL", async (t) => {
         const error = await t.rejects(async () => {
           await runWithContext(context, () => {
             return new Promise((resolve, reject) => {
+              // @ts-expect-error Wrong types
               const q = mysql.createQuery(
                 "SELECT petname FROM cats_idor",
+                // @ts-expect-error Wrong types
                 (err, results) => {
                   if (err) {
                     return reject(err);
