@@ -162,3 +162,31 @@ t.test(
     });
   }
 );
+
+t.test("bypassRequest is updated properly when already set", async (t) => {
+  const context: Context = {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://localhost:4000",
+    query: {},
+    headers: {},
+    body: undefined,
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/mp",
+    bypassRequest: true,
+  };
+
+  runWithContext(context, () => {
+    t.same(getContext()?.bypassRequest, true);
+
+    runWithContext({ ...context, bypassRequest: undefined }, () => {
+      t.same(getContext()?.bypassRequest, true);
+
+      runWithContext({ ...context, bypassRequest: false }, () => {
+        t.same(getContext()?.bypassRequest, false);
+      });
+    });
+  });
+});

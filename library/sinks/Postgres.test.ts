@@ -138,3 +138,93 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
     await client.end();
   }
 });
+
+t.test("it works with pipeline feature turned on", async (t) => {
+  const agent = createTestAgent();
+  agent.start([new Postgres()]);
+
+  const { Client } = require("pg") as typeof import("pg");
+  const client = new Client({
+    user: "root",
+    host: "127.0.0.1",
+    database: "main_db",
+    password: "password",
+    port: 27016,
+
+    // This allows multiple queries to be sent in a single round trip to the db
+    pipeline: true,
+  });
+  await client.connect();
+
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS cats_pipe (
+        petname varchar(255)
+      );
+    `);
+    await client.query("TRUNCATE cats_pipe");
+
+    const error = await t.rejects(async () => {
+      await runWithContext(context, () => {
+        return client.query("-- should be blocked");
+      });
+    });
+    if (error instanceof Error) {
+      t.same(
+        error.message,
+        "Zen has blocked an SQL injection: pg.query(...) originating from body.myTitle"
+      );
+    }
+
+    await runWithContext(context, async () => {
+      const safeQuery = async (queryText: string) => {
+        try {
+          const result = await client.query(queryText);
+          return { status: "fulfilled", value: result };
+        } catch (error) {
+          return { status: "rejected", reason: error };
+        }
+      };
+
+      const results = await Promise.all([
+        safeQuery("SELECT petname FROM cats_pipe;"),
+        safeQuery("SELECT petname FROM cats_pipe;"),
+        safeQuery("SELECT petname FROM cats_pipe;"),
+        safeQuery("SELECT petname FROM cats_pipe;"),
+        safeQuery("-- should be blocked"),
+        safeQuery("SELECT petname FROM cats_pipe;"),
+        safeQuery("SELECT petname FROM cats_pipe;"),
+        safeQuery("SELECT petname FROM cats_pipe;"),
+      ]);
+
+      const rejected = results.filter((r) => r.status === "rejected");
+      const fulfilled = results.filter((r) => r.status === "fulfilled");
+
+      t.equal(
+        rejected.length,
+        1,
+        "Expected exactly one query to throw an error"
+      );
+      t.equal(fulfilled.length, 7, "Expected exactly seven queries to succeed");
+
+      if (rejected.length === 1) {
+        const catchedError = rejected[0].reason;
+        t.ok(
+          catchedError instanceof Error,
+          "Expected the rejection reason to be an Error"
+        );
+
+        if (catchedError instanceof Error) {
+          t.match(
+            catchedError.message,
+            /Zen has blocked an SQL injection: pg.query\(\.\.\.\) originating from body\.myTitle/
+          );
+        }
+      }
+    });
+  } catch (error: any) {
+    t.fail(error);
+  } finally {
+    await client.end();
+  }
+});
