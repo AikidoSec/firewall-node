@@ -164,6 +164,17 @@ t.test(
           /Zen has blocked a path traversal attack: node:zlib.ZipEntry.createSymlink\(/
         );
       }
+
+      const err4 = t.throws(() =>
+        zlib.ZipEntry.createSymlink("safe-link.txt", "../../../../etc/passwd")
+      );
+      t.ok(err4 instanceof Error);
+      if (err4 instanceof Error) {
+        t.match(
+          err4.message,
+          /Zen has blocked a path traversal attack: node:zlib.ZipEntry.createSymlink\(/
+        );
+      }
     });
   }
 );

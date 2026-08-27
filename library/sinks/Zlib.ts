@@ -6,40 +6,46 @@ import { Wrapper } from "../agent/Wrapper";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 
 export class Zlib implements Wrapper {
-  private inspectPath(args: unknown[], operation: string) {
+  private inspectPath(args: unknown[], indexes: number[], operation: string) {
     const context = getContext();
 
-    if (!context || !args || args.length === 0 || typeof args[0] !== "string") {
+    if (!context || !args) {
       return undefined;
     }
 
-    const path = args[0];
-    const result = checkContextForPathTraversal({
-      filename: path,
-      operation: `node:zlib.${operation}`,
-      context: context,
-      checkPathStart: true,
-    });
+    for (const index of indexes) {
+      const path = args[index];
+      if (typeof path !== "string") {
+        continue;
+      }
 
-    if (result) {
-      return result;
+      const result = checkContextForPathTraversal({
+        filename: path,
+        operation: `node:zlib.${operation}`,
+        context: context,
+        checkPathStart: true,
+      });
+
+      if (result) {
+        return result;
+      }
     }
 
     return undefined;
   }
 
-  // Wraps a list of methods that all take a filename/entry name as their
-  // first argument, e.g. `add(filename, data)` or `open(filename)`.
   private wrapFilenameMethods(
     subject: unknown,
     methods: string[],
     className: string,
-    pkgInfo: PartialWrapPackageInfo
+    pkgInfo: PartialWrapPackageInfo,
+    argIndexes: number[] = [0]
   ) {
     for (const method of methods) {
       wrapExport(subject, method, pkgInfo, {
         kind: "fs_op",
-        inspectArgs: (args) => this.inspectPath(args, `${className}.${method}`),
+        inspectArgs: (args) =>
+          this.inspectPath(args, argIndexes, `${className}.${method}`),
       });
     }
   }
@@ -79,9 +85,17 @@ export class Zlib implements Wrapper {
       if (exports.ZipEntry) {
         this.wrapFilenameMethods(
           exports.ZipEntry,
-          ["create", "createSync", "createStream", "createSymlink"],
+          ["create", "createSync", "createStream"],
           "ZipEntry",
           pkgInfo
+        );
+
+        this.wrapFilenameMethods(
+          exports.ZipEntry,
+          ["createSymlink"],
+          "ZipEntry",
+          pkgInfo,
+          [0, 1] // The first two arguments are paths
         );
       }
     });
