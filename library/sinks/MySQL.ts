@@ -3,7 +3,6 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
@@ -64,8 +63,10 @@ export class MySQL implements Wrapper {
 
     if (
       args.length > 0 &&
-      isPlainObject(args[0]) &&
-      args[0].sql &&
+      args[0] &&
+      typeof args[0] === "object" &&
+      !Array.isArray(args[0]) &&
+      "sql" in args[0] &&
       typeof args[0].sql === "string"
     ) {
       const sql = args[0].sql;

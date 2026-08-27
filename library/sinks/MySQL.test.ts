@@ -87,6 +87,24 @@ t.test("it detects SQL injections", async () => {
       }),
       []
     );
+    t.same(
+      await runWithContext(context, () => {
+        return new Promise((resolve, reject) => {
+          const q = mysql.createQuery(
+            "SELECT petname FROM `cats`;",
+            (error, results) => {
+              if (error) {
+                return reject(error);
+              }
+
+              resolve(results);
+            }
+          );
+          connection.query(q);
+        });
+      }),
+      []
+    );
 
     const error = await t.rejects(async () => {
       runWithContext(context, () => {
@@ -110,6 +128,19 @@ t.test("it detects SQL injections", async () => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
+        "Zen has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
+      );
+    }
+
+    const error3 = await t.rejects(async () => {
+      runWithContext(context, () => {
+        return connection.query(mysql.createQuery("-- should be blocked"));
+      });
+    });
+
+    if (error3 instanceof Error) {
+      t.same(
+        error3.message,
         "Zen has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
       );
     }
