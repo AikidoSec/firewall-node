@@ -33,6 +33,14 @@ export class MySQL implements Wrapper {
     return undefined;
   }
 
+  private findObjectValues(query: object): unknown[] | undefined {
+    if ("values" in query && Array.isArray(query.values)) {
+      return query.values;
+    }
+
+    return undefined;
+  }
+
   private inspectQuery(args: unknown[]): InterceptorResult {
     const context = getContext();
 
@@ -70,7 +78,9 @@ export class MySQL implements Wrapper {
       typeof args[0].sql === "string"
     ) {
       const sql = args[0].sql;
-      const params = this.findParams(args);
+
+      // The second argument to query() overrides the object's own values
+      const params = this.findParams(args) ?? this.findObjectValues(args[0]);
 
       // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
       if (context) {
