@@ -81,9 +81,12 @@ function defineProperty(obj: unknown, name: PropertyKey, value: unknown) {
 export function isWrapped<T>(fn: T): fn is WrappedFunction<T> {
   return (
     fn instanceof Function &&
-    wrappedSymbol in fn &&
+    // Use hasOwnProperty instead of the `in` operator: `in` also matches markers
+    // inherited via the prototype chain, e.g. a class extending an already wrapped
+    // class would otherwise be mistaken for wrapped itself.
+    Object.prototype.hasOwnProperty.call(fn, wrappedSymbol) &&
     fn[wrappedSymbol] === true &&
-    originalSymbol in fn &&
+    Object.prototype.hasOwnProperty.call(fn, originalSymbol) &&
     fn[originalSymbol] instanceof Function
   );
 }

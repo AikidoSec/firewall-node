@@ -126,6 +126,44 @@ t.test("Does not double wrap an already wrapped default export", async (t) => {
   t.same(calls, 1);
 });
 
+t.test("Wraps a class that extends an already wrapped class", async (t) => {
+  let baseCalls = 0;
+  let subCalls = 0;
+
+  const exports: any = {
+    Base: class Base {
+      constructor(private input: string) {}
+
+      getInput() {
+        return this.input;
+      }
+    },
+  };
+
+  wrapNewInstance(exports, "Base", { name: "test", type: "external" }, () => {
+    baseCalls++;
+  });
+
+  exports.Sub = class Sub extends exports.Base {};
+  const originalSub = exports.Sub;
+
+  const wrappedSub = wrapNewInstance(
+    exports,
+    "Sub",
+    { name: "test", type: "external" },
+    () => {
+      subCalls++;
+    }
+  );
+
+  t.not(wrappedSub, originalSub);
+
+  new exports.Sub("input");
+
+  t.same(subCalls, 1);
+  t.same(baseCalls, 1);
+});
+
 t.test("Can wrap default export", async (t) => {
   let testExport = class Test {
     constructor(private input: string) {}
