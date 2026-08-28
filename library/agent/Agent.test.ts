@@ -1253,7 +1253,7 @@ t.test("it fetches blocked lists", async () => {
   agent.start([]);
 
   await setTimeout(0);
-  await (agent as any).firewallListsUpdate;
+  await agent.firewallListsUpdate;
 
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: true,
@@ -1356,7 +1356,7 @@ t.test("it only allows some IP addresses", async () => {
   agent.start([]);
 
   await setTimeout(0);
-  await (agent as any).firewallListsUpdate;
+  await agent.firewallListsUpdate;
 
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: true,

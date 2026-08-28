@@ -70,7 +70,7 @@ export class Agent {
   private attackWaveDetector = new AttackWaveDetector();
   private pendingEvents = new PendingEvents();
   private idorProtectionConfig: IdorProtectionConfig | undefined = undefined;
-  private firewallListsUpdate = Promise.resolve();
+  public firewallListsUpdate = Promise.resolve();
 
   constructor(
     private block: boolean,
