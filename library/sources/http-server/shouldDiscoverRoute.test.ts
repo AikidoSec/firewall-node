@@ -341,3 +341,27 @@ t.test("it does not ignore normal routes", async () => {
     true
   );
 });
+
+t.test("it does not discover routes with forceProtectionOff", async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/api/v1/users",
+      method: "GET",
+      forceProtectionOff: true,
+    }),
+    false
+  );
+});
+
+t.test("it discovers routes with forceProtectionOff set to false", async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/api/v1/users",
+      method: "GET",
+      forceProtectionOff: false,
+    }),
+    true
+  );
+});

@@ -83,6 +83,12 @@ export class ServiceConfig {
     return matchEndpoints(context, this.nonGraphQLEndpoints);
   }
 
+  isForceProtectionOffRoute(context: LimitedContext): boolean {
+    return this.getEndpoints(context).some(
+      (endpoint) => endpoint.forceProtectionOff
+    );
+  }
+
   getGraphQLField(
     context: LimitedContext,
     name: string,

@@ -40,6 +40,16 @@ const api = new ReportingAPIForTesting({
         windowSizeInMS: 60 * 60 * 1000,
       },
     },
+    {
+      route: "/protection-off",
+      method: "GET",
+      forceProtectionOff: true,
+      rateLimiting: {
+        enabled: false,
+        windowSizeInMS: 0,
+        maxRequests: 0,
+      },
+    },
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
   excludedUserIdsFromRateLimiting: [],
@@ -969,6 +979,39 @@ t.test("it blocks blocked IPs using session stream event", async (t) => {
         server.close();
         resolve();
       });
+    });
+  });
+});
+
+t.test("it does not count requests for routes with forceProtectionOff", async () => {
+  const server = createMinimalTestServer();
+
+  const totalBefore = agent.getInspectionStatistics().getStats().requests
+    .total;
+
+  await new Promise<void>((resolve) => {
+    server.listen(3441, () => {
+      http2Request(new URL("http://localhost:3441/protection-off"), "GET", {})
+        .then(() => {
+          t.same(
+            agent.getInspectionStatistics().getStats().requests.total,
+            totalBefore
+          );
+
+          return http2Request(
+            new URL("http://localhost:3441/not-protection-off"),
+            "GET",
+            {}
+          );
+        })
+        .then(() => {
+          t.same(
+            agent.getInspectionStatistics().getStats().requests.total,
+            totalBefore + 1
+          );
+          server.close();
+          resolve();
+        });
     });
   });
 });

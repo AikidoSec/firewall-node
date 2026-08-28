@@ -9,11 +9,17 @@ export function shouldDiscoverRoute({
   statusCode,
   route,
   method,
+  forceProtectionOff = false,
 }: {
   statusCode: number;
   route: string;
   method: string;
+  forceProtectionOff?: boolean;
 }) {
+  if (forceProtectionOff) {
+    return false;
+  }
+
   const validStatusCode = statusCode >= 200 && statusCode <= 399;
 
   if (!validStatusCode) {
