@@ -17,8 +17,56 @@ const testIpRanges = JSON.parse(
 const ipsToCheck = JSON.parse(
   readFileSync(join(__dirname, "./fixtures/ipsToCheck.json"), "utf-8")
 );
+const nativeBenchmarkIpRangeFiles = [
+  "list-1.json",
+  "list-2.json",
+  "list-3.json",
+  "list-4.json",
+  "list-5.json",
+  "list-6.json",
+];
 
 const iterations = 500;
+const maxNativeCreationBlockingMS = 50;
+
+async function createAndMeasureNativeIPMatcher(networks: string[]) {
+  let lastEventLoopTurnAt = performance.now();
+  let maxEventLoopDelayMS = 0;
+  let keepMeasuringEventLoop = true;
+
+  const measureEventLoopTurn = () => {
+    const now = performance.now();
+    maxEventLoopDelayMS = Math.max(
+      maxEventLoopDelayMS,
+      now - lastEventLoopTurnAt
+    );
+    lastEventLoopTurnAt = now;
+
+    if (keepMeasuringEventLoop) {
+      setImmediate(measureEventLoopTurn);
+    }
+  };
+
+  // Queue this before creation because it cannot run until the native binding
+  // has copied every network string from JavaScript and returned control to Node.
+  setImmediate(measureEventLoopTurn);
+
+  const buildStartedAt = performance.now();
+  const matcherPromise = createIPMatcher(networks);
+  const creationDurationMS = performance.now() - buildStartedAt;
+
+  let matcher: Awaited<ReturnType<typeof createIPMatcher>>;
+  let buildDurationMS = 0;
+  try {
+    matcher = await matcherPromise;
+    buildDurationMS = performance.now() - buildStartedAt;
+  } finally {
+    keepMeasuringEventLoop = false;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  }
+
+  return { matcher, creationDurationMS, buildDurationMS, maxEventLoopDelayMS };
+}
 
 t.test("test performance in comparison to node:net.blocklist", async (t) => {
   const ipMatcher = new IPMatcher(testIpRanges);
@@ -104,6 +152,65 @@ t.test("IPMatcher.has() throughput", async (t) => {
   t.ok(
     msPerCall < 0.02,
     `expected has() to take less than 0.02ms per call, took ${msPerCall.toFixed(6)}ms`
+  );
+});
+
+t.test("Native IPMatcher creation does not block the event loop", async (t) => {
+  if (!loadNodeInternals().bindings?.createIPMatcher) {
+    t.skip("native IPMatcher is unavailable", () => {});
+    return;
+  }
+
+  const nativeBenchmarkIpRanges: string[][] = nativeBenchmarkIpRangeFiles.map(
+    (fileName) =>
+      JSON.parse(
+        readFileSync(
+          join(__dirname, "./fixtures/native-ip-matcher", fileName),
+          "utf-8"
+        )
+      )
+  );
+  const creationDurations: number[] = [];
+  const buildDurations: number[] = [];
+  const eventLoopDelays: number[] = [];
+  for (const [index, networks] of nativeBenchmarkIpRanges.entries()) {
+    const {
+      matcher,
+      creationDurationMS,
+      buildDurationMS,
+      maxEventLoopDelayMS,
+    } = await createAndMeasureNativeIPMatcher(networks);
+
+    creationDurations.push(creationDurationMS);
+    buildDurations.push(buildDurationMS);
+    eventLoopDelays.push(maxEventLoopDelayMS);
+
+    t.ok(
+      matcher.has(networks[0]),
+      `matcher contains the first network in list ${index + 1}`
+    );
+    t.ok(
+      creationDurationMS < maxNativeCreationBlockingMS,
+      `expected native creation for list ${index + 1} to return within ${maxNativeCreationBlockingMS}ms, took ${creationDurationMS.toFixed(2)}ms`
+    );
+    t.ok(
+      maxEventLoopDelayMS < maxNativeCreationBlockingMS,
+      `expected native creation for list ${index + 1} not to block the event loop for ${maxNativeCreationBlockingMS}ms, took ${maxEventLoopDelayMS.toFixed(2)}ms`
+    );
+  }
+
+  const networkCount = nativeBenchmarkIpRanges.reduce(
+    (count, networks) => count + networks.length,
+    0
+  );
+  console.log(
+    `native creation processed ${networkCount.toLocaleString()} networks; calls took ${creationDurations
+      .map((duration) => duration.toFixed(2))
+      .join(", ")}ms; builds took ${buildDurations
+      .map((duration) => duration.toFixed(2))
+      .join(
+        ", "
+      )}ms; maximum event-loop delay was ${Math.max(...eventLoopDelays).toFixed(2)}ms`
   );
 });
 
