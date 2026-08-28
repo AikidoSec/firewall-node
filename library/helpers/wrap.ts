@@ -85,8 +85,8 @@ export function isWrapped<T>(fn: T): fn is WrappedFunction<T> {
     // inherited via the prototype chain, e.g. a class extending an already wrapped
     // class would otherwise be mistaken for wrapped itself.
     Object.prototype.hasOwnProperty.call(fn, wrappedSymbol) &&
-    fn[wrappedSymbol] === true &&
+    (fn as any)[wrappedSymbol] === true &&
     Object.prototype.hasOwnProperty.call(fn, originalSymbol) &&
-    fn[originalSymbol] instanceof Function
+    (fn as any)[originalSymbol] instanceof Function
   );
 }
