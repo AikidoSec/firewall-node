@@ -14,7 +14,6 @@ const CHAIN_METHODS = [
   "use",
   "concat",
   "unstable_concat",
-  "experimental_caller",
 ] as const;
 
 // Methods that turn a builder into a procedure. The function passed here
