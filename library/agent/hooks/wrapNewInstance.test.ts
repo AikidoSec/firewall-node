@@ -156,7 +156,7 @@ t.test("Wraps a class that extends an already wrapped class", async (t) => {
     }
   );
 
-  t.not(wrappedSub, originalSub);
+  t.equal(wrappedSub === originalSub, false);
 
   new exports.Sub("input");
 
