@@ -4,6 +4,17 @@ import { isWellKnownURI } from "../../helpers/isWellKnownURI";
 const EXCLUDED_METHODS = ["OPTIONS", "HEAD"];
 const IGNORE_EXTENSIONS = ["properties", "config", "webmanifest"];
 const IGNORE_STRINGS = ["cgi-bin"];
+const IGNORE_LAST_SEGMENTS = new Set([
+  "health",
+  "healthz",
+  "healthcheck",
+  "health-check",
+  "status",
+  "ready",
+  "readyz",
+  "live",
+  "livez",
+]);
 
 export function shouldDiscoverRoute({
   statusCode,
@@ -25,6 +36,10 @@ export function shouldDiscoverRoute({
   }
 
   const segments = route.split("/");
+
+  if (IGNORE_LAST_SEGMENTS.has(segments[segments.length - 1].toLowerCase())) {
+    return false;
+  }
 
   // Do not discover routes with dot files like `/path/to/.file` or `/.directory/file`
   // We want to allow discovery of well-known URIs like `/.well-known/acme-challenge`

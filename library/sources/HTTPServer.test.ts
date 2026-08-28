@@ -266,6 +266,37 @@ t.test(
   }
 );
 
+t.test(
+  "it does not discover or increment stats for health check routes",
+  async (t) => {
+    const server = http.createServer((req, res) => {
+      res.statusCode = 200;
+      res.end("OK");
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3342, () => {
+        fetch({
+          url: new URL("http://localhost:3342/health"),
+          method: "GET",
+          headers: {},
+          timeoutInMS: 500,
+        }).then(() => {
+          t.equal(
+            agent
+              .getRoutes()
+              .asArray()
+              .find((route) => route.path === "/health"),
+            undefined
+          );
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
+
 t.test("it parses cookies", async (t) => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");

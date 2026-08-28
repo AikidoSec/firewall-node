@@ -315,6 +315,30 @@ t.test("it allows redirects", async () => {
   );
 });
 
+t.test("it ignores common status / health check routes", async () => {
+  for (const route of [
+    "/health",
+    "/healthz",
+    "/healthcheck",
+    "/health-check",
+    "/status",
+    "/ready",
+    "/readyz",
+    "/live",
+    "/livez",
+    "/HEALTHZ",
+    "/api/health",
+    "/api/v1/health",
+    "/api/v1/status",
+  ]) {
+    t.same(
+      shouldDiscoverRoute({ statusCode: 200, route, method: "GET" }),
+      false,
+      route
+    );
+  }
+});
+
 t.test("it does not ignore normal routes", async () => {
   t.same(
     shouldDiscoverRoute({
