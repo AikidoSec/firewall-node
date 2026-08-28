@@ -24,6 +24,7 @@ export type Context = {
   route: string | undefined;
   graphql?: string[];
   xml?: unknown[];
+  trpc?: unknown[];
   rawBody?: unknown;
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
   markUnsafe?: unknown[];
@@ -94,6 +95,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.route = context.route;
     current.graphql = context.graphql;
     current.xml = context.xml;
+    current.trpc = context.trpc;
     current.rawBody = context.rawBody;
     current.subdomains = context.subdomains;
     current.outgoingRequestRedirects = context.outgoingRequestRedirects;

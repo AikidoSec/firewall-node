@@ -6,6 +6,7 @@ export const SOURCES = [
   "routeParams",
   "graphql",
   "xml",
+  "trpc",
   "subdomains",
   "markUnsafe",
   "url",
