@@ -983,35 +983,38 @@ t.test("it blocks blocked IPs using session stream event", async (t) => {
   });
 });
 
-t.test("it does not count requests for routes with forceProtectionOff", async () => {
-  const server = createMinimalTestServer();
+t.test(
+  "it does not count requests for routes with forceProtectionOff",
+  async () => {
+    const server = createMinimalTestServer();
 
-  const totalBefore = agent.getInspectionStatistics().getStats().requests
-    .total;
+    const totalBefore = agent.getInspectionStatistics().getStats()
+      .requests.total;
 
-  await new Promise<void>((resolve) => {
-    server.listen(3441, () => {
-      http2Request(new URL("http://localhost:3441/protection-off"), "GET", {})
-        .then(() => {
-          t.same(
-            agent.getInspectionStatistics().getStats().requests.total,
-            totalBefore
-          );
+    await new Promise<void>((resolve) => {
+      server.listen(3441, () => {
+        http2Request(new URL("http://localhost:3441/protection-off"), "GET", {})
+          .then(() => {
+            t.same(
+              agent.getInspectionStatistics().getStats().requests.total,
+              totalBefore
+            );
 
-          return http2Request(
-            new URL("http://localhost:3441/not-protection-off"),
-            "GET",
-            {}
-          );
-        })
-        .then(() => {
-          t.same(
-            agent.getInspectionStatistics().getStats().requests.total,
-            totalBefore + 1
-          );
-          server.close();
-          resolve();
-        });
+            return http2Request(
+              new URL("http://localhost:3441/not-protection-off"),
+              "GET",
+              {}
+            );
+          })
+          .then(() => {
+            t.same(
+              agent.getInspectionStatistics().getStats().requests.total,
+              totalBefore + 1
+            );
+            server.close();
+            resolve();
+          });
+      });
     });
-  });
-});
+  }
+);
