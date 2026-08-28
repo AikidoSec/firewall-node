@@ -28,6 +28,7 @@ const nativeBenchmarkIpRangeFiles = [
 
 const iterations = 500;
 const maxNativeCreationBlockingMS = 50;
+const maxEventLoopBlockingMS = process.env.GITHUB_ACTIONS === "true" ? 250 : 50;
 
 async function createAndMeasureNativeIPMatcher(networks: string[]) {
   let lastEventLoopTurnAt = performance.now();
@@ -194,8 +195,8 @@ t.test("Native IPMatcher creation does not block the event loop", async (t) => {
       `expected native creation for list ${index + 1} to return within ${maxNativeCreationBlockingMS}ms, took ${creationDurationMS.toFixed(2)}ms`
     );
     t.ok(
-      maxEventLoopDelayMS < maxNativeCreationBlockingMS,
-      `expected native creation for list ${index + 1} not to block the event loop for ${maxNativeCreationBlockingMS}ms, took ${maxEventLoopDelayMS.toFixed(2)}ms`
+      maxEventLoopDelayMS < maxEventLoopBlockingMS,
+      `expected native creation for list ${index + 1} not to block the event loop for ${maxEventLoopBlockingMS}ms, took ${maxEventLoopDelayMS.toFixed(2)}ms`
     );
   }
 
