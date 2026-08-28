@@ -54,6 +54,78 @@ t.test("Wrap non existing class", async (t) => {
   ]);
 });
 
+t.test("Does not double wrap the same class", async (t) => {
+  let firstCalls = 0;
+  let secondCalls = 0;
+  const exports = {
+    test: class Test {
+      constructor(private input: string) {}
+
+      getInput() {
+        return this.input;
+      }
+    },
+  };
+
+  const wrapped1 = wrapNewInstance(
+    exports,
+    "test",
+    { name: "test", type: "external" },
+    () => {
+      firstCalls++;
+    }
+  );
+
+  const wrapped2 = wrapNewInstance(
+    exports,
+    "test",
+    { name: "test", type: "external" },
+    () => {
+      secondCalls++;
+    }
+  );
+
+  t.equal(wrapped1, wrapped2);
+  t.equal(exports.test, wrapped1);
+
+  new exports.test("input");
+
+  t.same(firstCalls, 1);
+  t.same(secondCalls, 0);
+});
+
+t.test("Does not double wrap an already wrapped default export", async (t) => {
+  let calls = 0;
+  let testExport = class Test {
+    constructor(private input: string) {}
+
+    getInput() {
+      return this.input;
+    }
+  };
+
+  testExport = wrapNewInstance(
+    testExport,
+    undefined,
+    { name: "test", type: "external" },
+    () => {
+      calls++;
+    }
+  ) as any;
+
+  testExport = wrapNewInstance(
+    testExport,
+    undefined,
+    { name: "test", type: "external" },
+    () => {
+      calls += 100;
+    }
+  ) as any;
+
+  new testExport("input");
+  t.same(calls, 1);
+});
+
 t.test("Can wrap default export", async (t) => {
   let testExport = class Test {
     constructor(private input: string) {}
