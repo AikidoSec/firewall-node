@@ -120,5 +120,5 @@ jobs:
       - name: Upload coverage to Aikido
         uses: AikidoSec/code-coverage-github-action@c649d671735d625ec9d39bab5efae5921160ea63 # v0.1.0
         with:
-          files: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
-          fail_ci_if_error: true
+          lcov-file-paths: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
+          fail_on_error: true
