@@ -121,10 +121,11 @@ jobs:
         run: |
           mkdir -p coverage-artifacts
           if [ "${{ matrix.mode }}" = "cjs" ]; then
-            cp library/.tap/report/lcov.info coverage-artifacts/${{ matrix.mode }}-${{ matrix.node-version }}-${{ matrix.instrumentation }}.lcov
+            lcov_file=library/.tap/report/lcov.info
           else
-            cp .esm-tests/tests/lcov.info coverage-artifacts/${{ matrix.mode }}-${{ matrix.node-version }}-${{ matrix.instrumentation }}.lcov
+            lcov_file=.esm-tests/tests/lcov.info
           fi
+          node scripts/normalize-lcov-source-paths.js "$lcov_file" coverage-artifacts/${{ matrix.mode }}-${{ matrix.node-version }}-${{ matrix.instrumentation }}.lcov
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
