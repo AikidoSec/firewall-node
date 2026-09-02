@@ -117,9 +117,8 @@ jobs:
           max_attempts: 3
           command: npm run test:esm
 
-      - name: Upload coverage
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      - name: Upload coverage to Aikido
+        uses: AikidoSec/code-coverage-github-action@0.1.0
         with:
           files: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
-          use_oidc: true
           fail_ci_if_error: true
