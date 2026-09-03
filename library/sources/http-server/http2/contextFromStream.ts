@@ -3,6 +3,7 @@ import { buildRouteFromURL } from "../../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../../helpers/getIPAddressFromRequest";
 import { parse } from "../../../helpers/parseCookies";
 import { tryParseURLParams } from "../../../helpers/tryParseURLParams";
+import { isTrustedProxyRequest } from "../../../helpers/trustProxy";
 import { ServerHttp2Stream, IncomingHttpHeaders } from "http2";
 
 /**
@@ -23,6 +24,8 @@ export function contextFromStream(
     }
   }
 
+  const rawRemoteAddress = stream.session?.socket.remoteAddress;
+
   return {
     url: url,
     method: headers[":method"] as string,
@@ -35,7 +38,8 @@ export function contextFromStream(
     body: undefined,
     remoteAddress: getIPAddressFromRequest({
       headers: headers,
-      remoteAddress: stream.session?.socket.remoteAddress,
+      remoteAddress: rawRemoteAddress,
     }),
+    isBehindTrustedProxy: isTrustedProxyRequest(rawRemoteAddress),
   };
 }

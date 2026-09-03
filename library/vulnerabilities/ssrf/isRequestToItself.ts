@@ -1,5 +1,4 @@
 import { getPortFromURL } from "../../helpers/getPortFromURL";
-import { isTrustedProxyRequest } from "../../helpers/trustProxy";
 import { tryParseURL } from "../../helpers/tryParseURL";
 
 // We don't want to block outgoing requests to the same host as the server
@@ -9,17 +8,17 @@ export function isRequestToItself({
   serverUrl,
   outboundHostname,
   outboundPort,
-  remoteAddress,
+  isBehindTrustedProxy,
 }: {
   serverUrl: string;
   outboundHostname: string;
   outboundPort: number | undefined;
-  remoteAddress: string | undefined;
+  isBehindTrustedProxy: boolean | undefined;
 }): boolean {
   // When Node.js is not behind a reverse proxy, we can't trust the hostname inside `serverUrl`
   // The hostname in `serverUrl` is built from the request headers
   // The headers can be manipulated by the client if Node.js is directly exposed to the internet
-  if (!isTrustedProxyRequest(remoteAddress)) {
+  if (!isBehindTrustedProxy) {
     return false;
   }
 
