@@ -19,16 +19,27 @@ import { warnIfUsingTurbopackWithOldSystem } from "../helpers/warnIfUsingTurbopa
  * This method wraps the require function and sets up the hooks.
  * Globals are wrapped directly.
  */
-export function applyHooks(hooks: Hooks, newInstrumentation: boolean) {
+export function applyHooks(
+  hooks: Hooks,
+  newInstrumentation: boolean,
+  isBundlingProcess: boolean = false
+) {
   if (!newInstrumentation) {
     setPackagesToPatch(hooks.getPackages());
     setBuiltinModulesToPatch(hooks.getBuiltInModules());
-    wrapRequire();
-    warnIfUsingTurbopackWithOldSystem();
+
+    if (!isBundlingProcess) {
+      // No need to wrap require during the bundling process
+      wrapRequire();
+      warnIfUsingTurbopackWithOldSystem();
+    }
   } else {
     setPackagesToInstrument(hooks.getPackages());
     setBuiltinsToInstrument(hooks.getBuiltInModules());
-    registerNodeHooks();
+    if (!isBundlingProcess) {
+      // No need to register hooks during the bundling process
+      registerNodeHooks();
+    }
   }
 
   hooks.getGlobals().forEach((g) => {

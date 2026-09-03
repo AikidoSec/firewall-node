@@ -4,12 +4,37 @@ import { LoggerForTesting } from "../logger/LoggerForTesting";
 import { Token } from "../api/Token";
 import { bindContext } from "../Context";
 import { createTestAgent } from "../../helpers/createTestAgent";
+import { getInstance, setInstance } from "../AgentSingleton";
 
 const logger = new LoggerForTesting();
 
 createTestAgent({
   logger,
   token: new Token("123"),
+});
+
+t.test("Only calls interceptors with agent", async (t) => {
+  const toWrap = {
+    test: () => "test",
+  };
+
+  const instance = getInstance();
+  // @ts-expect-error Test
+  setInstance(undefined);
+
+  wrapExport(
+    toWrap,
+    "test",
+    { name: "test", type: "external" },
+    {
+      kind: undefined,
+      modifyReturnValue: () => "modified",
+    }
+  );
+
+  t.same(toWrap.test(), "test");
+
+  setInstance(instance!);
 });
 
 t.test("Inspect args", async (t) => {

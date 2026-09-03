@@ -1,0 +1,16 @@
+{
+  "name": "rolldown-bundle",
+  "scripts": {
+    "build": "rolldown -c"
+  },
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@hono/node-server": "^1.18.1",
+    "hono": "^4.8.12",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.4",
+    "rolldown": "^1.0.0-beta.54"
+  }
+}

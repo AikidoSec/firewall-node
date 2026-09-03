@@ -268,3 +268,82 @@ pub fn insert_access_local_var<'a>(
 
     body.push(stmt_expression);
 }
+
+// Add a statement to the end of the body: __instrumentPackageWrapped('name', 'version');
+pub fn insert_package_wrapped<'a>(
+    allocator: &'a Allocator,
+    builder: &'a AstBuilder,
+    pkg_name: &str,
+    pkg_version: &str,
+    body: &mut OxcVec<'a, Statement<'a>>,
+) {
+    let mut instrument_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(2);
+
+    instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+        SPAN,
+        allocator.alloc_str(pkg_name),
+        None,
+    )));
+
+    instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+        SPAN,
+        allocator.alloc_str(pkg_version),
+        None,
+    )));
+
+    // Build and add a call expression
+    let call_expr = builder.expression_call(
+        SPAN,
+        builder.expression_identifier(SPAN, "__instrumentPackageWrapped"),
+        NONE,
+        instrument_args,
+        false,
+    );
+
+    let stmt_expression = builder.statement_expression(SPAN, call_expr);
+
+    body.push(stmt_expression);
+}
+
+// Add a statement to the end of the body: __instrumentPackageLoaded('name', 'version', 'agent_version');
+pub fn insert_package_loaded<'a>(
+    allocator: &'a Allocator,
+    builder: &'a AstBuilder,
+    pkg_name: &str,
+    pkg_version: &str,
+    agent_version: &str,
+    body: &mut OxcVec<'a, Statement<'a>>,
+) {
+    let mut instrument_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(3);
+
+    instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+        SPAN,
+        allocator.alloc_str(pkg_name),
+        None,
+    )));
+
+    instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+        SPAN,
+        allocator.alloc_str(pkg_version),
+        None,
+    )));
+
+    instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+        SPAN,
+        allocator.alloc_str(agent_version),
+        None,
+    )));
+
+    // Build and add a call expression
+    let call_expr = builder.expression_call(
+        SPAN,
+        builder.expression_identifier(SPAN, "__instrumentPackageLoaded"),
+        NONE,
+        instrument_args,
+        false,
+    );
+
+    let stmt_expression = builder.statement_expression(SPAN, call_expr);
+
+    body.push(stmt_expression);
+}

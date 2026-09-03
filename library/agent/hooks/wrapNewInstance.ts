@@ -11,11 +11,6 @@ export function wrapNewInstance(
   pkgInfo: PartialWrapPackageInfo,
   interceptor: (instance: any, constructorArgs: unknown[]) => unknown
 ) {
-  const agent = getInstance();
-  if (!agent) {
-    throw new Error("Can not wrap new instance if agent is not initialized");
-  }
-
   try {
     return wrapDefaultOrNamed(
       subject,
@@ -34,7 +29,7 @@ export function wrapNewInstance(
             }
           } catch (error) {
             if (error instanceof Error) {
-              agent.onFailedToWrapMethod(
+              getInstance()?.onFailedToWrapMethod(
                 pkgInfo.name,
                 className || "default export",
                 error
@@ -48,7 +43,7 @@ export function wrapNewInstance(
     );
   } catch (error) {
     if (error instanceof Error) {
-      agent.onFailedToWrapMethod(
+      getInstance()?.onFailedToWrapMethod(
         pkgInfo.name,
         className || "default export",
         error
