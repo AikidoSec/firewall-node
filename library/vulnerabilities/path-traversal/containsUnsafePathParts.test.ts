@@ -44,6 +44,27 @@ t.test("it detects dangerous path parts for URLs", async () => {
   t.same(containsUnsafePathPartsUrl("file:///.\t\n./test.txt"), true);
 });
 
+t.test("it detects percent-encoded dot segments for URLs", async () => {
+  t.same(containsUnsafePathPartsUrl("%2e%2e/test.txt"), true);
+  t.same(containsUnsafePathPartsUrl(".%2e/test.txt"), true);
+  t.same(containsUnsafePathPartsUrl("%2e./test.txt"), true);
+  t.same(containsUnsafePathPartsUrl("%2E%2E/test.txt"), true);
+  t.same(containsUnsafePathPartsUrl("file:///%2e%2e/test.txt"), true);
+  t.same(containsUnsafePathPartsUrl("a/%2e%2e/test.txt"), true);
+  t.same(containsUnsafePathPartsUrl("a\\%2e%2e\\test.txt"), true);
+  t.same(containsUnsafePathPartsUrl("%2e%2e"), true);
+});
+
+t.test(
+  "it does not flag segments that only look like dot segments",
+  async () => {
+    t.same(containsUnsafePathPartsUrl("%2e%2e%2e/test.txt"), false);
+    t.same(containsUnsafePathPartsUrl("a%2e%2eb/test.txt"), false);
+    t.same(containsUnsafePathPartsUrl("%2e%2e-backup/test.txt"), false);
+    t.same(containsUnsafePathPartsUrl("safe/file.txt"), false);
+  }
+);
+
 t.test("it only removes some chars from the URL", async () => {
   t.same(fileURLToPath("file:///.\t./test.txt"), "/test.txt");
   t.same(fileURLToPath("file:///.\n./test.txt"), "/test.txt");

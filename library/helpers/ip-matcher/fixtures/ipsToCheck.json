@@ -1,0 +1,10 @@
+[
+  { "ip": "202.160.131.0", "shouldExist": true },
+  { "ip": "20.50.168.91", "shouldExist": true },
+  { "ip": "2a03:2880:f10c::12", "shouldExist": true },
+  { "ip": "35.196.0.12", "shouldExist": true },
+  { "ip": "34.3.64.8", "shouldExist": true },
+  { "ip": "2a03:2880:f20c::ff", "shouldExist": true },
+  { "ip": "192.168.2.1", "shouldExist": false },
+  { "ip": "::1", "shouldExist": false }
+]

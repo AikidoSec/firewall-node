@@ -54,6 +54,116 @@ t.test("Wrap non existing class", async (t) => {
   ]);
 });
 
+t.test("Does not double wrap the same class", async (t) => {
+  let firstCalls = 0;
+  let secondCalls = 0;
+  const exports = {
+    test: class Test {
+      constructor(private input: string) {}
+
+      getInput() {
+        return this.input;
+      }
+    },
+  };
+
+  const wrapped1 = wrapNewInstance(
+    exports,
+    "test",
+    { name: "test", type: "external" },
+    () => {
+      firstCalls++;
+    }
+  );
+
+  const wrapped2 = wrapNewInstance(
+    exports,
+    "test",
+    { name: "test", type: "external" },
+    () => {
+      secondCalls++;
+    }
+  );
+
+  t.equal(wrapped1, wrapped2);
+  t.equal(exports.test, wrapped1);
+
+  new exports.test("input");
+
+  t.same(firstCalls, 1);
+  t.same(secondCalls, 0);
+});
+
+t.test("Does not double wrap an already wrapped default export", async (t) => {
+  let calls = 0;
+  let testExport = class Test {
+    constructor(private input: string) {}
+
+    getInput() {
+      return this.input;
+    }
+  };
+
+  testExport = wrapNewInstance(
+    testExport,
+    undefined,
+    { name: "test", type: "external" },
+    () => {
+      calls++;
+    }
+  ) as any;
+
+  testExport = wrapNewInstance(
+    testExport,
+    undefined,
+    { name: "test", type: "external" },
+    () => {
+      calls += 100;
+    }
+  ) as any;
+
+  new testExport("input");
+  t.same(calls, 1);
+});
+
+t.test("Wraps a class that extends an already wrapped class", async (t) => {
+  let baseCalls = 0;
+  let subCalls = 0;
+
+  const exports: any = {
+    Base: class Base {
+      constructor(private input: string) {}
+
+      getInput() {
+        return this.input;
+      }
+    },
+  };
+
+  wrapNewInstance(exports, "Base", { name: "test", type: "external" }, () => {
+    baseCalls++;
+  });
+
+  exports.Sub = class Sub extends exports.Base {};
+  const originalSub = exports.Sub;
+
+  const wrappedSub = wrapNewInstance(
+    exports,
+    "Sub",
+    { name: "test", type: "external" },
+    () => {
+      subCalls++;
+    }
+  );
+
+  t.equal(wrappedSub === originalSub, false);
+
+  new exports.Sub("input");
+
+  t.same(subCalls, 1);
+  t.same(baseCalls, 1);
+});
+
 t.test("Can wrap default export", async (t) => {
   let testExport = class Test {
     constructor(private input: string) {}

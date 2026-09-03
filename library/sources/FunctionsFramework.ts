@@ -100,10 +100,7 @@ function incrementStatsAndDiscoverAPISpec(
   agent: Agent,
   statusCode: number
 ) {
-  if (
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress)
-  ) {
+  if (agent.getConfig().isBypassedRequest(context)) {
     return;
   }
 

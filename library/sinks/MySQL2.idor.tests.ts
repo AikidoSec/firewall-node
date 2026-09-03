@@ -85,6 +85,112 @@ export function createMySQL2IdorTests(versionPkgName: string) {
         t.same(rows, []);
       });
 
+      await t.test("allows query with tenant filter in obj", async () => {
+        const [rows] = await runWithContext(context, () => {
+          return connection.query({
+            sql: "SELECT petname FROM cats_idor2 WHERE tenant_id = ?",
+            values: ["org_123"],
+          });
+        });
+        t.same(rows, []);
+      });
+
+      await t.test("allows query with tenant filter after obj", async () => {
+        const [rows] = await runWithContext(context, () => {
+          return connection.query(
+            {
+              sql: "SELECT petname FROM cats_idor2 WHERE tenant_id = ?",
+            },
+            ["org_123"]
+          );
+        });
+        t.same(rows, []);
+      });
+
+      await t.test(
+        "query() prefers the second argument's values over the object's values when both are provided",
+        async () => {
+          const [rows] = await runWithContext(context, () => {
+            return withoutIdorProtection(async () => {
+              return await connection.query(
+                { sql: "SELECT ? as val", values: ["fromObject"] },
+                ["fromSecondArg"]
+              );
+            });
+          });
+          t.equal((rows as { val: string }[])[0].val, "fromSecondArg");
+        }
+      );
+
+      await t.test(
+        "execute() prefers the object's values over the second argument's values when both are provided",
+        async () => {
+          const [rows] = await runWithContext(context, () => {
+            return withoutIdorProtection(async () => {
+              return await connection.execute(
+                { sql: "SELECT ? as val", values: ["fromObject"] },
+                ["fromSecondArg"]
+              );
+            });
+          });
+          t.equal((rows as { val: string }[])[0].val, "fromObject");
+        }
+      );
+
+      await t.test(
+        "execute() falls back to the second argument's values when the object has no values",
+        async () => {
+          const [rows] = await runWithContext(context, () => {
+            return withoutIdorProtection(async () => {
+              return await connection.execute({ sql: "SELECT ? as val" }, [
+                "fromSecondArg",
+              ]);
+            });
+          });
+          t.equal((rows as { val: string }[])[0].val, "fromSecondArg");
+        }
+      );
+
+      await t.test(
+        "blocks query() with wrong tenant filter when values are passed as second argument",
+        async () => {
+          const error = await t.rejects(async () => {
+            await runWithContext(context, () => {
+              return connection.query(
+                {
+                  sql: "SELECT petname FROM cats_idor2 WHERE tenant_id = ?",
+                  values: ["org_123"],
+                },
+                ["org_456"]
+              );
+            });
+          });
+
+          if (error instanceof Error) {
+            t.match(
+              error.message,
+              "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+            );
+          }
+        }
+      );
+
+      await t.test(
+        "allows query() with correct tenant filter when values are passed as second argument",
+        async () => {
+          const [rows] = await runWithContext(context, () => {
+            return connection.query(
+              {
+                sql: "SELECT petname FROM cats_idor2 WHERE tenant_id = ?",
+                values: ["org_456"],
+              },
+              ["org_123"]
+            );
+          });
+          t.same(rows, []);
+        }
+      );
+
       await t.test("blocks query without tenant filter", async () => {
         const error = await t.rejects(async () => {
           await runWithContext(context, () => {
@@ -116,7 +222,7 @@ export function createMySQL2IdorTests(versionPkgName: string) {
         if (error instanceof Error) {
           t.match(
             error.message,
-            "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+            "Zen IDOR protection: query on table 'cats_idor2' requires a tenant ID, but setTenantId() was not called (use runWithTenant(...) for background work)"
           );
         }
       });

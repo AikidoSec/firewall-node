@@ -5,6 +5,7 @@ import { Wrapper } from "../agent/Wrapper";
 import { colorText } from "../helpers/colorText";
 import { warnBox } from "../helpers/warnBox";
 import { createRequestListener } from "./http-server/createRequestListener";
+import { createSessionListener } from "./http-server/http2/createSessionListener";
 import { createStreamListener } from "./http-server/http2/createStreamListener";
 
 export class HTTPServer implements Wrapper {
@@ -60,6 +61,10 @@ export class HTTPServer implements Wrapper {
 
     if (module === "http2" && args[0] === "stream") {
       return [args[0], createStreamListener(args[1], module, agent)];
+    }
+
+    if (module === "http2" && args[0] === "session") {
+      return [args[0], createSessionListener(args[1], agent)];
     }
 
     return args;

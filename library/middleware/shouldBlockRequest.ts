@@ -43,11 +43,9 @@ export function shouldBlockRequest(): Result {
   updateContext(context, "executedMiddleware", true);
   agent.onMiddlewareExecuted();
 
-  const isBypassedIP =
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress);
+  const isBypassedRequest = agent.getConfig().isBypassedRequest(context);
 
-  if (isBypassedIP) {
+  if (isBypassedRequest) {
     return { block: false };
   }
 

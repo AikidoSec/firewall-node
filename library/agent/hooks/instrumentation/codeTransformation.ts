@@ -24,12 +24,17 @@ export function transformCode(
 
     // Rewrite import path for unit tests if environment variable is set to true
     if (isNewInstrumentationUnitTest()) {
+      // ESM files generate static ESM import statements, but ts-node can't handle this
+      // Use a .mjs wrapper (which uses createRequire internally) for ESM files
+      const injectedFile = isEsmUnitTest()
+        ? "injectedFunctions.js"
+        : pkgLoadFormat === "module"
+          ? "injectedFunctions.mjs"
+          : "injectedFunctions.ts";
+
       return result.replace(
         "@aikidosec/firewall/instrument/internals",
-        join(
-          __dirname,
-          isEsmUnitTest() ? "injectedFunctions.js" : "injectedFunctions.ts"
-        )
+        join(__dirname, injectedFile)
       );
     }
 

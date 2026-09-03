@@ -3,7 +3,6 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
@@ -29,6 +28,14 @@ export class MySQL implements Wrapper {
   private findParams(args: unknown[]): unknown[] | undefined {
     if (args.length >= 2 && Array.isArray(args[1])) {
       return args[1];
+    }
+
+    return undefined;
+  }
+
+  private findObjectValues(query: object): unknown[] | undefined {
+    if ("values" in query && Array.isArray(query.values)) {
+      return query.values;
     }
 
     return undefined;
@@ -64,12 +71,16 @@ export class MySQL implements Wrapper {
 
     if (
       args.length > 0 &&
-      isPlainObject(args[0]) &&
-      args[0].sql &&
+      args[0] &&
+      typeof args[0] === "object" &&
+      !Array.isArray(args[0]) &&
+      "sql" in args[0] &&
       typeof args[0].sql === "string"
     ) {
       const sql = args[0].sql;
-      const params = this.findParams(args);
+
+      // The second argument to query() overrides the object's own values
+      const params = this.findParams(args) ?? this.findObjectValues(args[0]);
 
       // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
       if (context) {

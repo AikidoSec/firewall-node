@@ -4,10 +4,12 @@ import {
   Context,
   getContext,
   runWithContext,
+  updateContext,
 } from "../../../agent/Context";
 import { contextFromStream } from "./contextFromStream";
 import { shouldDiscoverRoute } from "../shouldDiscoverRoute";
 import { IncomingHttpHeaders, ServerHttp2Stream } from "http2";
+import { blockIPsAndBots } from "../blockIPsAndBots";
 
 /**
  * Wraps the http2 stream listener to get the request context of http2 requests.
@@ -18,7 +20,7 @@ export function createStreamListener(
   module: string,
   agent: Agent
 ) {
-  return function requestListener(
+  return function streamListener(
     stream: ServerHttp2Stream,
     headers: IncomingHttpHeaders,
     flags: number,
@@ -43,6 +45,16 @@ export function createStreamListener(
       stream.prependListener = wrapStreamEvent(stream.prependListener);
       stream.prependOnceListener = wrapStreamEvent(stream.prependOnceListener);
 
+      if (blockIPsAndBots(stream, agent)) {
+        if (context) {
+          // To prevent attack wave detection from checking this request
+          updateContext(context, "blockedDueToIPOrBot", true);
+        }
+
+        // The return is necessary to prevent the listener from being called
+        return;
+      }
+
       return listener(stream, headers, flags, rawHeaders);
     });
   };
@@ -57,10 +69,7 @@ function discoverRouteFromStream(
     return;
   }
 
-  if (
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress)
-  ) {
+  if (agent.getConfig().isBypassedRequest(context)) {
     return;
   }
 

@@ -45,7 +45,7 @@ test("it blocks request in blocking mode", async () => {
     // Wait for the server to start
     await timeout(2000);
 
-    const [sqlInjection, normalAdd] = await Promise.all([
+    const [sqlInjection, normalAdd, bypassedRequest] = await Promise.all([
       fetch(`http://127.0.0.1:${port}/add`, {
         method: "POST",
         body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_2;-- H" }),
@@ -62,10 +62,20 @@ test("it blocks request in blocking mode", async () => {
         },
         signal: AbortSignal.timeout(5000),
       }),
+      fetch(`http://127.0.0.1:${port}/add`, {
+        method: "POST",
+        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_2;-- H" }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-Bypass-Request": "true",
+        },
+        signal: AbortSignal.timeout(5000),
+      }),
     ]);
 
     equal(sqlInjection.status, 500);
     equal(normalAdd.status, 200);
+    equal(bypassedRequest.status, 200);
     match(stdout, /Starting agent/);
     match(stderr, /Zen has blocked an SQL injection/);
   } catch (err) {
@@ -107,7 +117,7 @@ test("it does not block request in monitoring mode", async () => {
     // Wait for the server to start
     await timeout(2000);
 
-    const [sqlInjection, normalAdd] = await Promise.all([
+    const [sqlInjection, normalAdd, bypassedRequest] = await Promise.all([
       fetch(`http://127.0.0.1:${port2}/add`, {
         method: "POST",
         body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_2;-- H" }),
@@ -124,10 +134,20 @@ test("it does not block request in monitoring mode", async () => {
         },
         signal: AbortSignal.timeout(5000),
       }),
+      fetch(`http://127.0.0.1:${port2}/add`, {
+        method: "POST",
+        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_2;-- H" }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-Bypass-Request": "true",
+        },
+        signal: AbortSignal.timeout(5000),
+      }),
     ]);
 
     equal(sqlInjection.status, 200);
     equal(normalAdd.status, 200);
+    equal(bypassedRequest.status, 200);
     match(stdout, /Starting agent/);
     doesNotMatch(stderr, /Zen has blocked an SQL injection/);
   } catch (err) {
