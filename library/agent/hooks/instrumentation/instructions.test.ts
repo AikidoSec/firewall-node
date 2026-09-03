@@ -24,6 +24,7 @@ import { wrapBuiltinExports } from "./wrapBuiltinExports";
 import { Agent } from "../../Agent";
 import { wrap } from "../../../helpers/wrap";
 import { getInstance } from "../../AgentSingleton";
+import { Hooks } from "../Hooks";
 
 const consoleWarnings: string[] = [];
 
@@ -78,6 +79,7 @@ t.test("it works", async (t) => {
         modifyArgs: false,
         modifyReturnValue: false,
         modifyArgumentsObject: false,
+        className: undefined,
       },
     ],
     accessLocalVariables: [],
@@ -215,6 +217,15 @@ t.test("it works using injected functions", async (t) => {
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
   t.equal(pkgModifyReturnValueCalled, false);
+  t.same(
+    __instrumentModifyReturnValue(
+      "foo.bar.js.baz.MethodDefinition.^1.0.0",
+      [1, 2, 3],
+      "42",
+      this
+    ),
+    "42"
+  );
 
   // Without agent
   t.same(wrapBuiltinExports("http", { a: 1 }), { a: 1 });
@@ -508,6 +519,40 @@ t.test("test local variable access", async (t) => {
   t.equal(callbackCalledCount, 2);
 });
 
+t.test(
+  "it collects interceptors when multiple wrappers register the same builtin",
+  async (t) => {
+    let firstInterceptorCalled = false;
+    let secondInterceptorCalled = false;
+
+    const hooks = new Hooks();
+
+    hooks.addBuiltinModule("http").onRequire(() => {
+      firstInterceptorCalled = true;
+    });
+
+    hooks.addBuiltinModule("http").onRequire(() => {
+      secondInterceptorCalled = true;
+    });
+
+    t.same(hooks.getBuiltInModules().length, 1);
+
+    setBuiltinsToInstrument(hooks.getBuiltInModules());
+
+    t.equal(shouldPatchBuiltin("http"), true);
+    t.same(getBuiltinInterceptors("http").length, 2);
+
+    getBuiltinInterceptors("http")[0]({}, { name: "http", type: "builtin" });
+    t.equal(firstInterceptorCalled, true);
+    t.equal(secondInterceptorCalled, false);
+
+    getBuiltinInterceptors("http")[1]({}, { name: "http", type: "builtin" });
+    t.equal(secondInterceptorCalled, true);
+
+    setBuiltinsToInstrument([]);
+  }
+);
+
 t.test("addFileInstrumentation checks path", async (t) => {
   const pkg = new Package("foo").withVersion("^1.0.0");
 
@@ -589,3 +634,73 @@ t.test("instrumentPackageLoaded works", async (t) => {
     "@foo/bar": "1.2.3",
   });
 });
+t.test(
+  "use className to limit instrumentation to specific method of a class",
+  async (t) => {
+    let callbackCalledCount = 0;
+
+    const pkg = new Package("foo");
+    pkg.withVersion("^1.0.0").addFileInstrumentation({
+      path: "dist/test.mjs",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "abc",
+          className: "MyClass",
+          operationKind: "sql_op",
+          inspectArgs: () => {
+            ++callbackCalledCount;
+          },
+        },
+      ],
+    });
+
+    setPackagesToInstrument([pkg]);
+    createTestAgent();
+
+    t.equal(callbackCalledCount, 0);
+
+    __instrumentInspectArgs(
+      "foo.dist/test.mjs.abc.MethodDefinition.^1.0.0",
+      [],
+      "1.0.0",
+      this
+    );
+    t.equal(callbackCalledCount, 0);
+
+    __instrumentInspectArgs(
+      "foo.dist/test.mjs.MyClass.abc.MethodDefinition.^1.0.0",
+      [],
+      "1.0.0",
+      this
+    );
+
+    t.equal(callbackCalledCount, 1);
+
+    t.same(
+      getPackageFileInstrumentationInstructions(
+        "foo",
+        "1.0.0",
+        "dist/test.mjs"
+      ),
+      {
+        path: "dist/test.mjs",
+        identifier: "foo.dist/test.mjs.^1.0.0",
+        versionRange: "^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "abc",
+            identifier: "foo.dist/test.mjs.MyClass.abc.MethodDefinition.^1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            className: "MyClass",
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+  }
+);

@@ -8,6 +8,8 @@ import Zen from "@aikidosec/firewall";
 Zen.enableIdorProtection({
   tenantColumnName: "user_id",
   excludedTables: ["cats_6"],
+  // Off by default; the e2e tests flip this on to check the requireTenantId path.
+  requireTenantId: process.env.IDOR_REQUIRE_TENANT_ID === "true",
 });
 
 const app = new Hono();
@@ -71,6 +73,26 @@ app.get("/fetch", async (c) => {
   const text = await response.text();
   return c.json({ success: true, status: response.status, body: text });
 });
+
+if (process.env.IDOR_BACKGROUND_TEST === "true") {
+  const runQuery = async () => {
+    try {
+      await db.query("SELECT petname FROM cats_6_with_idor WHERE user_id = 1;");
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
+
+  const interval = setInterval(async () => {
+    if (process.env.IDOR_BACKGROUND_WITH_TENANT === "true") {
+      await Zen.runWithTenant(2, runQuery);
+    } else {
+      await runQuery();
+    }
+  }, 500);
+
+  interval.unref();
+}
 
 function getPort() {
   const port = parseInt(process.argv[2], 10) || 4000;

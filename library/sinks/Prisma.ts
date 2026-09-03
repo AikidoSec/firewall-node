@@ -16,6 +16,7 @@ import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectN
 import type { LocalVariableAccessConfig } from "../agent/hooks/instrumentation/types";
 import { inspectArgs } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { extractSQLFromObject } from "./prisma/extractSQLFromObject";
 
 type AllOperationsQueryExtension = {
   model?: string;
@@ -27,7 +28,12 @@ type AllOperationsQueryExtension = {
 const NOSQL_OPERATIONS_WITH_FILTER = ["findRaw"] as const;
 const NOSQL_OPERATIONS_WITH_PIPELINE = ["aggregateRaw"] as const;
 
-const SQL_OPERATIONS_TO_PROTECT = ["$queryRawUnsafe", "$executeRawUnsafe"];
+const SQL_OPERATIONS_TO_PROTECT = [
+  "$queryRawUnsafe",
+  "$executeRawUnsafe",
+  "$queryRaw",
+  "$executeRaw",
+];
 
 export class Prisma implements Wrapper {
   // Check if the prisma client is a NoSQL client
@@ -86,9 +92,8 @@ export class Prisma implements Wrapper {
       return undefined;
     }
 
-    if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
-      const sql: string = args[0];
-
+    const sql = extractSQLFromObject(args, dialect);
+    if (sql) {
       return checkContextForSqlInjection({
         sql: sql,
         context: context,

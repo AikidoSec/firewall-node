@@ -85,13 +85,17 @@ export function getPathsToPayload(
     }
 
     if (Array.isArray(value)) {
-      if (
-        value.length > 1 &&
-        value.length < MAX_ARRAY_LENGTH &&
-        value.join().toLowerCase() === attackPayloadLowercase
-      ) {
-        matches.add(path);
-        return;
+      try {
+        if (
+          value.length > 1 &&
+          value.length < MAX_ARRAY_LENGTH &&
+          value.join().toLowerCase() === attackPayloadLowercase
+        ) {
+          matches.add(path);
+          return;
+        }
+      } catch {
+        // Ignore deeply nested arrays that overflow during native join recursion.
       }
 
       for (const [index, item] of value.entries()) {
@@ -99,7 +103,7 @@ export function getPathsToPayload(
           break;
         }
 
-        traverse(item, path.concat({ type: "array", index }), depth);
+        traverse(item, path.concat({ type: "array", index }), depth + 1);
       }
     }
 

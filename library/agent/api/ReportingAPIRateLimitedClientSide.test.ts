@@ -205,7 +205,6 @@ function generateHeartbeatEvent(): Event {
       ipAddresses: {
         breakdown: {},
       },
-      sqlTokenizationFailures: 0,
     },
     agent: {
       version: "1.0.0",
@@ -280,6 +279,7 @@ t.test("it does not blow memory", async () => {
       allowedIPAddresses: [],
       blockNewOutgoingRequests: false,
       domains: [],
+      excludedUserIdsFromRateLimiting: [],
     });
   }
 

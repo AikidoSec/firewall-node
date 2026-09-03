@@ -460,3 +460,75 @@ t.test(
     );
   }
 );
+
+t.test(
+  "it detects path traversal using percent-encoded dot segments",
+  async (t) => {
+    const payloads = ["%2e%2e", ".%2e", "%2e.", "%2E%2E"];
+
+    for (const dotSegment of payloads) {
+      const payload = `${dotSegment}/etc/passwd`;
+      t.same(
+        checkContextForPathTraversal({
+          filename: new URL(payload, "file:///var/www/uploads/"),
+          operation: "operation",
+          context: {
+            cookies: {},
+            headers: {},
+            remoteAddress: "ip",
+            method: "POST",
+            url: "url",
+            query: {
+              file: payload,
+            },
+            body: {},
+            routeParams: {},
+            source: "express",
+            route: undefined,
+          },
+        }),
+        {
+          operation: "operation",
+          kind: "path_traversal",
+          source: "query",
+          pathsToPayload: [".file"],
+          metadata: {
+            filename: "/var/www/etc/passwd",
+          },
+          payload: payload,
+        },
+        `payload: ${payload}`
+      );
+    }
+  }
+);
+
+t.test(
+  "it does not flag a segment that only looks like a dot segment",
+  async () => {
+    t.same(
+      checkContextForPathTraversal({
+        filename: new URL(
+          "%2e%2e-backup/etc/passwd",
+          "file:///var/www/uploads/"
+        ),
+        operation: "operation",
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "POST",
+          url: "url",
+          query: {
+            file: "%2e%2e-backup/etc/passwd",
+          },
+          body: {},
+          routeParams: {},
+          source: "express",
+          route: undefined,
+        },
+      }),
+      undefined
+    );
+  }
+);

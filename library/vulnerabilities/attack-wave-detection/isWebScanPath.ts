@@ -15,12 +15,26 @@ const fileExtensions = new Set<string>([
   "sqlite3db",
 ]);
 
+// Extensions from other platforms that a Node.js app wouldn't serve.
+// Only treated as scanning when the status code is 404.
+// A 200 might mean the app proxies to another backend.
+const foreignExtensions = new Set<string>([
+  "php",
+  "php3",
+  "php4",
+  "php5",
+  "phtml",
+  "java",
+  "jsp",
+  "jspx",
+]);
+
 const filenames = new Set<string>(fileNames.map((name) => name.toLowerCase()));
 const directories = new Set<string>(
   directoryNames.map((name) => name.toLowerCase())
 );
 
-export function isWebScanPath(path: string): boolean {
+export function isWebScanPath(path: string, statusCode: number): boolean {
   const normalized = path.toLowerCase();
 
   const segments = normalized.split("/");
@@ -35,9 +49,15 @@ export function isWebScanPath(path: string): boolean {
     if (filename.includes(".")) {
       const ext = filename.split(".").pop();
 
-      // Check file extension
-      if (ext && fileExtensions.has(ext)) {
-        return true;
+      if (ext) {
+        // Check file extension
+        if (fileExtensions.has(ext)) {
+          return true;
+        }
+
+        if (statusCode === 404 && foreignExtensions.has(ext)) {
+          return true;
+        }
       }
     }
   }

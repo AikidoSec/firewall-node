@@ -8,6 +8,7 @@ import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { resolve } from "path";
 import { FileSystem } from "../sinks/FileSystem";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 
 // Allow self-signed certificates
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -41,10 +42,29 @@ const api = new ReportingAPIForTesting({
     },
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
+  excludedUserIdsFromRateLimiting: [],
 });
+
+const mockedFetchListAPI = new FetchListsAPIForTesting({
+  allowedIPAddresses: [],
+  blockedIPAddresses: [
+    {
+      key: "geoip/Belgium;BE",
+      source: "geoip",
+      ips: ["9.9.9.9"],
+      description: "geo restrictions",
+    },
+  ],
+  blockedUserAgents: "hackerbot",
+  monitoredUserAgents: "",
+  monitoredIPAddresses: [],
+  userAgentDetails: [],
+});
+
 const agent = createTestAgent({
   token: new Token("123"),
   api,
+  fetchListsAPI: mockedFetchListAPI,
 });
 agent.start([new HTTPServer(), new FileSystem()]);
 
@@ -247,7 +267,7 @@ t.test("it parses cookies", async () => {
 
 t.test("it sets body in context", async () => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = createMinimalTestServer();
 
@@ -272,7 +292,7 @@ t.test("it sets body in context", async () => {
 
 t.test("it sends 413 when body is larger than 20 Mb", async () => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = createMinimalTestServer();
 
@@ -548,6 +568,49 @@ t.test("it wraps the createSecureServer stream event", async () => {
   });
 });
 
+t.test("it does not interfere with non-stream session listeners", async (t) => {
+  const server = http2.createSecureServer({
+    key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+    cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+  });
+
+  let sessionClosed = false;
+
+  server.on("session", (session) => {
+    session.on("close", () => {
+      sessionClosed = true;
+    });
+    session.once("close", () => {});
+    session.addListener("close", () => {});
+    session.prependListener("close", () => {});
+    session.prependOnceListener("close", () => {});
+
+    session.on("stream", (stream) => {
+      stream.respond({ ":status": 200 });
+      stream.end("ok");
+    });
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3430, () => {
+      http2Request(new URL("https://localhost:3430"), "GET", {}).then(
+        ({ body }) => {
+          t.same(body, "ok");
+          server.close();
+          resolve();
+        }
+      );
+    });
+  });
+
+  await new Promise<void>((resolve) => {
+    setTimeout(() => {
+      t.ok(sessionClosed);
+      resolve();
+    }, 100);
+  });
+});
+
 t.test("real injection test", async (t) => {
   const server = http2.createServer();
   server.on("stream", (stream, headers) => {
@@ -736,7 +799,7 @@ t.test("it reports attack waves", async (t) => {
 
 t.test("it parses Multipart body", async () => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = createMinimalTestServer();
 
@@ -767,7 +830,7 @@ t.test("it parses Multipart body", async () => {
 
 t.test("it ignores files in Multipart body", async () => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = createMinimalTestServer();
 
@@ -798,7 +861,7 @@ t.test("it ignores files in Multipart body", async () => {
 
 t.test("invalid Multipart body results in empty body", async () => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = createMinimalTestServer();
 
@@ -815,6 +878,94 @@ t.test("invalid Multipart body results in empty body", async () => {
       ).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context.body, undefined);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it blocks bots", async (t) => {
+  const server = http2.createSecureServer({
+    key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+    cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+  });
+
+  server.on("stream", (stream, headers) => {
+    stream.respond({ ":status": 200 });
+    stream.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3438, () => {
+      http2Request(new URL("https://localhost:3438"), "GET", {
+        "User-Agent": "hackerbot 1.0",
+      }).then(({ headers, body }) => {
+        t.same(headers[":status"], 403);
+        t.same(
+          body,
+          "You are not allowed to access this resource because you have been identified as a bot."
+        );
+
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it blocks blocked IPs", async (t) => {
+  const server = http2.createSecureServer({
+    key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+    cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+  });
+
+  server.on("stream", (stream, headers) => {
+    stream.respond({ ":status": 200 });
+    stream.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3439, () => {
+      http2Request(new URL("https://localhost:3439"), "GET", {
+        "x-forwarded-for": "9.9.9.9",
+      }).then(({ headers, body }) => {
+        t.same(headers[":status"], 403);
+        t.same(
+          body,
+          "Your IP address is blocked due to geo restrictions. (Your IP: 9.9.9.9)"
+        );
+
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it blocks blocked IPs using session stream event", async (t) => {
+  const server = http2.createSecureServer({
+    key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+    cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+  });
+
+  server.on("session", (session) => {
+    session.on("stream", (stream, headers) => {
+      stream.respond({ ":status": 200 });
+      stream.end(JSON.stringify(getContext()));
+    });
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3440, () => {
+      http2Request(new URL("https://localhost:3440"), "GET", {
+        "x-forwarded-for": "9.9.9.9",
+      }).then(({ headers, body }) => {
+        t.same(headers[":status"], 403);
+        t.same(
+          body,
+          "Your IP address is blocked due to geo restrictions. (Your IP: 9.9.9.9)"
+        );
         server.close();
         resolve();
       });

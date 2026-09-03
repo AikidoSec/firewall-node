@@ -39,13 +39,17 @@ t.test("it blocks in blocking mode", (t) => {
         fetch("http://localhost:4000/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
+        fetch("http://localhost:4000/?search[$nin]=foo", {
+          signal: AbortSignal.timeout(5000),
+        }),
         fetch("http://localhost:4000/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ]);
     })
-    .then(([noSQLInjection, normalSearch]) => {
+    .then(([noSQLInjection, noSQLInjection2, normalSearch]) => {
       t.equal(noSQLInjection.status, 500);
+      t.equal(noSQLInjection2.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Zen has blocked a NoSQL injection/);
@@ -84,13 +88,17 @@ t.test("it does not block in dry mode", (t) => {
         fetch("http://localhost:4001/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
+        fetch("http://localhost:4001/?search[$nin]=foo", {
+          signal: AbortSignal.timeout(5000),
+        }),
         fetch("http://localhost:4001/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ])
     )
-    .then(([noSQLInjection, normalSearch]) => {
+    .then(([noSQLInjection, noSQLInjection2, normalSearch]) => {
       t.equal(noSQLInjection.status, 200);
+      t.equal(noSQLInjection2.status, 200);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
       t.notMatch(stderr, /Zen has blocked a NoSQL injection/);

@@ -84,7 +84,7 @@ t.test("it works", (t) => {
   agent.getHostnames().clear();
 
   runWithContext(createContext(), () => {
-    const aikido = https.request("https://aikido.dev");
+    const aikido = https.request("https://AIKIDO.dev");
     aikido.end();
   });
   t.same(agent.getHostnames().asArray(), [
@@ -372,6 +372,37 @@ t.test("it works", (t) => {
         t.fail("should not finish");
       });
       metadataRequest.end();
+    }
+  );
+
+  runWithContext(
+    {
+      ...createContext(),
+      body: { path: "/tmp/unixsocket" },
+    },
+    () => {
+      try {
+        https
+          .request(
+            {
+              socketPath: "/tmp/unixsocket",
+            },
+            (res) => {
+              t.fail("should not respond");
+            }
+          )
+          .on("finish", () => {
+            t.fail("should not finish");
+          })
+          .end();
+      } catch (error) {
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen has blocked a path traversal attack: https.request(...) originating from body.path"
+          );
+        }
+      }
     }
   );
 

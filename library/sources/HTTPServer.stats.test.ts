@@ -14,6 +14,7 @@ const api = new ReportingAPIForTesting({
   blockedUserIds: [],
   endpoints: [],
   heartbeatIntervalInMS: 10 * 60 * 1000,
+  excludedUserIdsFromRateLimiting: [],
 });
 
 const agent = createTestAgent({

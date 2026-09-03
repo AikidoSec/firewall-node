@@ -80,6 +80,66 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
 
       await sql.unsafe("");
     });
+
+    const numberOfQueries = 50;
+
+    const results = await Promise.allSettled(
+      Array.from({ length: numberOfQueries }, (_, index) => {
+        const contextKey = `myTitle${index}`;
+        const injection = `abc' OR 1=1; -- should be blocked ${index}`;
+
+        return runWithContext(
+          {
+            remoteAddress: "::1",
+            method: "POST",
+            url: "http://localhost:4000",
+            query: {},
+            headers: {},
+            body: {
+              [contextKey]: injection,
+            },
+            cookies: {},
+            routeParams: {},
+            source: "hono",
+            route: "/posts/:id",
+          },
+          async () => {
+            try {
+              await sql.unsafe(
+                `SELECT id FROM cats_2 WHERE petname = '${injection}'`
+              );
+              return {
+                index,
+                error: null,
+              };
+            } catch (error: any) {
+              return {
+                index,
+                error,
+              };
+            }
+          }
+        );
+      })
+    );
+
+    t.equal(results.length, numberOfQueries);
+
+    for (const result of results) {
+      t.equal(result.status, "fulfilled");
+
+      if (result.status === "fulfilled") {
+        const { index, error } = result.value;
+        t.ok(error instanceof Error);
+
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            `Zen has blocked an SQL injection: sql.unsafe(...) originating from body.myTitle${index}`
+          );
+        }
+      }
+    }
   } catch (error: any) {
     t.fail(error);
   } finally {

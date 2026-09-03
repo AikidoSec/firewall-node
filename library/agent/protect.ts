@@ -16,6 +16,7 @@ import {
   createCloudFunctionWrapper,
   FunctionsFramework,
 } from "../sources/FunctionsFramework";
+import { Elysia } from "../sources/Elysia";
 import { Hono } from "../sources/Hono";
 import { HTTPServer } from "../sources/HTTPServer";
 import { createLambdaWrapper } from "../sources/Lambda";
@@ -33,6 +34,7 @@ import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
 import { GraphQL } from "../sources/GraphQL";
+import { Trpc } from "../sources/Trpc";
 import { Xml2js } from "../sources/Xml2js";
 import { RawBody } from "../sources/RawBody";
 import { FastXmlParser } from "../sources/FastXmlParser";
@@ -61,6 +63,9 @@ import { FunctionSink } from "../sinks/FunctionSink";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
 import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
+import { Mongoose } from "../sinks/Mongoose";
+import { NodeVm } from "../sinks/NodeVm";
+import { Zlib } from "../sinks/Zlib";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -133,6 +138,7 @@ function startAgent({
   return agent;
 }
 
+// When adding a new web framework, also update the list in Agent.hasWebFrameworkLoaded()
 export function getWrappers() {
   return [
     new Express(),
@@ -150,7 +156,9 @@ export function getWrappers() {
     new Path(),
     new HTTPServer(),
     new Hono(),
+    new Elysia(),
     new GraphQL(),
+    new Trpc(),
     new OpenAI(),
     new Mistral(),
     new Anthropic(),
@@ -175,6 +183,9 @@ export function getWrappers() {
     new AwsSDKVersion2(),
     new AiSDK(),
     new GoogleGenAi(),
+    new Mongoose(),
+    new NodeVm(),
+    new Zlib(),
   ];
 }
 

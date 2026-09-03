@@ -56,6 +56,7 @@ const agent = new Agent(
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
+    excludedUserIdsFromRateLimiting: [],
   }),
   new Token("123"),
   undefined,
@@ -407,6 +408,7 @@ t.test("it rate limits requests by ip address", opts, async (t) => {
   });
 
   t.same(response4.statusCode, 429);
+  t.ok(parseInt(response4.headers["retry-after"] as string) > 0);
 });
 
 t.test(
@@ -492,6 +494,53 @@ t.test("It works with route params", opts, async (t) => {
     cookies: {},
   });
 });
+
+t.test(
+  "It works with route params in array-based hooks passed to app.route",
+  opts,
+  async (t) => {
+    const app = await getApp();
+
+    app.route({
+      method: "GET",
+      url: "/array-hook/:test",
+      preHandler: [
+        async (request, reply) => {
+          const context = getContext();
+          reply
+            .code(200)
+            .header("Content-Type", "application/json")
+            .send(context);
+        },
+      ],
+      handler: (request, reply) => {
+        reply.code(500).send("preHandler should have replied already");
+      },
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/array-hook/123",
+      headers: {
+        accept: "application/json",
+      },
+    });
+
+    t.same(response.statusCode, 200);
+
+    const json = await response.json();
+    t.match(json, {
+      url: "/array-hook/123",
+      remoteAddress: "127.0.0.1",
+      method: "GET",
+      routeParams: {
+        test: "123",
+      },
+      source: "fastify",
+      route: "/array-hook/:number",
+    });
+  }
+);
 
 t.test(
   "it rate limits requests by ip address in app withouth hooks",

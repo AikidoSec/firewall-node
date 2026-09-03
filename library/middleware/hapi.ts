@@ -18,7 +18,11 @@ export function addHapiMiddleware(app: Server) {
           message += ` (Your IP: ${escapeHTML(result.ip)})`;
         }
 
-        return h.response(message).code(429).takeover();
+        return h
+          .response(message)
+          .code(429)
+          .header("Retry-After", result.retryAfterSeconds.toString())
+          .takeover();
       }
 
       if (result.type === "blocked") {

@@ -1,0 +1,19 @@
+{
+  "name": "elysiajs-pg-esm",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --require @aikidosec/firewall/instrument ./app.ts"
+  },
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@elysia/node": "^1.4.6",
+    "elysia": "^1.4.28",
+    "pg": "^8.13.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "@types/pg": "^8.20.0",
+    "typescript": "^6.0.3"
+  }
+}

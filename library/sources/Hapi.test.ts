@@ -27,6 +27,7 @@ const agent = createTestAgent({
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
+    excludedUserIdsFromRateLimiting: [],
   }),
   token: new Token("123"),
 });
@@ -221,6 +222,7 @@ t.test("it rate limits based on IP address", async (t) => {
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response3.status, 429);
   t.match(response3.text, "You are rate limited by Zen. (Your IP: 1.2.3.4)");
+  t.ok(parseInt(response3.headers["retry-after"]) > 0);
 });
 
 t.test("it blocks based on user ID", async (t) => {

@@ -193,12 +193,100 @@ t.test("it decodes uri encoded strings", async () => {
   );
 });
 
+t.test("it decodes double-encoded strings iteratively", async () => {
+  t.same(
+    extractStringsFromUserInput({ str: "a%2520b" }),
+    fromArr(["str", "a%2520b", "a%20b", "a b"])
+  );
+});
+
+t.test("it decodes up to MAX_URL_DECODE_DEPTH (5) times", async () => {
+  t.same(
+    extractStringsFromUserInput({ str: "a%2525252520b" }),
+    fromArr([
+      "str",
+      "a%2525252520b",
+      "a%25252520b",
+      "a%252520b",
+      "a%2520b",
+      "a%20b",
+      "a b",
+    ])
+  );
+});
+
+t.test(
+  "it stops at MAX_URL_DECODE_DEPTH and does not fully decode",
+  async () => {
+    t.same(
+      extractStringsFromUserInput({ str: "a%252525252520b" }),
+      fromArr([
+        "str",
+        "a%252525252520b",
+        "a%2525252520b",
+        "a%25252520b",
+        "a%252520b",
+        "a%2520b",
+        "a%20b",
+      ])
+    );
+    t.notOk(extractStringsFromUserInput({ str: "a%252525252520b" }).has("a b"));
+  }
+);
+
+t.test("it stops decoding on invalid percent encoding", async () => {
+  t.same(
+    extractStringsFromUserInput({ str: "test%ZZfoo" }),
+    fromArr(["str", "test%ZZfoo"])
+  );
+});
+
+t.test(
+  "it handles encoded percent sign (%25) becoming an invalid sequence",
+  async () => {
+    t.same(
+      extractStringsFromUserInput({ str: "a%25b" }),
+      fromArr(["str", "a%25b", "a%b"])
+    );
+  }
+);
+
+t.test(
+  "it does not partially decode strings with mixed valid and invalid sequences",
+  async () => {
+    t.same(
+      extractStringsFromUserInput({ str: "foo%20bar%ZZbaz" }),
+      fromArr(["str", "foo%20bar%ZZbaz"])
+    );
+  }
+);
+
+t.test("it decodes multi-byte UTF-8 percent sequences", async () => {
+  t.same(
+    extractStringsFromUserInput({ str: "%C3%A9" }),
+    fromArr(["str", "%C3%A9", "é"])
+  );
+});
+
 function buildNestedDictIterative(depth: number): Record<string, unknown> {
   let result: Record<string, unknown> = { a: "b" };
   for (let i = 1; i <= depth; i++) {
     const newLevel: Record<string, unknown> = {};
     newLevel[`key${i}`] = result;
     result = newLevel;
+  }
+
+  return result;
+}
+
+function buildNestedArrayIterative(depth: number): unknown[] {
+  const result: unknown[] = [];
+  let current: unknown[] = result;
+
+  for (let i = 1; i <= depth; i++) {
+    const nextLevel: unknown[] = [];
+    current.push(nextLevel);
+    current = nextLevel;
   }
 
   return result;
@@ -211,6 +299,18 @@ t.test("it handles deeply nested objects without stack overflow", async () => {
   const result = extractStringsFromUserInput(body);
   t.ok(result.size > 0);
   t.ok(result.has("Test'), ('Test2');--"));
+});
+
+t.test("it handles deeply nested arrays without stack overflow", async () => {
+  const body = buildNestedArrayIterative(10_000);
+  body.push("Test'), ('Test2');--");
+
+  const result = extractStringsFromUserInput(body);
+
+  t.ok(result);
+  if (result) {
+    t.ok(result.has("Test'), ('Test2');--"));
+  }
 });
 
 t.test("it handles deeply nested JWT without stack overflow", async () => {
@@ -308,5 +408,15 @@ t.test("it does not ignore URLs outside of JWT payload", async () => {
   t.same(
     extractStringsFromUserInput(input),
     fromArr(["url", "https://example.com", "name", "Test'), ('Test2');--"])
+  );
+});
+
+t.test("it works with objects containing constructor key", async () => {
+  t.same(
+    extractStringsFromUserInput({
+      test: "value",
+      constructor: "constructor value",
+    }),
+    fromArr(["test", "value", "constructor", "constructor value"])
   );
 });

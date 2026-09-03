@@ -13,9 +13,7 @@ To use Zen with esbuild, you need to install the `@aikidosec/firewall` package a
 import { zenEsbuildPlugin } from "@aikidosec/firewall/bundler";
 
 await esbuild.build({
-  entryPoints: [
-    /* ... */
-  ],
+  entryPoints: [/* ... */],
   bundle: true,
   platform: "node",
   format: "cjs", // or "esm"

@@ -13,13 +13,21 @@ import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
+import { shutdown } from "./agent/shutdown";
 import { isLibBundled } from "./helpers/isLibBundled";
-import { setTenantId } from "./agent/context/tenantId";
+import {
+  setTenantId,
+  runWithTenant,
+  getTenantId,
+} from "./agent/context/tenantId";
 import { enableIdorProtection } from "./agent/idorProtection";
 import { withoutIdorProtection } from "./agent/context/withoutIdorProtection";
 import { colorText } from "./helpers/colorText";
+import { warnBox } from "./helpers/warnBox";
 import { isPreloaded } from "./helpers/isPreloaded";
 import { warnIfEntrypointIsModule } from "./helpers/warnIfEntrypointIsModule";
+import { elysiaHandler } from "./middleware/elysia";
+import { bypassRequest } from "./agent/context/bypassRequest";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -33,7 +41,9 @@ if (!isNewHookSystemUsed()) {
       console.warn(
         colorText(
           "red",
-          "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions (https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md)."
+          warnBox(
+            "Zen is NOT protecting your application. Your app runs in ESM mode, which requires the new hook system. Setup instructions: https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+          )
         )
       );
     }
@@ -41,8 +51,7 @@ if (!isNewHookSystemUsed()) {
     if (isLibBundled()) {
       // oxlint-disable-next-line no-console
       console.warn(
-        colorText(
-          "red",
+        warnBox(
           "AIKIDO: Your application seems to be using a bundler without using the Zen bundler plugin. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
         )
       );
@@ -67,10 +76,15 @@ export {
   fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
+  elysiaHandler,
   setRateLimitGroup,
+  shutdown,
   setTenantId,
+  runWithTenant,
+  getTenantId,
   enableIdorProtection,
   withoutIdorProtection,
+  bypassRequest,
 };
 
 // Required for ESM / TypeScript default export support
@@ -86,8 +100,13 @@ export default {
   fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
+  elysiaHandler,
   setRateLimitGroup,
+  shutdown,
   setTenantId,
+  runWithTenant,
+  getTenantId,
   enableIdorProtection,
   withoutIdorProtection,
+  bypassRequest,
 };

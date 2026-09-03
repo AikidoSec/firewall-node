@@ -21,6 +21,11 @@ export class Hooks {
   }
 
   addBuiltinModule(name: string): BuiltinModule {
+    const existing = this.builtinModules.find((m) => m.getName() === name);
+    if (existing) {
+      return existing;
+    }
+
     const module = new BuiltinModule(name);
     this.builtinModules.push(module);
 

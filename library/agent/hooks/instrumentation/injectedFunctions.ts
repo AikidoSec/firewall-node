@@ -103,7 +103,7 @@ export function __instrumentModifyReturnValue(
 ): unknown {
   const agent = getInstance();
   if (!agent) {
-    return args;
+    return returnValue;
   }
 
   const cbInfo = getFunctionCallbackInfo(id);

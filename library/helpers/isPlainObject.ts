@@ -17,20 +17,29 @@ function isObject(o: unknown) {
  * isPlainObject(new Foo()) // Returns false
  */
 export function isPlainObject(o: unknown): o is Record<string, unknown> {
-  let ctor, prot;
-
   if (isObject(o) === false) return false;
 
-  // It has modified constructor
-  ctor = (o as any).constructor;
-  if (ctor === undefined) return true;
+  // Prototype of the instance itself (e.g. Object.prototype for `{}`)
+  const objectPrototype = Object.getPrototypeOf(o);
 
-  // It has modified prototype
-  prot = ctor.prototype;
-  if (isObject(prot) === false) return false;
+  // Constructor found on the object's prototype chain.
+  // Reading it from the prototype avoids issues when `o` has its own `constructor` key.
+  const constructorFromPrototype = objectPrototype?.constructor;
+  if (constructorFromPrototype === undefined) {
+    return true;
+  }
+
+  // Check the constructor's prototype to distinguish plain objects from custom class instances.
+  const constructorPrototype = constructorFromPrototype.prototype;
+  if (isObject(constructorPrototype) === false) return false;
 
   // Its constructor does not have an Object-specific method
-  if (Object.prototype.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
+  if (
+    Object.prototype.hasOwnProperty.call(
+      constructorPrototype,
+      "isPrototypeOf"
+    ) === false
+  ) {
     return false;
   }
 

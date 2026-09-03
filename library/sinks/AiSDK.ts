@@ -181,14 +181,18 @@ export class AiSDK implements Wrapper {
           !returnValue ||
           typeof returnValue !== "object" ||
           !("response" in returnValue) ||
-          !(returnValue.response instanceof Promise) ||
-          !("usage" in returnValue) ||
-          !(returnValue.usage instanceof Promise)
+          !("usage" in returnValue)
         ) {
           return returnValue;
         }
 
-        Promise.allSettled([returnValue.response, returnValue.usage])
+        const response = returnValue.response;
+        const usage = returnValue.usage;
+        if (!(response instanceof Promise) || !(usage instanceof Promise)) {
+          return returnValue;
+        }
+
+        Promise.allSettled([response, usage])
           .then((promiseResults) => {
             const response =
               promiseResults[0].status === "fulfilled"
@@ -224,7 +228,7 @@ export class AiSDK implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("ai")
-      .withVersion("^6.0.0 || ^5.0.0 || ^4.0.0")
+      .withVersion("^7.0.0 || ^6.0.0 || ^5.0.0 || ^4.0.0")
       .onRequire((exports, pkgInfo) => {
         // Can't wrap it directly because it's a readonly proxy
         const generateTextFunc = exports.generateText;

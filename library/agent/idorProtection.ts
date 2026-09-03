@@ -5,6 +5,7 @@ import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 export function enableIdorProtection(config: {
   tenantColumnName: string;
   excludedTables?: string[];
+  requireTenantId?: boolean;
 }) {
   const agent = getInstance();
 
@@ -49,9 +50,21 @@ export function enableIdorProtection(config: {
     );
   }
 
+  let requireTenantId = false;
+  if ("requireTenantId" in rawConfig) {
+    if (typeof rawConfig.requireTenantId !== "boolean") {
+      agent.log(
+        `enableIdorProtection(...) expects 'requireTenantId' to be a boolean.`
+      );
+      return;
+    }
+    requireTenantId = rawConfig.requireTenantId;
+  }
+
   const validatedConfig: IdorProtectionConfig = {
     tenantColumnName: rawConfig.tenantColumnName,
     excludedTables: excludedTables,
+    requireTenantId: requireTenantId,
   };
 
   agent.setIdorProtectionConfig(validatedConfig);

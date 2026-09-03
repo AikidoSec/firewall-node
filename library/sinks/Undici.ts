@@ -80,7 +80,7 @@ export class Undici implements Wrapper {
 
   private patchGlobalDispatcher(
     agent: Agent,
-    undiciModule: typeof import("undici-v7")
+    undiciModule: typeof import("undici-v8")
   ) {
     const dispatcher = new undiciModule.Agent({
       connect: {
@@ -101,7 +101,7 @@ export class Undici implements Wrapper {
   }
 
   private patchExports(
-    exports: typeof import("undici-v7"),
+    exports: typeof import("undici-v8"),
     pkgInfo: PartialWrapPackageInfo
   ) {
     const agent = getInstance();
@@ -147,7 +147,7 @@ export class Undici implements Wrapper {
 
     hooks
       .addPackage("undici")
-      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0")
+      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0")
       .onRequire((exports, pkgInfo) => this.patchExports(exports, pkgInfo))
       .addFileInstrumentation({
         path: "./index.js",

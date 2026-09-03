@@ -1,5 +1,6 @@
 import { addIPv4MappedAddresses } from "../../helpers/addIPv4MappedAddresses";
 import { IPMatcher } from "../../helpers/ip-matcher/IPMatcher";
+import { normalizeHostname } from "../../helpers/normalizeHostname";
 
 // These IP addresses are used to access the instance metadata service (IMDS)
 // We should block any requests to these IP addresses
@@ -23,5 +24,5 @@ export function isIMDSIPAddress(ip: string): boolean {
 const trustedHosts = ["metadata.google.internal", "metadata.goog"];
 
 export function isTrustedHostname(hostname: string): boolean {
-  return trustedHosts.includes(hostname);
+  return trustedHosts.includes(normalizeHostname(hostname.toLowerCase()));
 }

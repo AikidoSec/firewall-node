@@ -32,6 +32,7 @@ export async function createRestifyTests(restifyPackageName: string) {
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
       allowedIPAddresses: ["4.3.2.1"],
+      excludedUserIdsFromRateLimiting: [],
     }),
     token: new Token("123"),
     serverless: undefined,
@@ -203,6 +204,7 @@ export async function createRestifyTests(restifyPackageName: string) {
       .set("x-forwarded-for", "1.2.3.4");
     t.same(res2.statusCode, 429);
     t.same(res2.text, "You are rate limited by Zen. (Your IP: 1.2.3.4)");
+    t.ok(parseInt(res2.headers["retry-after"]) > 0);
 
     await sleep(2000);
 

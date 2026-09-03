@@ -89,6 +89,7 @@ entrypoints.forEach((entrypoint) => {
             stderr,
             /Your application seems to be using a bundler without using the Zen bundler plugin/
           );
+          t.notMatch(stderr, /Zen is NOT protecting your application/);
         }
       )
       .catch((error) => {
@@ -253,6 +254,7 @@ t.test("it prints warning before crashing if bundled", (t) => {
       stderr,
       /Your application seems to be using a bundler without using the Zen bundler plugin/
     );
+    t.match(stderr, /Zen is NOT protecting your application/);
     t.match(stderr, /ENOENT: no such file or directory/); // Can't load wasm
 
     t.end();

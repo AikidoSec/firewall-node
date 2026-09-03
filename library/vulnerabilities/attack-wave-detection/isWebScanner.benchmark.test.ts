@@ -24,11 +24,14 @@ t.test("it does take less than 0.1ms", async (t) => {
 
   const iterations = 25_000;
   for (let i = 0; i < iterations; i++) {
-    isWebScanner(getTestContext("/wp-config.php", "GET", { test: "1" }));
+    isWebScanner(getTestContext("/wp-config.php", "GET", { test: "1" }), 200);
     isWebScanner(
-      getTestContext("/vulnerable", "GET", { test: "1'; DROP TABLE users; --" })
+      getTestContext("/vulnerable", "GET", {
+        test: "1'; DROP TABLE users; --",
+      }),
+      200
     );
-    isWebScanner(getTestContext("/", "GET", { test: "1" }));
+    isWebScanner(getTestContext("/", "GET", { test: "1" }), 200);
   }
 
   const end = performance.now();

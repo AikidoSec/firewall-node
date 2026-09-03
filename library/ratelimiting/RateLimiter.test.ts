@@ -27,13 +27,15 @@ const maxAmount = 5;
 t.test("should allow up to maxAmount requests within TTL", async (t) => {
   const limiter = new RateLimiter(maxAmount, ttl);
   for (let i = 0; i < maxAmount; i++) {
-    t.ok(
+    t.same(
       limiter.isAllowed(key, ttl, maxAmount),
+      { allowed: true },
       `Request ${i + 1} should be allowed`
     );
   }
-  t.notOk(
-    limiter.isAllowed(key, ttl, maxAmount),
+  t.equal(
+    limiter.isAllowed(key, ttl, maxAmount).allowed,
+    false,
     `Request ${maxAmount + 1} should not be allowed`
   );
 });
@@ -41,20 +43,23 @@ t.test("should allow up to maxAmount requests within TTL", async (t) => {
 t.test("should reset after TTL has expired", async (t) => {
   const limiter = new RateLimiter(maxAmount, ttl);
   for (let i = 0; i < maxAmount; i++) {
-    t.ok(
+    t.same(
       limiter.isAllowed(key, ttl, maxAmount),
+      { allowed: true },
       `Request ${i + 1} should be allowed`
     );
   }
-  t.notOk(
-    limiter.isAllowed(key, ttl, maxAmount),
+  t.equal(
+    limiter.isAllowed(key, ttl, maxAmount).allowed,
+    false,
     `Request ${maxAmount + 1} should not be allowed`
   );
 
   clock.tick(ttl + 1);
 
-  t.ok(
+  t.same(
     limiter.isAllowed(key, ttl, maxAmount),
+    { allowed: true },
     `Request after TTL should be allowed`
   );
 });
@@ -64,25 +69,29 @@ t.test("should allow requests for different keys independently", async (t) => {
   const key2 = "user2";
 
   for (let i = 0; i < maxAmount; i++) {
-    t.ok(
+    t.same(
       limiter.isAllowed(key, ttl, maxAmount),
+      { allowed: true },
       `Request ${i + 1} for key1 should be allowed`
     );
   }
-  t.notOk(
-    limiter.isAllowed(key, ttl, maxAmount),
+  t.equal(
+    limiter.isAllowed(key, ttl, maxAmount).allowed,
+    false,
     `Request ${maxAmount + 1} for key1 should not be allowed`
   );
 
   for (let i = 0; i < maxAmount; i++) {
-    t.ok(
+    t.same(
       limiter.isAllowed(key2, ttl, maxAmount),
+      { allowed: true },
       `Request ${i + 1} for key2 should be allowed`
     );
   }
 
-  t.notOk(
-    limiter.isAllowed(key2, ttl, maxAmount),
+  t.equal(
+    limiter.isAllowed(key2, ttl, maxAmount).allowed,
+    false,
     `Request ${maxAmount + 1} for key2 should not be allowed`
   );
 });
@@ -95,8 +104,9 @@ t.test("should handle TTL expiration", async (t) => {
 
   clock.tick(ttl + 1);
 
-  t.ok(
+  t.same(
     limiter.isAllowed(key, ttl, maxAmount),
+    { allowed: true },
     `Request after TTL should be allowed`
   );
 });
@@ -104,13 +114,15 @@ t.test("should handle TTL expiration", async (t) => {
 t.test("should allow requests exactly at limit", async (t) => {
   const limiter = new RateLimiter(maxAmount, ttl);
   for (let i = 0; i < maxAmount; i++) {
-    t.ok(
+    t.same(
       limiter.isAllowed(key, ttl, maxAmount),
+      { allowed: true },
       `Request ${i + 1} should be allowed`
     );
   }
-  t.notOk(
-    limiter.isAllowed(key, ttl, maxAmount),
+  t.equal(
+    limiter.isAllowed(key, ttl, maxAmount).allowed,
+    false,
     `Request ${maxAmount + 1} should not be allowed`
   );
 });
@@ -118,16 +130,18 @@ t.test("should allow requests exactly at limit", async (t) => {
 t.test("should handle multiple rapid requests", async (t) => {
   const limiter = new RateLimiter(maxAmount, ttl);
   for (let i = 0; i < maxAmount; i++) {
-    t.ok(
+    t.same(
       limiter.isAllowed(key, ttl, maxAmount),
+      { allowed: true },
       `Request ${i + 1} should be allowed`
     );
   }
 
   clock.tick(100);
 
-  t.notOk(
-    limiter.isAllowed(key, ttl, maxAmount),
+  t.equal(
+    limiter.isAllowed(key, ttl, maxAmount).allowed,
+    false,
     `Request ${maxAmount + 1} should not be allowed`
   );
 });
@@ -136,13 +150,15 @@ t.test("should handle different window sizes", async (t) => {
   const limiter = new RateLimiter(maxAmount, ttl);
   const differentWindowSize = 1000; // 1 second window
   for (let i = 0; i < maxAmount; i++) {
-    t.ok(
+    t.same(
       limiter.isAllowed(key, differentWindowSize, maxAmount),
+      { allowed: true },
       `Request ${i + 1} should be allowed`
     );
   }
-  t.notOk(
-    limiter.isAllowed(key, differentWindowSize, maxAmount),
+  t.equal(
+    limiter.isAllowed(key, differentWindowSize, maxAmount).allowed,
+    false,
     `Request ${maxAmount + 1} should not be allowed`
   );
 });
@@ -150,8 +166,9 @@ t.test("should handle different window sizes", async (t) => {
 t.test("should handle sliding window with intermittent requests", async (t) => {
   const limiter = new RateLimiter(maxAmount, ttl);
   for (let i = 0; i < maxAmount; i++) {
-    t.ok(
+    t.same(
       limiter.isAllowed(key, ttl, maxAmount),
+      { allowed: true },
       `Request ${i + 1} should be allowed`
     );
     clock.tick(100);
@@ -159,8 +176,9 @@ t.test("should handle sliding window with intermittent requests", async (t) => {
 
   clock.tick(ttl + 1);
 
-  t.ok(
+  t.same(
     limiter.isAllowed(key, ttl, maxAmount),
+    { allowed: true },
     `Request after sliding window should be allowed`
   );
 });
@@ -168,23 +186,26 @@ t.test("should handle sliding window with intermittent requests", async (t) => {
 t.test("should handle sliding window edge case", async (t) => {
   const limiter = new RateLimiter(maxAmount, ttl);
   for (let i = 0; i < maxAmount; i++) {
-    t.ok(
+    t.same(
       limiter.isAllowed(key, ttl, maxAmount),
+      { allowed: true },
       `Request ${i + 1} should be allowed`
     );
   }
 
   clock.tick(ttl + 1);
 
-  t.ok(
+  t.same(
     limiter.isAllowed(key, ttl, maxAmount),
+    { allowed: true },
     `Request after sliding window should be allowed`
   );
 
   clock.tick(ttl + 1);
 
-  t.ok(
+  t.same(
     limiter.isAllowed(key, ttl, maxAmount),
+    { allowed: true },
     `Request after sliding window should be allowed`
   );
 });
@@ -192,8 +213,9 @@ t.test("should handle sliding window edge case", async (t) => {
 t.test("should handle sliding window with delayed requests", async (t) => {
   const limiter = new RateLimiter(maxAmount, ttl);
   for (let i = 0; i < maxAmount; i++) {
-    t.ok(
+    t.same(
       limiter.isAllowed(key, ttl, maxAmount),
+      { allowed: true },
       `Request ${i + 1} should be allowed`
     );
     clock.tick(100);
@@ -201,8 +223,9 @@ t.test("should handle sliding window with delayed requests", async (t) => {
 
   clock.tick(ttl + 1);
 
-  t.ok(
+  t.same(
     limiter.isAllowed(key, ttl, maxAmount),
+    { allowed: true },
     `Request after sliding window should be allowed`
   );
 });
@@ -210,45 +233,99 @@ t.test("should handle sliding window with delayed requests", async (t) => {
 t.test("should handle sliding window with burst requests", async (t) => {
   const limiter = new RateLimiter(maxAmount, ttl);
   for (let i = 0; i < maxAmount; i++) {
-    t.ok(
+    t.same(
       limiter.isAllowed(key, ttl, maxAmount),
+      { allowed: true },
       `Request ${i + 1} should be allowed`
     );
   }
 
   clock.tick(ttl / 2 + 1);
 
-  t.notOk(
-    limiter.isAllowed(key, ttl, maxAmount),
+  t.equal(
+    limiter.isAllowed(key, ttl, maxAmount).allowed,
+    false,
     `Request ${maxAmount + 1} should not be allowed`
   );
-  t.notOk(
-    limiter.isAllowed(key, ttl, maxAmount),
+  t.equal(
+    limiter.isAllowed(key, ttl, maxAmount).allowed,
+    false,
     `Request ${maxAmount + 2} should not be allowed`
   );
-  t.notOk(
-    limiter.isAllowed(key, ttl, maxAmount),
+  t.equal(
+    limiter.isAllowed(key, ttl, maxAmount).allowed,
+    false,
     `Request ${maxAmount + 3} should not be allowed`
   );
 
   clock.tick(ttl / 2 + 1);
 
   for (let i = 0; i < 2; i++) {
-    t.ok(
+    t.same(
       limiter.isAllowed(key, ttl, maxAmount),
+      { allowed: true },
       `Request ${i + 1} should be allowed`
     );
   }
 
-  t.notOk(
-    limiter.isAllowed(key, ttl, maxAmount),
+  t.equal(
+    limiter.isAllowed(key, ttl, maxAmount).allowed,
+    false,
     `Request ${maxAmount + 1} should not be allowed`
   );
 
   clock.tick(ttl + 1);
 
-  t.ok(
+  t.same(
     limiter.isAllowed(key, ttl, maxAmount),
+    { allowed: true },
     `Request after sliding window should be allowed`
   );
 });
+
+t.test("should return retryAfterSeconds when rate limited", async (t) => {
+  const windowSize = 10000;
+  const max = 2;
+  const limiter = new RateLimiter(max, windowSize);
+
+  t.same(limiter.isAllowed(key, windowSize, max), { allowed: true });
+
+  clock.tick(3000);
+
+  t.same(limiter.isAllowed(key, windowSize, max), { allowed: true });
+
+  clock.tick(2000);
+
+  const result = limiter.isAllowed(key, windowSize, max);
+  t.equal(result.allowed, false);
+  if (!result.allowed) {
+    t.equal(result.retryAfterSeconds, 5);
+  }
+});
+
+t.test(
+  "retryAfterSeconds decreases as time passes towards window expiry",
+  async (t) => {
+    const windowSize = 10000;
+    const max = 1;
+    const limiter = new RateLimiter(max, windowSize);
+
+    t.same(limiter.isAllowed(key, windowSize, max), { allowed: true });
+
+    clock.tick(4000);
+
+    const result = limiter.isAllowed(key, windowSize, max);
+    t.equal(result.allowed, false);
+    if (!result.allowed) {
+      t.equal(result.retryAfterSeconds, 6);
+    }
+
+    clock.tick(3000);
+
+    const result2 = limiter.isAllowed(key, windowSize, max);
+    t.equal(result2.allowed, false);
+    if (!result2.allowed) {
+      t.equal(result2.retryAfterSeconds, 3);
+    }
+  }
+);
