@@ -441,14 +441,20 @@ t.test("count mode: use nth IP from the right", async (t) => {
 });
 
 t.test(
-  "count mode: private IP at the selected slot falls back to remoteAddress",
+  "count mode: private IP at the selected slot continues walking left",
   async (t) => {
     process.env.AIKIDO_TRUST_PROXY = "1";
     clearTrustProxyCache();
-    // n=1 selects rightmost (127.0.0.1), which is private → fall back
     t.same(
       getIPAddressFromRequest({
         headers: { "x-forwarded-for": "9.9.9.9, 127.0.0.1" },
+        remoteAddress: "5.5.5.5",
+      }),
+      "9.9.9.9"
+    );
+    t.same(
+      getIPAddressFromRequest({
+        headers: { "x-forwarded-for": "127.0.0.1, 192.168.0.1" },
         remoteAddress: "5.5.5.5",
       }),
       "5.5.5.5"
@@ -504,8 +510,30 @@ t.test("CIDR mode: still skips private IPs even if not in CIDR", async (t) => {
   t.same(
     getIPAddressFromRequest({
       headers: { "x-forwarded-for": "8.8.8.8, 192.168.1.1, 1.2.3.4" },
-      remoteAddress: "5.5.5.5",
+      remoteAddress: "1.2.3.4",
     }),
     "8.8.8.8"
   );
 });
+
+t.test(
+  "CIDR mode: header is ignored when remoteAddress is not a trusted proxy",
+  async (t) => {
+    process.env.AIKIDO_TRUST_PROXY = "1.2.3.4/32";
+    clearTrustProxyCache();
+    t.same(
+      getIPAddressFromRequest({
+        headers: { "x-forwarded-for": "9.9.9.9" },
+        remoteAddress: "5.5.5.5",
+      }),
+      "5.5.5.5"
+    );
+    t.same(
+      getIPAddressFromRequest({
+        headers: { "x-forwarded-for": "9.9.9.9" },
+        remoteAddress: undefined,
+      }),
+      undefined
+    );
+  }
+);

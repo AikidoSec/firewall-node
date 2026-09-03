@@ -20,9 +20,23 @@ export function getTrustProxyConfig(): TrustProxyConfig {
   return cached;
 }
 
-export function trustProxy(): boolean {
+export function isTrustedProxyRequest(
+  remoteAddress: string | undefined
+): boolean {
   const config = getTrustProxyConfig();
-  return config.type !== "boolean" || config.value;
+
+  if (config.type === "boolean") {
+    return config.value;
+  }
+
+  if (config.type === "cidr") {
+    if (!remoteAddress) {
+      return false;
+    }
+    return config.matcher.hasWithMappedCheck(remoteAddress);
+  }
+
+  return true;
 }
 
 function parseTrustProxy(value: string | undefined): TrustProxyConfig {

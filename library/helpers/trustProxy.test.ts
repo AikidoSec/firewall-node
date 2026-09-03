@@ -1,6 +1,6 @@
 import * as t from "tap";
 import {
-  trustProxy,
+  isTrustedProxyRequest,
   getTrustProxyConfig,
   clearTrustProxyCache,
 } from "./trustProxy";
@@ -11,19 +11,19 @@ t.beforeEach(() => {
 });
 
 t.test("the default is true", async () => {
-  t.equal(trustProxy(), true);
+  t.equal(isTrustedProxyRequest(undefined), true);
   t.same(getTrustProxyConfig(), { type: "boolean", value: true });
 });
 
 t.test("trust proxy set to false", async () => {
   process.env.AIKIDO_TRUST_PROXY = "false";
-  t.equal(trustProxy(), false);
+  t.equal(isTrustedProxyRequest(undefined), false);
   t.same(getTrustProxyConfig(), { type: "boolean", value: false });
 });
 
 t.test("trust proxy set to true", async () => {
   process.env.AIKIDO_TRUST_PROXY = "true";
-  t.equal(trustProxy(), true);
+  t.equal(isTrustedProxyRequest(undefined), true);
   t.same(getTrustProxyConfig(), { type: "boolean", value: true });
 });
 
@@ -32,7 +32,7 @@ t.test("trust proxy set to a positive integer", async () => {
   const config = getTrustProxyConfig();
   t.equal(config.type, "count");
   t.equal((config as { type: "count"; value: number }).value, 2);
-  t.equal(trustProxy(), true);
+  t.equal(isTrustedProxyRequest(undefined), true);
 });
 
 t.test("trust proxy set to 1", async () => {
@@ -47,14 +47,16 @@ t.test("trust proxy set to 0", async () => {
   const config = getTrustProxyConfig();
   t.equal(config.type, "boolean");
   t.equal((config as { type: "boolean"; value: boolean }).value, false);
-  t.equal(trustProxy(), false);
+  t.equal(isTrustedProxyRequest(undefined), false);
 });
 
 t.test("trust proxy set to a single CIDR range", async () => {
   process.env.AIKIDO_TRUST_PROXY = "1.2.3.4/32";
   const config = getTrustProxyConfig();
   t.equal(config.type, "cidr");
-  t.equal(trustProxy(), true);
+  t.equal(isTrustedProxyRequest("1.2.3.4"), true);
+  t.equal(isTrustedProxyRequest("5.5.5.5"), false);
+  t.equal(isTrustedProxyRequest(undefined), false);
 });
 
 t.test("trust proxy set to multiple CIDR ranges", async () => {

@@ -1,17 +1,20 @@
 import { isIP } from "net";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
-import { getTrustProxyConfig, TrustProxyConfig } from "./trustProxy";
+import {
+  getTrustProxyConfig,
+  isTrustedProxyRequest,
+  TrustProxyConfig,
+} from "./trustProxy";
 
 export function getIPAddressFromRequest(req: {
   headers: Record<string, unknown>;
   remoteAddress: string | undefined;
 }) {
-  const config = getTrustProxyConfig();
-  if (config.type === "boolean" && !config.value) {
-    if (req.remoteAddress) {
-      return req.remoteAddress;
-    }
+  if (!isTrustedProxyRequest(req.remoteAddress)) {
+    return req.remoteAddress;
   }
+
+  const config = getTrustProxyConfig();
 
   if (req.headers) {
     const ipHeaderName = getIpHeaderName();
@@ -25,28 +28,20 @@ export function getIPAddressFromRequest(req: {
     }
   }
 
-  if (req.remoteAddress) {
-    return req.remoteAddress;
-  }
-
-  return undefined;
+  return req.remoteAddress;
 }
 
 function selectClientIP(
   ips: string[],
   config: TrustProxyConfig
 ): string | null {
-  if (config.type === "count") {
-    const idx = ips.length - config.value;
-    if (idx >= 0) {
-      const ip = ips[idx];
-      if (isIP(ip) && !isPrivateIP(ip)) return ip;
-    }
-    return null;
-  }
+  // In count mode, the configured number of rightmost hops are trusted
+  // proxies, so the search starts to their left instead of at the end
+  const startIndex =
+    config.type === "count" ? ips.length - config.value : ips.length - 1;
 
   // Search right-to-left for the first non-private IP not belonging to a trusted proxy
-  for (let i = ips.length - 1; i >= 0; i--) {
+  for (let i = startIndex; i >= 0; i--) {
     const ip = ips[i];
     if (!isIP(ip) || isPrivateIP(ip)) {
       continue;
