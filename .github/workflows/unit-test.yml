@@ -121,11 +121,10 @@ jobs:
         run: |
           mkdir -p coverage-artifacts
           if [ "${{ matrix.mode }}" = "cjs" ]; then
-            lcov_file=library/.tap/report/lcov.info
+            cp library/.tap/report/lcov.info coverage-artifacts/${{ matrix.mode }}-${{ matrix.node-version }}-${{ matrix.instrumentation }}.lcov
           else
-            lcov_file=.esm-tests/tests/lcov.info
+            cp .esm-tests/tests/lcov.info coverage-artifacts/${{ matrix.mode }}-${{ matrix.node-version }}-${{ matrix.instrumentation }}.lcov
           fi
-          node scripts/normalize-lcov-source-paths.js "$lcov_file" coverage-artifacts/${{ matrix.mode }}-${{ matrix.node-version }}-${{ matrix.instrumentation }}.lcov
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -166,7 +165,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload coverage to Aikido
-        uses: AikidoSec/code-coverage-github-action@c649d671735d625ec9d39bab5efae5921160ea63 # v0.1.0
+        uses: AikidoSec/code-coverage-github-action@18138c9866f45cb159779a167d6e1330c967fe28 # v0.1.1
         with:
           lcov-file-paths: ${{ steps.coverage_reports.outputs.paths }}
           fail-on-error: true
