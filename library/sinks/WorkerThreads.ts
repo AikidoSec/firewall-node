@@ -5,6 +5,7 @@ import { Wrapper } from "../agent/Wrapper";
 import { checkContextForJsInjection } from "../vulnerabilities/js-injection/checkContextForJsInjection";
 import { getInstance } from "../agent/AgentSingleton";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
+import { decodeDataUrl, isJsDataUrl } from "../helpers/decodeDataUrl";
 
 export class WorkerThreads implements Wrapper {
   #inspectCode(args: unknown[]) {
@@ -37,6 +38,37 @@ export class WorkerThreads implements Wrapper {
     }
 
     return "eval" in options && !!options.eval;
+  }
+
+  #isDataUrlOp(args: unknown[]): boolean {
+    return args[0] instanceof URL && args[0].protocol === "data:";
+  }
+
+  #inspectDataUrlCode(args: unknown[]) {
+    const context = getContext();
+    if (!context) {
+      return undefined;
+    }
+
+    const url = args[0];
+    if (!(url instanceof URL)) {
+      return undefined;
+    }
+
+    if (!isJsDataUrl(url)) {
+      return undefined;
+    }
+
+    const code = decodeDataUrl(url);
+    if (code === undefined) {
+      return undefined;
+    }
+
+    return checkContextForJsInjection({
+      js: code,
+      operation: "new Worker(...)",
+      context,
+    });
   }
 
   #inspectFilePath(args: unknown[]) {
@@ -72,6 +104,19 @@ export class WorkerThreads implements Wrapper {
       inspectArgs(
         args,
         () => this.#inspectCode(args),
+        context,
+        agent,
+        {
+          name: "worker_threads",
+          type: "builtin",
+        },
+        "new Worker(...)",
+        "eval_op"
+      );
+    } else if (this.#isDataUrlOp(args)) {
+      inspectArgs(
+        args,
+        () => this.#inspectDataUrlCode(args),
         context,
         agent,
         {

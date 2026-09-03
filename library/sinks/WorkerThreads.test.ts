@@ -124,6 +124,62 @@ t.test("it works", async (t) => {
     );
   });
 
+  await runSafeWorker(
+    new URL(`data:text/javascript,${encodeURIComponent("console.log('hi')")}`)
+  );
+
+  await runWithContext(dangerousCodeContext, async () => {
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript,${encodeURIComponent(
+              "1 + 1; console.log('hello')"
+            )}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+    );
+
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript;base64,${Buffer.from(
+              "1 + 1; console.log('hello')"
+            ).toString("base64")}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+    );
+
+    await new Promise<void>((resolve, reject) => {
+      const worker = new Worker(
+        new URL(
+          `data:text/typescript,${encodeURIComponent("1 + 1; console.log('hello')")}`
+        )
+      );
+      worker.on("error", (error) => {
+        t.match(error.message, /Unknown module format/);
+        resolve();
+      });
+      worker.on("exit", () =>
+        reject(new Error("Expected worker to error out"))
+      );
+    });
+
+    // Node only treats `data:` URLs as inline code when passed as an actual URL instance
+    throws(
+      () =>
+        new Worker(
+          `data:text/javascript,${encodeURIComponent(
+            "1 + 1; console.log('hello')"
+          )}`
+        ),
+      /Wrap data: URLs with `new URL`/
+    );
+  });
+
   class CustomWorker extends Worker {}
 
   const customWorker = new CustomWorker(helloWorldFixture);
