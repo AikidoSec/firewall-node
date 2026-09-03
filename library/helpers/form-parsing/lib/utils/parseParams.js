@@ -1,4 +1,3 @@
-/* eslint-disable object-property-newline */
 "use strict";
 
 const decodeText = require("./decodeText");
@@ -496,12 +495,73 @@ function encodedReplacer(match) {
   return EncodedLookup[match];
 }
 
+function decodeUtf8Text(text) {
+  for (var i = 0, len = text.length; i < len; ++i) {
+    // eslint-disable-line no-var
+    if (text.charCodeAt(i) > 0x7f) {
+      return decodeText(text, "binary", "utf8");
+    }
+  }
+  return text;
+}
+
 const STATE_KEY = 0;
 const STATE_VALUE = 1;
 const STATE_CHARSET = 2;
 const STATE_LANG = 3;
 
+function parseFormDataDisposition(str) {
+  if (!str.startsWith('form-data; name="')) {
+    return;
+  }
+
+  let valueStart = 17;
+  let valueEnd = str.indexOf('"', valueStart);
+  if (valueEnd === -1 || str.indexOf("\\", valueStart) !== -1) {
+    return;
+  }
+
+  const res = [
+    "form-data",
+    ["name", decodeUtf8Text(str.slice(valueStart, valueEnd))],
+  ];
+  let pos = valueEnd + 1;
+
+  while (pos < str.length && str[pos] !== ";") {
+    ++pos;
+  }
+  if (pos === str.length) {
+    return res;
+  }
+
+  ++pos;
+  while (str[pos] === " " || str[pos] === "\t") {
+    ++pos;
+  }
+  if (!str.startsWith('filename="', pos)) {
+    return;
+  }
+
+  valueStart = pos + 10;
+  valueEnd = str.indexOf('"', valueStart);
+  if (valueEnd === -1 || str.indexOf("\\", valueStart) !== -1) {
+    return;
+  }
+
+  res.push(["filename", decodeUtf8Text(str.slice(valueStart, valueEnd))]);
+  return res;
+}
+
 function parseParams(str) {
+  if (str.indexOf(";") === -1) {
+    return [decodeUtf8Text(str)];
+  }
+
+  const fastFormData = parseFormDataDisposition(str);
+  if (fastFormData !== undefined) {
+    return fastFormData;
+  }
+
   const res = [];
   let state = STATE_KEY;
   let charset = "";
@@ -573,7 +633,7 @@ function parseParams(str) {
           }
           charset = "";
         } else if (tmp.length) {
-          tmp = decodeText(tmp, "binary", "utf8");
+          tmp = decodeUtf8Text(tmp);
         }
         if (res[p] === undefined) {
           res[p] = tmp;
@@ -596,7 +656,7 @@ function parseParams(str) {
       charset
     );
   } else if (tmp) {
-    tmp = decodeText(tmp, "binary", "utf8");
+    tmp = decodeUtf8Text(tmp);
   }
 
   if (res[p] === undefined) {
