@@ -36,7 +36,7 @@ export class WorkerThreads implements Wrapper {
       return false;
     }
 
-    return "eval" in options && options.eval === true;
+    return "eval" in options && !!options.eval;
   }
 
   #inspectFilePath(args: unknown[]) {
@@ -60,12 +60,12 @@ export class WorkerThreads implements Wrapper {
     }
   }
 
-  private onConstruct(target: any, args: unknown[]) {
+  private onConstruct(target: any, args: unknown[], newTarget: Function) {
     const agent = getInstance();
     const context = getContext();
 
     if (!agent || !context || args.length === 0) {
-      return new target(...args);
+      return Reflect.construct(target, args, newTarget);
     }
 
     if (this.#isEvalOp(args)) {
@@ -96,14 +96,15 @@ export class WorkerThreads implements Wrapper {
       );
     }
 
-    return new target(...args);
+    return Reflect.construct(target, args, newTarget);
   }
 
   wrap(hooks: Hooks): void {
     hooks.addBuiltinModule("worker_threads").onRequire((exports) => {
       // We can't use our helper wrapNewInstance because it can not inspect constructor args
       exports.Worker = new Proxy(exports.Worker, {
-        construct: (target, args) => this.onConstruct(target, args),
+        construct: (target, args, newTarget) =>
+          this.onConstruct(target, args, newTarget),
       });
     });
   }

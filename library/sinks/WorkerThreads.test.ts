@@ -115,4 +115,21 @@ t.test("it works", async (t) => {
       /Received an instance of Buffer/
     );
   });
+
+  await runWithContext(dangerousCodeContext, async () => {
+    // eval is truthy but not strictly `true` - Node still treats this as eval mode
+    throws(
+      () => new Worker("1 + 1; console.log('hello')", { eval: 1 as any }),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+    );
+  });
+
+  class CustomWorker extends Worker {}
+
+  const customWorker = new CustomWorker(helloWorldFixture);
+  t.ok(customWorker instanceof CustomWorker, "preserves subclass prototype");
+  await new Promise<void>((resolve, reject) => {
+    customWorker.on("error", reject);
+    customWorker.on("exit", () => resolve());
+  });
 });
