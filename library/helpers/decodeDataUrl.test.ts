@@ -32,10 +32,18 @@ t.test("no comma separator returns undefined", async (t) => {
   t.equal(decodeDataUrl(url), undefined);
 });
 
-t.test("malformed percent-encoding returns undefined", async (t) => {
+t.test("malformed percent-encoding falls back to the raw body", async (t) => {
   const url = new URL("data:text/javascript,%");
-  t.equal(decodeDataUrl(url), undefined);
+  t.equal(decodeDataUrl(url), "%");
 });
+
+t.test(
+  "malformed percent-encoding elsewhere still returns inspectable code instead of undefined",
+  async (t) => {
+    const url = new URL("data:text/javascript,console.log(%22%ZZ%22)");
+    t.equal(decodeDataUrl(url), "console.log(%22%ZZ%22)");
+  }
+);
 
 t.test("isJsDataUrl recognizes executable JS mime types", async (t) => {
   t.ok(isJsDataUrl(new URL("data:text/javascript,code")));
