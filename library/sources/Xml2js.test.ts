@@ -75,4 +75,11 @@ t.test("it works", async () => {
       t.same(getContext()?.xml, [{ root: "Hello xml2js!" }]);
     });
   });
+
+  // Ignore if the first argument is not a string or Buffer
+  runWithContext(getTestContext(), () => {
+    parseString(123 as unknown as string, () => {
+      t.same(getContext()?.xml, undefined);
+    });
+  });
 });

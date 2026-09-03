@@ -80,6 +80,26 @@ t.test("xml2json works", async () => {
   });
 });
 
+t.test("Ignore if the first argument is not a string or Buffer", async () => {
+  const context = {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://localhost:4000",
+    query: {},
+    headers: {},
+    body: "<root>Hello xml-js!</root>",
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/posts/:id",
+  };
+
+  runWithContext(context, () => {
+    xmljs.xml2js(123, { compact: true });
+    t.same(getContext()?.xml, undefined);
+  });
+});
+
 t.test("Ignore if xml is not in the context", async () => {
   const xmlString = "<root>Hello xml-js!</root>";
 
