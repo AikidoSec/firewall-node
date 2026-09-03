@@ -68,4 +68,11 @@ t.test("it works", async () => {
       t.same(getContext()?.xml, undefined);
     });
   });
+
+  runWithContext(getTestContext(), () => {
+    parseString(Buffer.from(xmlString), (err, result) => {
+      t.same(result, { root: "Hello xml2js!" });
+      t.same(getContext()?.xml, [{ root: "Hello xml2js!" }]);
+    });
+  });
 });

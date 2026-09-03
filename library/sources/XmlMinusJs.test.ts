@@ -43,6 +43,12 @@ t.test("xml-js works", async () => {
     t.same(result, expectedCompact);
     t.same(getContext()?.xml, [expectedCompact]);
   });
+
+  runWithContext(context, () => {
+    const result = xmljs.xml2js(Buffer.from(xmlString), { compact: true });
+    t.same(result, expectedCompact);
+    t.same(getContext()?.xml, [expectedCompact, expectedCompact]);
+  });
 });
 
 t.test("xml2json works", async () => {
