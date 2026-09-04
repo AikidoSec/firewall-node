@@ -141,6 +141,7 @@ jobs:
           fail_ci_if_error: true
 
   upload-coverage:
+    if: ${{ github.event_name != 'release' }}
     needs: test
     runs-on: ubuntu-latest
     permissions:
