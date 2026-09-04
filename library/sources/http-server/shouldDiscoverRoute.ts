@@ -9,12 +9,12 @@ export function shouldDiscoverRoute({
   statusCode,
   route,
   method,
-  forceProtectionOff = false,
+  forceProtectionOff,
 }: {
   statusCode: number;
   route: string;
   method: string;
-  forceProtectionOff?: boolean;
+  forceProtectionOff: boolean;
 }) {
   if (forceProtectionOff) {
     return false;
