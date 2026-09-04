@@ -13,6 +13,10 @@ import { blockIPsAndBots } from "./blockIPsAndBots";
 import { contextFromRequest } from "./contextFromRequest";
 import { readBodyStream } from "./readBodyStream";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
+import {
+  PAYLOAD_TOO_DEEP_MESSAGE,
+  shouldBlockRequestForPayloadDepth,
+} from "../../helpers/shouldBlockRequestForPayloadDepth";
 
 export function createRequestListener(
   listener: Function,
@@ -97,6 +101,13 @@ function callListenerWithContext(
       return;
     }
 
+    if (context && !res.headersSent && shouldBlockRequestForPayloadDepth()) {
+      res.statusCode = 413;
+      res.setHeader("Content-Type", "text/plain");
+      res.end(PAYLOAD_TOO_DEEP_MESSAGE);
+      return;
+    }
+
     // Rate limiting normally happens in our framework specific middleware (e.g. express)
     // For certain frameworks, e.g. next.js, we need to do this here so that it works out of the box
     if (shouldRateLimit && applyRateLimiting(res)) {
@@ -170,6 +181,7 @@ function onFinishRequestHandler(
     if (
       context.remoteAddress &&
       !context.blockedDueToIPOrBot &&
+      !context.blockedDueToPayloadDepth &&
       agent.getAttackWaveDetector().check(context, res.statusCode)
     ) {
       agent.onDetectedAttackWave({

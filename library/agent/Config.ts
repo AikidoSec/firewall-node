@@ -33,4 +33,5 @@ export type Config = {
   blockNewOutgoingRequests?: boolean;
   domains?: Domain[];
   enabledFeatures?: string[];
+  maxPayloadDepth?: number | null;
 };

@@ -220,6 +220,26 @@ t.test("it adds JSON body to context", opts, async (t) => {
   });
 });
 
+t.test("it blocks deeply nested JSON bodies after parsing", opts, async (t) => {
+  agent.getConfig().updateMaxPayloadDepth(3);
+  t.teardown(() => agent.getConfig().updateMaxPayloadDepth(undefined));
+
+  const app = await getApp();
+  const response = await app.request("/json", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ one: { two: { three: { value: "hidden" } } } }),
+  });
+
+  t.equal(response.status, 413);
+  t.equal(
+    await response.text(),
+    "This request was aborted by Aikido firewall because the body exceeded the maximum allowed depth."
+  );
+});
+
 t.test("it adds form body to context", opts, async (t) => {
   const app = await getApp();
   const response = await app.request("/form", {

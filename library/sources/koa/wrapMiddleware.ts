@@ -1,6 +1,10 @@
 import { contextFromRequest } from "./contextFromRequest";
 import { runWithContext } from "../../agent/Context";
 import type { Middleware, Context as KoaContext } from "koa";
+import {
+  PAYLOAD_TOO_DEEP_MESSAGE,
+  shouldBlockRequestForPayloadDepth,
+} from "../../helpers/shouldBlockRequestForPayloadDepth";
 
 export function wrapMiddleware(origMiddleware: Middleware): Middleware {
   return function wrapped() {
@@ -26,6 +30,13 @@ export function wrapMiddleware(origMiddleware: Middleware): Middleware {
     const context = contextFromRequest(ctx);
 
     return runWithContext(context, () => {
+      if (shouldBlockRequestForPayloadDepth()) {
+        ctx.type = "text/plain";
+        ctx.body = PAYLOAD_TOO_DEEP_MESSAGE;
+        ctx.status = 413;
+        return;
+      }
+
       return applyOriginal();
     });
   };

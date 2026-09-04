@@ -9,7 +9,7 @@ type UserString = string;
 // An attacker can include a large nested payload as part of a normal body
 // extractStringsFromUserInput will trigger a max call stack size,
 // the error will be caught, but it stops our inspection
-const MAX_DEPTH = 1024;
+export const MAX_USER_INPUT_TRAVERSAL_DEPTH = 1024;
 
 const MAX_URL_DECODE_DEPTH = 5;
 
@@ -19,7 +19,7 @@ export function extractStringsFromUserInput(
 ): Set<UserString> {
   const results: Set<UserString> = new Set();
 
-  if (depth >= MAX_DEPTH) {
+  if (depth > MAX_USER_INPUT_TRAVERSAL_DEPTH) {
     return results;
   }
 

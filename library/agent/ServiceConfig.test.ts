@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
 import type { Context } from "./Context";
+import { MAX_USER_INPUT_TRAVERSAL_DEPTH } from "../helpers/extractStringsFromUserInput";
 t.test("it returns false if empty rules", async () => {
   const config = new ServiceConfig([], 0, [], []);
   t.same(config.getLastUpdatedAt(), 0);
@@ -32,6 +33,19 @@ t.test("it updates realtime updates enabled", async (t) => {
 
   config.updateEnabledFeatures(["some_other_feature"]);
   t.same(config.isRealtimeUpdatesEnabled(), false);
+});
+
+t.test("it validates the maximum payload depth", async (t) => {
+  const config = new ServiceConfig([], 0, [], []);
+
+  config.updateMaxPayloadDepth(25);
+  t.equal(config.getMaxPayloadDepth(), 25);
+
+  config.updateMaxPayloadDepth(MAX_USER_INPUT_TRAVERSAL_DEPTH + 100);
+  t.equal(config.getMaxPayloadDepth(), MAX_USER_INPUT_TRAVERSAL_DEPTH);
+
+  config.updateMaxPayloadDepth(0);
+  t.equal(config.getMaxPayloadDepth(), undefined);
 });
 
 t.test("it works", async () => {

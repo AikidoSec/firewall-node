@@ -7,6 +7,10 @@ import { isPlainObject } from "../helpers/isPlainObject";
 import { shouldDiscoverRoute } from "./http-server/shouldDiscoverRoute";
 import { getContextForGatewayEvent, isGatewayEvent } from "./lambda/gateway";
 import { tryParseJSON } from "../helpers/tryParseJSON";
+import {
+  PAYLOAD_TOO_DEEP_MESSAGE,
+  shouldBlockRequestForPayloadDepth,
+} from "../helpers/shouldBlockRequestForPayloadDepth";
 
 type CallbackHandler<TEvent, TResult> = (
   event: TEvent,
@@ -158,6 +162,14 @@ export function createLambdaWrapper(handler: Handler): Handler {
     let result: unknown;
     try {
       result = await runWithContext(agentContext, async () => {
+        if (isGatewayEvent(event) && shouldBlockRequestForPayloadDepth()) {
+          return {
+            statusCode: 413,
+            headers: { "Content-Type": "text/plain" },
+            body: PAYLOAD_TOO_DEEP_MESSAGE,
+          };
+        }
+
         return await asyncHandler(event, context);
       });
 
@@ -210,6 +222,7 @@ function incrementStatsAndDiscoverAPISpec(
       if (
         agentContext.remoteAddress &&
         !agentContext.blockedDueToIPOrBot &&
+        !agentContext.blockedDueToPayloadDepth &&
         agent.getAttackWaveDetector().check(agentContext, result.statusCode)
       ) {
         agent.onDetectedAttackWave({

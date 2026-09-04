@@ -5,6 +5,8 @@ import { AsyncResource } from "async_hooks";
 import type { Endpoint } from "./Config";
 import { Source, SOURCES } from "./Source";
 
+export const PAYLOAD_DEPTH_CHECK = Symbol("payloadDepthCheck");
+
 export type User = { id: string; name?: string };
 
 export type Context = {
@@ -30,6 +32,13 @@ export type Context = {
   markUnsafe?: unknown[];
   cache?: ReturnType<typeof extractStringsFromUserInput>;
   cachePathTraversal?: ReturnType<typeof extractStringsFromUserInput>;
+  [PAYLOAD_DEPTH_CHECK]?: {
+    body: unknown;
+    rawBody: unknown;
+    maxDepth: number;
+    tooDeep: boolean;
+  };
+  blockedDueToPayloadDepth?: boolean;
   /**
    * Used to store redirects in outgoing http(s) requests that are started by a user-supplied input (hostname and port / url) to prevent SSRF redirect attacks.
    */
@@ -50,8 +59,8 @@ export function getContext(): Readonly<Context> | undefined {
   return ContextStorage.getStore();
 }
 
-function isSourceKey(key: string): key is Source {
-  return SOURCES.includes(key as Source);
+function isSourceKey(key: PropertyKey): key is Source {
+  return typeof key === "string" && SOURCES.includes(key as Source);
 }
 
 // We need to use a function to mutate the context because we need to clear the cache when the user input changes
@@ -68,6 +77,10 @@ export function updateContext<K extends keyof Context>(
     delete context.cache;
     delete context.cachePathTraversal;
   }
+
+  if (key === "body" || key === "rawBody") {
+    delete context[PAYLOAD_DEPTH_CHECK];
+  }
 }
 
 /**
@@ -83,6 +96,10 @@ export function runWithContext<T>(context: Context, fn: () => T) {
   // If there is already a context, we just update it
   // In this way we don't lose the `attackDetected` flag
   if (current) {
+    if (current.body !== context.body || current.rawBody !== context.rawBody) {
+      delete current[PAYLOAD_DEPTH_CHECK];
+    }
+
     current.url = context.url;
     current.method = context.method;
     current.query = context.query;
@@ -116,6 +133,8 @@ export function runWithContext<T>(context: Context, fn: () => T) {
   // Make sure to clean up the cache before running the function
   delete context.cache;
   delete context.cachePathTraversal;
+  delete context[PAYLOAD_DEPTH_CHECK];
+  delete context.blockedDueToPayloadDepth;
 
   // If there's no context yet, we create a new context and run the function with it
   return ContextStorage.run(context, fn);

@@ -6,6 +6,11 @@ import type { InterceptorResult } from "./InterceptorResult";
 import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
 import { onInspectionInterceptorResult } from "./onInspectionInterceptorResult";
+import { cleanError } from "../../helpers/cleanError";
+import {
+  PayloadTooDeepError,
+  shouldBlockRequestForPayloadDepth,
+} from "../../helpers/shouldBlockRequestForPayloadDepth";
 
 export type InspectArgsInterceptor = (
   args: unknown[],
@@ -150,6 +155,10 @@ export function inspectArgs(
   kind: OperationKind | undefined
 ) {
   if (context) {
+    if (shouldBlockRequestForPayloadDepth()) {
+      throw cleanError(new PayloadTooDeepError());
+    }
+
     const matches = agent.getConfig().getEndpoints(context);
 
     if (matches.find((match) => match.forceProtectionOff)) {

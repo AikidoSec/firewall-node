@@ -360,6 +360,12 @@ export class Agent {
       if (Array.isArray(response.enabledFeatures)) {
         this.serviceConfig.updateEnabledFeatures(response.enabledFeatures);
       }
+
+      if ("maxPayloadDepth" in response) {
+        this.serviceConfig.updateMaxPayloadDepth(response.maxPayloadDepth);
+      } else if ("endpoints" in response) {
+        this.serviceConfig.updateMaxPayloadDepth(undefined);
+      }
     }
   }
 

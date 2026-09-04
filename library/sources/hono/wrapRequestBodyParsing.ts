@@ -1,6 +1,10 @@
 import type { Context } from "hono";
 import { getContext, updateContext } from "../../agent/Context";
 import { createWrappedFunction, isWrapped } from "../../helpers/wrap";
+import {
+  PayloadTooDeepError,
+  shouldBlockRequestForPayloadDepth,
+} from "../../helpers/shouldBlockRequestForPayloadDepth";
 
 // Wrap the request body parsing functions to update the context with the parsed body, if any of the functions are called.
 export function wrapRequestBodyParsing(req: Context["req"]) {
@@ -23,6 +27,9 @@ function wrapBodyParsingFunction<T extends Function>(func: T) {
         const context = getContext();
         if (context) {
           updateContext(context, "body", returnValue);
+          if (shouldBlockRequestForPayloadDepth()) {
+            throw new PayloadTooDeepError();
+          }
         }
       }
 

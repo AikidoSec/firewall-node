@@ -8,6 +8,7 @@ import {
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { normalizeHostname } from "../helpers/normalizeHostname";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
+import { MAX_USER_INPUT_TRAVERSAL_DEPTH } from "../helpers/extractStringsFromUserInput";
 import type { Endpoint, EndpointConfig, Domain } from "./Config";
 import type {
   FetchListsAPIResponse,
@@ -44,6 +45,8 @@ export class ServiceConfig {
   private excludedUserIdsFromRateLimiting = new Set<string>();
 
   private enabledFeatures = new Set<string>();
+
+  private maxPayloadDepth: number | undefined;
 
   constructor(
     endpoints: EndpointConfig[],
@@ -359,5 +362,18 @@ export class ServiceConfig {
 
   isRealtimeUpdatesEnabled(): boolean {
     return this.enabledFeatures.has("realtime_updates");
+  }
+
+  updateMaxPayloadDepth(maxPayloadDepth: unknown): void {
+    this.maxPayloadDepth =
+      typeof maxPayloadDepth === "number" &&
+      Number.isSafeInteger(maxPayloadDepth) &&
+      maxPayloadDepth > 0
+        ? Math.min(maxPayloadDepth, MAX_USER_INPUT_TRAVERSAL_DEPTH)
+        : undefined;
+  }
+
+  getMaxPayloadDepth(): number | undefined {
+    return this.maxPayloadDepth;
   }
 }

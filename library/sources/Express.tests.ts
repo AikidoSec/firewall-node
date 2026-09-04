@@ -345,6 +345,21 @@ export async function createExpressTests(expressPackageName: string) {
     });
   });
 
+  t.test("it blocks bodies beyond the configured depth", async (t) => {
+    agent.getConfig().updateMaxPayloadDepth(3);
+    t.teardown(() => agent.getConfig().updateMaxPayloadDepth(undefined));
+
+    const response = await request(getApp())
+      .post("/")
+      .send({ one: { two: { three: { value: "hidden" } } } });
+
+    t.equal(response.statusCode, 413);
+    t.equal(
+      response.text,
+      "This request was aborted by Aikido firewall because the body exceeded the maximum allowed depth."
+    );
+  });
+
   t.test("it adds body schema to stored routes", async (t) => {
     agent.getRoutes().clear();
     const response = await request(getApp())

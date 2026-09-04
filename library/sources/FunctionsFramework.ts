@@ -9,6 +9,10 @@ import type { HttpFunction } from "@google-cloud/functions-framework";
 import { buildRouteFromURL } from "../helpers/buildRouteFromURL";
 import { shouldDiscoverRoute } from "./http-server/shouldDiscoverRoute";
 import { isPlainObject } from "../helpers/isPlainObject";
+import {
+  PAYLOAD_TOO_DEEP_MESSAGE,
+  shouldBlockRequestForPayloadDepth,
+} from "../helpers/shouldBlockRequestForPayloadDepth";
 
 export function getFlushEveryMS(): number {
   if (process.env.AIKIDO_CLOUD_FUNCTION_FLUSH_EVERY_MS) {
@@ -72,6 +76,10 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
         route: buildRouteFromURL(url),
       },
       async () => {
+        if (!res.headersSent && shouldBlockRequestForPayloadDepth()) {
+          return res.status(413).type("text").send(PAYLOAD_TOO_DEEP_MESSAGE);
+        }
+
         try {
           return await fn(req, res);
         } finally {
@@ -123,6 +131,7 @@ function incrementStatsAndDiscoverAPISpec(
     if (
       context.remoteAddress &&
       !context.blockedDueToIPOrBot &&
+      !context.blockedDueToPayloadDepth &&
       agent.getAttackWaveDetector().check(context, statusCode)
     ) {
       agent.onDetectedAttackWave({

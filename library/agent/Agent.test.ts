@@ -1000,6 +1000,30 @@ t.test(
   }
 );
 
+t.test(
+  "it stores maxPayloadDepth from the startup event response",
+  async (t) => {
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      excludedUserIdsFromRateLimiting: [],
+      maxPayloadDepth: 25,
+    });
+    const agent = createTestAgent({
+      token: new Token("123"),
+      api,
+    });
+
+    await agent.onStart();
+
+    t.equal(agent.getConfig().getMaxPayloadDepth(), 25);
+  }
+);
+
 t.test("it enables blocking mode after sending startup event", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting({

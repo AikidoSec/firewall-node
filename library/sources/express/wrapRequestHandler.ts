@@ -1,7 +1,11 @@
-import type { RequestHandler } from "express";
+import type { RequestHandler, Response } from "express";
 import { runWithContext } from "../../agent/Context";
 import { contextFromRequest } from "./contextFromRequest";
 import { createWrappedFunction } from "../../helpers/wrap";
+import {
+  PAYLOAD_TOO_DEEP_MESSAGE,
+  shouldBlockRequestForPayloadDepth,
+} from "../../helpers/shouldBlockRequestForPayloadDepth";
 
 export function wrapRequestHandler(handler: RequestHandler): RequestHandler {
   const fn = createWrappedFunction(handler, function wrap(handler) {
@@ -13,6 +17,18 @@ export function wrapRequestHandler(handler: RequestHandler): RequestHandler {
       const context = contextFromRequest(arguments[0]);
 
       return runWithContext(context, () => {
+        const response = arguments[1] as Response | undefined;
+        if (
+          response &&
+          !response.headersSent &&
+          shouldBlockRequestForPayloadDepth()
+        ) {
+          return response
+            .status(413)
+            .type("text")
+            .send(PAYLOAD_TOO_DEEP_MESSAGE);
+        }
+
         return handler.apply(this, arguments);
       });
     };

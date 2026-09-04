@@ -2,12 +2,12 @@ import * as t from "tap";
 import { wrapExport } from "./wrapExport";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
 import { Token } from "../api/Token";
-import { bindContext } from "../Context";
+import { bindContext, runWithContext, type Context } from "../Context";
 import { createTestAgent } from "../../helpers/createTestAgent";
 
 const logger = new LoggerForTesting();
 
-createTestAgent({
+const agent = createTestAgent({
   logger,
   token: new Token("123"),
 });
@@ -36,6 +36,53 @@ t.test("Inspect args", async (t) => {
   t.same(toWrap.test("input"), "input");
   t.ok(executedCallback);
 });
+
+t.test(
+  "blocks operations for bodies beyond the configured depth",
+  async (t) => {
+    agent.getConfig().updateMaxPayloadDepth(1);
+    t.teardown(() => agent.getConfig().updateMaxPayloadDepth(undefined));
+
+    let called = false;
+    const toWrap = {
+      test() {
+        called = true;
+      },
+    };
+
+    wrapExport(
+      toWrap,
+      "test",
+      { name: "test", type: "external" },
+      {
+        kind: "sql_op",
+        inspectArgs: () => {},
+      }
+    );
+
+    const context: Context = {
+      remoteAddress: "::1",
+      method: "POST",
+      url: "http://localhost:4000",
+      query: {},
+      headers: {},
+      body: { nested: {} },
+      cookies: {},
+      routeParams: {},
+      source: "express",
+      route: "/",
+    };
+
+    runWithContext(context, () => {
+      const error = t.throws(() => toWrap.test());
+      t.match(error, {
+        message:
+          "This request was aborted by Aikido firewall because the body exceeded the maximum allowed depth.",
+      });
+    });
+    t.equal(called, false);
+  }
+);
 
 t.test("Modify args", async (t) => {
   const toWrap = {
