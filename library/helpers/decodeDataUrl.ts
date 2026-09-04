@@ -6,26 +6,61 @@ const JS_DATA_URL_MIME_TYPES = new Set([
   "application/javascript",
 ]);
 
-export function isJsDataUrl(url: URL): boolean {
-  const commaIndex = url.pathname.indexOf(",");
+function getDataUrlPath(url: string | URL): string | undefined {
+  if (url instanceof URL) {
+    if (url.protocol !== "data:") {
+      return undefined;
+    }
+    return url.pathname;
+  }
+
+  // Node always normalizes the scheme to lowercase before we see it
+  if (!url.startsWith("data:")) {
+    return undefined;
+  }
+
+  const questionIndex = url.indexOf("?", 5);
+  const hashIndex = url.indexOf("#", 5);
+  const stopIndex =
+    questionIndex === -1
+      ? hashIndex
+      : hashIndex === -1
+        ? questionIndex
+        : Math.min(questionIndex, hashIndex);
+
+  return url.slice(5, stopIndex === -1 ? undefined : stopIndex);
+}
+
+export function isJsDataUrl(url: string | URL): boolean {
+  const path = getDataUrlPath(url);
+  if (path === undefined) {
+    return false;
+  }
+
+  const commaIndex = path.indexOf(",");
   if (commaIndex === -1) {
     return false;
   }
 
-  const meta = url.pathname.slice(0, commaIndex);
+  const meta = path.slice(0, commaIndex);
   const mime = meta.split(";")[0].trim().toLowerCase();
 
   return JS_DATA_URL_MIME_TYPES.has(mime);
 }
 
-export function decodeDataUrl(url: URL): string | undefined {
-  const commaIndex = url.pathname.indexOf(",");
+export function decodeDataUrl(url: string | URL): string | undefined {
+  const path = getDataUrlPath(url);
+  if (path === undefined) {
+    return undefined;
+  }
+
+  const commaIndex = path.indexOf(",");
   if (commaIndex === -1) {
     return undefined;
   }
 
-  const meta = url.pathname.slice(0, commaIndex);
-  const data = url.pathname.slice(commaIndex + 1);
+  const meta = path.slice(0, commaIndex);
+  const data = path.slice(commaIndex + 1);
 
   // Node decodes data: URL bodies forgivingly, accepting malformed percent-encoding
   const decoded = safeDecodeURIComponent(data) ?? data;

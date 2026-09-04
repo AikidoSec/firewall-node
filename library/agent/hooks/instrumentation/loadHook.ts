@@ -14,6 +14,8 @@ import { getInstance } from "../../AgentSingleton";
 import { syncBuiltinESMExports } from "module";
 import { getBuiltinModuleWithoutPatching } from "./processGetBuiltin";
 import { wrapBuiltinExports } from "./wrapBuiltinExports";
+import { isJsDataUrl } from "../../../helpers/decodeDataUrl";
+import { checkImportForCodeInjection } from "../../../vulnerabilities/js-injection/checkImportForCodeInjection";
 
 const builtinPatchedSymbol = Symbol("zen.instrumentation.builtin.patched");
 
@@ -22,6 +24,10 @@ export function onModuleLoad(
   context: Parameters<LoadFunction>[1],
   previousLoadResult: ReturnType<LoadFunction>
 ): ReturnType<LoadFunction> {
+  if (isJsDataUrl(path)) {
+    return checkImportForCodeInjection(path, previousLoadResult);
+  }
+
   try {
     // Ignore unsupported formats, e.g. wasm, native addons or json
     if (
