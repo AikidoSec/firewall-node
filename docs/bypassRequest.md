@@ -1,6 +1,6 @@
 # Bypass Zen for a specific request
 
-Call `Zen.bypassRequest()` in a middleware or controller to bypass Zen for this request. A bypassed request is fully excluded from Zen inspection and enforcement: Zen will not analyze the request, generate findings, or apply blocking rules for that traffic. Your application handles the request normally.
+Call `Zen.bypassRequest()` in a middleware or request handler to bypass Zen for this request. A bypassed request is fully excluded from Zen inspection and enforcement: Zen will not analyze the request, generate findings, or apply blocking rules for that traffic. Your application handles the request normally.
 
 ## What gets bypassed
 
