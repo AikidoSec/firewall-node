@@ -533,6 +533,49 @@ t.test("no cookie header", async () => {
   });
 });
 
+t.test(
+  "it does not count requests for routes with forceProtectionOff",
+  async () => {
+    const api = new ReportingAPIForTesting({
+      success: true,
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      excludedUserIdsFromRateLimiting: [],
+      endpoints: [
+        {
+          method: "GET",
+          route: "/dev/{proxy+}",
+          forceProtectionOff: true,
+          rateLimiting: {
+            enabled: false,
+            windowSizeInMS: 0,
+            maxRequests: 0,
+          },
+        },
+      ],
+    });
+    const agent = createTestAgent({
+      block: false,
+      token: new Token("token"),
+      serverless: "lambda",
+      api,
+    });
+    agent.start([]);
+
+    const handler = createLambdaWrapper(async () => {});
+
+    await handler(gatewayEvent, lambdaContext, () => {});
+
+    t.match(agent.getInspectionStatistics().getStats(), {
+      requests: {
+        total: 0,
+      },
+    });
+  }
+);
+
 t.test("it counts attacks", async () => {
   const agent = createTestAgent({
     block: false,

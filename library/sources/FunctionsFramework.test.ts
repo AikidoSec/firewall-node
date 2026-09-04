@@ -139,6 +139,52 @@ t.test("it counts requests", async (t) => {
   });
 });
 
+t.test(
+  "it does not count requests for routes with forceProtectionOff",
+  async (t) => {
+    const api = new ReportingAPIForTesting({
+      success: true,
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      excludedUserIdsFromRateLimiting: [],
+      endpoints: [
+        {
+          method: "GET",
+          route: "/",
+          forceProtectionOff: true,
+          rateLimiting: {
+            enabled: false,
+            windowSizeInMS: 0,
+            maxRequests: 0,
+          },
+        },
+      ],
+    });
+    const agent = createTestAgent({
+      serverless: "gcp",
+      token: new Token("123"),
+      api,
+    });
+    agent.start([]);
+
+    const app = getExpressApp();
+
+    await request(app).get("/");
+    t.same(agent.getInspectionStatistics().getStats().requests, {
+      total: 0,
+      aborted: 0,
+      rateLimited: 0,
+      attacksDetected: { total: 0, blocked: 0 },
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
+    });
+  }
+);
+
 t.test("it counts attacks", async (t) => {
   const agent = createTestAgent({
     serverless: "gcp",
