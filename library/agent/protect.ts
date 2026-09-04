@@ -66,6 +66,7 @@ import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 import { Mongoose } from "../sinks/Mongoose";
 import { NodeVm } from "../sinks/NodeVm";
 import { Zlib } from "../sinks/Zlib";
+import { WorkerThreads } from "../sinks/WorkerThreads";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -186,6 +187,7 @@ export function getWrappers() {
     new Mongoose(),
     new NodeVm(),
     new Zlib(),
+    new WorkerThreads(),
   ];
 }
 
