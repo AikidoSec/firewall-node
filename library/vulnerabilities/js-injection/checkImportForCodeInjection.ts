@@ -29,6 +29,8 @@ export function checkImportForCodeInjection(
         js: code,
         operation: "await import(...)",
         context,
+        // Node executes data: URL imports as ESM, not CommonJS
+        sourceType: 3,
       });
     },
     context,

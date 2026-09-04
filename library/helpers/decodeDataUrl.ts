@@ -6,6 +6,20 @@ const JS_DATA_URL_MIME_TYPES = new Set([
   "application/javascript",
 ]);
 
+// Returns the earliest of the given indexes, ignoring any that are -1 (not found)
+function earliestIndex(...indexes: number[]): number {
+  let result = -1;
+  for (const index of indexes) {
+    if (index === -1) {
+      continue;
+    }
+    if (result === -1 || index < result) {
+      result = index;
+    }
+  }
+  return result;
+}
+
 function getDataUrlPath(url: string | URL): string | undefined {
   if (url instanceof URL) {
     if (url.protocol !== "data:") {
@@ -21,12 +35,7 @@ function getDataUrlPath(url: string | URL): string | undefined {
 
   const questionIndex = url.indexOf("?", 5);
   const hashIndex = url.indexOf("#", 5);
-  const stopIndex =
-    questionIndex === -1
-      ? hashIndex
-      : hashIndex === -1
-        ? questionIndex
-        : Math.min(questionIndex, hashIndex);
+  const stopIndex = earliestIndex(questionIndex, hashIndex);
 
   return url.slice(5, stopIndex === -1 ? undefined : stopIndex);
 }

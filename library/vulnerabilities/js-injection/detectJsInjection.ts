@@ -1,7 +1,7 @@
 import { shouldReturnEarly } from "./shouldReturnEarly";
 import { wasm_detect_js_injection } from "../../internals/zen_internals";
 
-type ZenInternalsJsSourceType =
+export type ZenInternalsJsSourceType =
   | 0 // js (auto-detect CJS or ESM)
   | 1 // ts (TypeScript)
   | 2 // cjs (CommonJS)
