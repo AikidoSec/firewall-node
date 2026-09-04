@@ -1,17 +1,14 @@
 import type { Request } from "express";
 import { Context } from "../../agent/Context";
-import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
-import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
+import { getStableRouteAndRemoteAddress } from "../../helpers/getStableRouteAndRemoteAddress";
 
 export function contextFromRequest(req: Request): Context {
+  const { route, remoteAddress } = getStableRouteAndRemoteAddress(req);
   const url = req.protocol + "://" + req.get("host") + req.originalUrl;
 
   return {
     method: req.method,
-    remoteAddress: getIPAddressFromRequest({
-      headers: req.headers,
-      remoteAddress: req.socket?.remoteAddress,
-    }),
+    remoteAddress,
     body: req.body ? req.body : undefined,
     url: url,
     headers: req.headers,
@@ -20,7 +17,7 @@ export function contextFromRequest(req: Request): Context {
     /* c8 ignore next */
     cookies: req.cookies ? req.cookies : {},
     source: "express",
-    route: buildRouteFromURL(url),
+    route,
     subdomains: req.subdomains,
   };
 }
