@@ -119,6 +119,7 @@ t.test("it wraps the createServer function of http module", async () => {
           source: "http.createServer",
           routeParams: {},
           cookies: {},
+          isBehindTrustedProxy: true,
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
         });
@@ -166,6 +167,7 @@ t.test("it wraps the createServer function of https module", async () => {
           source: "https.createServer",
           routeParams: {},
           cookies: {},
+          isBehindTrustedProxy: true,
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
         });
@@ -552,6 +554,7 @@ t.test("it wraps on request event of http", async () => {
           source: "http.createServer",
           routeParams: {},
           cookies: {},
+          isBehindTrustedProxy: true,
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
         });
@@ -597,6 +600,7 @@ t.test("it wraps on request event of https", async () => {
           cookies: {},
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
+          isBehindTrustedProxy: true,
         });
         server.close();
         resolve();

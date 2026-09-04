@@ -9,7 +9,7 @@ import {
 export function getIPAddressFromRequest(req: {
   headers: Record<string, unknown>;
   remoteAddress: string | undefined;
-}) {
+}): string | undefined {
   if (!isTrustedProxyRequest(req.remoteAddress)) {
     return req.remoteAddress;
   }
@@ -34,7 +34,7 @@ export function getIPAddressFromRequest(req: {
 function selectClientIP(
   ips: string[],
   config: TrustProxyConfig
-): string | null {
+): string | undefined {
   // In count mode, the configured number of rightmost hops are trusted
   // proxies, so the search starts to their left instead of at the end
   const startIndex =
@@ -53,7 +53,7 @@ function selectClientIP(
     return ip;
   }
 
-  return null;
+  return undefined;
 }
 
 function getIpHeaderName(): string {

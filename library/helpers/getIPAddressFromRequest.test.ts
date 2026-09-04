@@ -279,12 +279,34 @@ t.test(
   }
 );
 
+t.test("x-forwarded-for with trust proxy and multiple IPs", async (t) => {
+  process.env.AIKIDO_TRUST_PROXY = "true";
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "9.9.9.9, 8.8.8.8, 7.7.7.7",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "7.7.7.7"
+  );
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for":
+          "a3ad:8f95:d2a8:454b:cf19:be6e:73c6:f880, 3b07:2fba:0270:2149:5fc1:2049:5f04:2131, 791d:967e:428a:90b9:8f6f:4fcc:5d88:015d",
+      },
+      remoteAddress: "df89:84af:85e0:c55f:960c:341a:2cc6:734d",
+    }),
+    "791d:967e:428a:90b9:8f6f:4fcc:5d88:015d"
+  );
+});
+
 t.test(
   "x-forwarded-for with trust proxy and multiple public IPs returns rightmost",
   async (t) => {
     process.env.AIKIDO_TRUST_PROXY = "true";
     clearTrustProxyCache();
-    // Rightmost non-private is 7.7.7.7
     t.same(
       getIPAddressFromRequest({
         headers: {
