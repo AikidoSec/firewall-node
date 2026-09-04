@@ -181,14 +181,18 @@ export class AiSDK implements Wrapper {
           !returnValue ||
           typeof returnValue !== "object" ||
           !("response" in returnValue) ||
-          !(returnValue.response instanceof Promise) ||
-          !("usage" in returnValue) ||
-          !(returnValue.usage instanceof Promise)
+          !("usage" in returnValue)
         ) {
           return returnValue;
         }
 
-        Promise.allSettled([returnValue.response, returnValue.usage])
+        const response = returnValue.response;
+        const usage = returnValue.usage;
+        if (!(response instanceof Promise) || !(usage instanceof Promise)) {
+          return returnValue;
+        }
+
+        Promise.allSettled([response, usage])
           .then((promiseResults) => {
             const response =
               promiseResults[0].status === "fulfilled"

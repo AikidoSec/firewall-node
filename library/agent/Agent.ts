@@ -57,7 +57,7 @@ export class Agent {
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig([], Date.now(), [], [], [], []);
+  private serviceConfig = new ServiceConfig([], Date.now(), [], []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -70,6 +70,7 @@ export class Agent {
   private attackWaveDetector = new AttackWaveDetector();
   private pendingEvents = new PendingEvents();
   private idorProtectionConfig: IdorProtectionConfig | undefined = undefined;
+  public firewallListsUpdate = Promise.resolve();
 
   constructor(
     private block: boolean,
@@ -162,7 +163,12 @@ export class Agent {
       this.checkForReportingAPIError(result);
       this.updateServiceConfig(result);
 
-      await this.updateBlockedLists();
+      this.queueBlockedListsUpdate().catch((error) => {
+        // oxlint-disable-next-line no-console
+        console.error(
+          `Aikido: Failed to update blocked lists: ${error.message}`
+        );
+      });
     }
   }
 
@@ -427,6 +433,15 @@ export class Agent {
     this.interval.unref();
   }
 
+  private queueBlockedListsUpdate(): Promise<void> {
+    const update = this.firewallListsUpdate.then(() =>
+      this.updateBlockedLists()
+    );
+    this.firewallListsUpdate = update.catch(() => {});
+
+    return update;
+  }
+
   private async updateBlockedLists() {
     if (!this.token) {
       return;
@@ -437,25 +452,8 @@ export class Agent {
       return;
     }
 
-    try {
-      const {
-        blockedIPAddresses,
-        blockedUserAgents,
-        allowedIPAddresses,
-        monitoredIPAddresses,
-        monitoredUserAgents,
-        userAgentDetails,
-      } = await this.fetchListsAPI.getLists(this.token);
-      this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
-      this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
-      this.serviceConfig.updateAllowedIPAddresses(allowedIPAddresses);
-      this.serviceConfig.updateMonitoredIPAddresses(monitoredIPAddresses);
-      this.serviceConfig.updateMonitoredUserAgents(monitoredUserAgents);
-      this.serviceConfig.updateUserAgentDetails(userAgentDetails);
-    } catch (error: any) {
-      // oxlint-disable-next-line no-console
-      console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
-    }
+    const lists = await this.fetchListsAPI.getLists(this.token);
+    await this.serviceConfig.updateFirewallLists(lists);
   }
 
   private startPollingForConfigChanges() {
@@ -465,7 +463,7 @@ export class Agent {
 
     const onConfigUpdate = (config: Config) => {
       this.updateServiceConfig({ success: true, ...config });
-      this.updateBlockedLists().catch((error) => {
+      this.queueBlockedListsUpdate().catch((error) => {
         this.logger.log(`Failed to update blocked lists: ${error.message}`);
       });
     };
@@ -654,6 +652,7 @@ export class Agent {
       "@nestjs/core",
       "micro",
       "nuxt",
+      "@trpc/server",
     ];
 
     return webFrameworks.some(

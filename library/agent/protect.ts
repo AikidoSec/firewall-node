@@ -34,6 +34,7 @@ import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
 import { GraphQL } from "../sources/GraphQL";
+import { Trpc } from "../sources/Trpc";
 import { Xml2js } from "../sources/Xml2js";
 import { RawBody } from "../sources/RawBody";
 import { FastXmlParser } from "../sources/FastXmlParser";
@@ -157,6 +158,7 @@ export function getWrappers() {
     new Hono(),
     new Elysia(),
     new GraphQL(),
+    new Trpc(),
     new OpenAI(),
     new Mistral(),
     new Anthropic(),

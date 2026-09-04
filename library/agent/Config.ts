@@ -1,4 +1,4 @@
-import type { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
+import type { IPMatcher } from "../helpers/ip-matcher/createIPMatcher";
 
 export type EndpointConfig = {
   method: string;
