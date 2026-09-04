@@ -1,9 +1,6 @@
 # Bypass Zen for a specific request
 
-Call `Zen.bypassRequest()` in a middleware to bypass Zen for this request. A bypassed request is fully excluded from Zen inspection and enforcement: Zen will not analyze the request, generate findings, or apply blocking rules for that traffic. Your application handles the request normally.
-
-> [!NOTE]
-> Zen's built-in [Bypassed IPs](https://help.aikido.dev/zen-firewall/zen-features/bypassed-ips) feature uses request bypassing internally, triggered by a matching IP/CIDR. `Zen.bypassRequest()` lets you bypass requests using your custom logic.
+Call `Zen.bypassRequest()` in a middleware or controller to bypass Zen for this request. A bypassed request is fully excluded from Zen inspection and enforcement: Zen will not analyze the request, generate findings, or apply blocking rules for that traffic. Your application handles the request normally.
 
 ## What gets bypassed
 
@@ -27,6 +24,7 @@ import Zen from "@aikidosec/firewall";
 const app = new Hono();
 
 app.use(async (c, next) => {
+  // Add your custom logic here
   if (yourCustomLogic() === "true") {
     Zen.bypassRequest(); // <-- This disables Zen for this specific request
   }
@@ -34,15 +32,22 @@ app.use(async (c, next) => {
   await next();
 });
 
+// Make sure to call Zen.bypassRequest() in a middleware before this to bypass Rate limiting and user blocking
 Zen.addHonoMiddleware(app);
 
 app.get("/", async (c) => {
+  // Alternatively, you can also call Zen.bypassRequest() here to bypass attack blocking only for this specific route
+  // This will however not bypass rate limiting or user blocking, as those are applied in the middleware
+
   // Your route logic here
   return c.text("Hello, World!");
 });
 
 // ...
 ```
+
+> [!NOTE]
+> Zen also has a built-in [Bypassed IPs](https://help.aikido.dev/zen-firewall/zen-features/bypassed-ips) feature without requiring code changes.
 
 > [!WARNING]
 > A bypassed request gets zero protection from Zen — no attack detection, no rate limiting, no blocking, no tracking. Ensure that your custom logic only bypasses requests that you fully trust.
