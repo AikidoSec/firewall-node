@@ -160,6 +160,7 @@ For framework- and provider- specific instructions, check out our docs:
 - [Proxy / IP headers](docs/proxy.md) — configure client IP detection behind load balancers
 - [Set the current user](docs/user.md) — identify users for rate limiting, blocking, and attack reports
 - [IDOR protection](docs/idor-protection.md) — prevent data leaks in multi-tenant apps
+- [Bypassing requests](docs/bypassRequest.md) — disable Zen for specific requests
 
 ## Reporting to your Aikido Security dashboard
 
