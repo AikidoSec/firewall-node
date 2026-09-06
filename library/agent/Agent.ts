@@ -10,6 +10,8 @@ import { RateLimiter } from "../ratelimiting/RateLimiter";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import type {
   AgentInfo,
+  AiToolHits,
+  AiUsage,
   DetectedAttack,
   DetectedAttackWave,
 } from "./api/Event";
@@ -276,6 +278,28 @@ export class Agent {
         });
       this.pendingEvents.onAPICall(promise);
     }
+  }
+
+  /**
+   * Reports an AI proxy event (ai-usage/ai-tool-hits) -- stamps `time` and
+   * `agent` the same way onDetectedAttack/sendHeartbeat do, so every event
+   * type gets a consistent envelope regardless of source.
+   */
+  reportEvent(event: Omit<AiUsage, "agent" | "time"> | Omit<AiToolHits, "agent" | "time">) {
+    if (!this.token) {
+      return;
+    }
+
+    const promise = this.api
+      .report(
+        this.token,
+        { ...event, time: Date.now(), agent: this.getAgentInfo() },
+        this.timeoutInMS
+      )
+      .catch(() => {
+        this.logger.log(`Failed to report event of type ${event.type}`);
+      });
+    this.pendingEvents.onAPICall(promise);
   }
 
   /**
