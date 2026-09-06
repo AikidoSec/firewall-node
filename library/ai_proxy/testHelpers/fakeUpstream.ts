@@ -31,12 +31,17 @@ export class FakeUpstream {
   // them -- every socket here is tracked and destroyed by hand on stop().
   // Typed structurally: the "connect" event's clientSocket comes through as
   // a plain Duplex, not the more specific net.Socket.
-  private sockets = new Set<{ destroy(): void; on(event: "close", cb: () => void): void }>();
+  private sockets = new Set<{
+    destroy(): void;
+    on(event: "close", cb: () => void): void;
+  }>();
 
   constructor(responses: Record<string, [string, CannedResponse][]> = {}) {
     this.responses = responses;
     const pem = readFileSync(CERT_PATH, "utf8");
-    const cert = pem.match(/-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/)![0];
+    const cert = pem.match(
+      /-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/
+    )![0];
     const key = pem.match(
       /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]+?-----END (?:RSA )?PRIVATE KEY-----/
     )![0];
@@ -50,17 +55,25 @@ export class FakeUpstream {
     this.connectProxy = createHttpServer();
     this.connectProxy.on("connect", (_req, clientSocket, head) => {
       this.track(clientSocket);
-      const upstreamSocket = net.connect(this.tlsPort, "127.0.0.1", () => {
+      const establishTunnel = () => {
         clientSocket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
         upstreamSocket.write(head);
         upstreamSocket.pipe(clientSocket);
         clientSocket.pipe(upstreamSocket);
-      });
+      };
+      const upstreamSocket = net.connect(
+        this.tlsPort,
+        "127.0.0.1",
+        establishTunnel
+      );
       this.track(upstreamSocket);
     });
   }
 
-  private track(socket: { destroy(): void; on(event: "close", cb: () => void): void }) {
+  private track(socket: {
+    destroy(): void;
+    on(event: "close", cb: () => void): void;
+  }) {
     this.sockets.add(socket);
     socket.on("close", () => this.sockets.delete(socket));
   }
@@ -118,7 +131,10 @@ export class FakeUpstream {
 
       this.requests.push({ host, path, body });
 
-      const canned = this.match(host, path) ?? { body: '{"ok":true}', contentType: "application/json" };
+      const canned = this.match(host, path) ?? {
+        body: '{"ok":true}',
+        contentType: "application/json",
+      };
       socket.write(
         `HTTP/1.1 200 OK\r\nContent-Type: ${canned.contentType ?? "application/json"}\r\n` +
           `Content-Length: ${Buffer.byteLength(canned.body)}\r\nConnection: close\r\n\r\n${canned.body}`

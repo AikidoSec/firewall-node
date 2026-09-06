@@ -1,5 +1,6 @@
 import { Hooks } from "../agent/hooks/Hooks";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
+import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import { createZenFetch } from "../ai_proxy/fetch";
 
@@ -20,7 +21,9 @@ import { createZenFetch } from "../ai_proxy/fetch";
  */
 export class AiProxyClients implements Wrapper {
   private pin(instance: any, constructorArgs: unknown[]) {
-    const options = constructorArgs[0] as { fetch?: unknown; apiKey?: string } | undefined;
+    const options = constructorArgs[0] as
+      | { fetch?: unknown; apiKey?: string }
+      | undefined;
     if (options?.fetch) {
       return;
     }
@@ -34,16 +37,30 @@ export class AiProxyClients implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
+    const pinOpenAI = (exports: any, pkgInfo: PartialWrapPackageInfo) => {
+      wrapNewInstance(exports, "OpenAI", pkgInfo, (instance, args) =>
+        this.pin(instance, args)
+      );
+      wrapNewInstance(exports, "AzureOpenAI", pkgInfo, (instance, args) =>
+        this.pin(instance, args)
+      );
+    };
+
     hooks
       .addPackage("openai")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0")
-      .onRequire((exports, pkgInfo) => {
-        wrapNewInstance(exports, "OpenAI", pkgInfo, (instance, args) =>
-          this.pin(instance, args)
-        );
-        wrapNewInstance(exports, "AzureOpenAI", pkgInfo, (instance, args) =>
-          this.pin(instance, args)
-        );
+      .onRequire((exports, pkgInfo) => pinOpenAI(exports, pkgInfo))
+      // onRequire only fires under old instrumentation; new instrumentation
+      // needs addFileInstrumentation instead. index.js is every version's
+      // main, so patching module.exports here after it finishes executing
+      // covers both the direct-assignment and getter-re-export shapes.
+      .addFileInstrumentation({
+        path: "index.js",
+        functions: [],
+        accessLocalVariables: {
+          names: ["module.exports"],
+          cb: (vars, pkgInfo) => pinOpenAI(vars[0], pkgInfo),
+        },
       });
 
     hooks
@@ -59,6 +76,22 @@ export class AiProxyClients implements Wrapper {
             this.pin(instance, args)
           ) ?? exports
         );
+      })
+      // Same new-instrumentation gap as above; patched here instead of the
+      // top-level export since that's a factory function, not an object
+      // with a reassignable property. index.js re-reads Anthropic from
+      // client.js on every access, so patching it here is visible everywhere.
+      .addFileInstrumentation({
+        path: "client.js",
+        functions: [],
+        accessLocalVariables: {
+          names: ["module.exports"],
+          cb: (vars, pkgInfo) => {
+            wrapNewInstance(vars[0], "Anthropic", pkgInfo, (instance, args) =>
+              this.pin(instance, args)
+            );
+          },
+        },
       });
   }
 }

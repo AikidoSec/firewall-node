@@ -1,5 +1,9 @@
 import { readFileSync } from "node:fs";
-import { Agent as HttpsAgent, request as httpsRequest, type RequestOptions } from "node:https";
+import {
+  Agent as HttpsAgent,
+  request as httpsRequest,
+  type RequestOptions,
+} from "node:https";
 import { connect as netConnect } from "node:net";
 import { Duplex, Readable } from "node:stream";
 import { connect as tlsConnect } from "node:tls";
@@ -39,7 +43,8 @@ class ZenProxyAgent extends HttpsAgent {
     const targetPort = options.port ?? 443;
     const socket = netConnect({ host: "127.0.0.1", port: this.proxyPort });
 
-    const fail = (err: Error) => callback?.(err, undefined as unknown as Duplex);
+    const fail = (err: Error) =>
+      callback?.(err, undefined as unknown as Duplex);
     socket.once("error", fail);
     socket.write(
       `CONNECT ${targetHost}:${targetPort} HTTP/1.1\r\nHost: ${targetHost}:${targetPort}\r\n\r\n`
@@ -55,10 +60,16 @@ class ZenProxyAgent extends HttpsAgent {
       socket.removeListener("data", onData);
       socket.removeListener("error", fail);
 
-      const statusLine = buffer.subarray(0, buffer.indexOf("\r\n")).toString("latin1");
+      const statusLine = buffer
+        .subarray(0, buffer.indexOf("\r\n"))
+        .toString("latin1");
       if (!/^HTTP\/1\.[01] 200/.test(statusLine)) {
         socket.destroy();
-        fail(new Error(`AI proxy CONNECT to ${targetHost}:${targetPort} failed: ${statusLine}`));
+        fail(
+          new Error(
+            `AI proxy CONNECT to ${targetHost}:${targetPort} failed: ${statusLine}`
+          )
+        );
         return;
       }
 
@@ -125,10 +136,18 @@ function requestViaAgent(
   init: RequestInit | undefined,
   agent: ZenProxyAgent
 ): Promise<Response> {
-  const url = new URL(
-    typeof input === "string" ? input : input instanceof URL ? input.href : input.url
-  );
-  const method = init?.method ?? (typeof input === "object" && "method" in input ? input.method : "GET");
+  let inputUrl: string;
+  if (typeof input === "string") {
+    inputUrl = input;
+  } else if (input instanceof URL) {
+    inputUrl = input.href;
+  } else {
+    inputUrl = input.url;
+  }
+  const url = new URL(inputUrl);
+  const method =
+    init?.method ??
+    (typeof input === "object" && "method" in input ? input.method : "GET");
 
   return new Promise((resolve, reject) => {
     const req = httpsRequest(
@@ -153,9 +172,13 @@ function requestViaAgent(
     req.once("error", reject);
 
     const body = init?.body;
-    if (body == null) {
+    if (body === null || body === undefined) {
       req.end();
-    } else if (typeof body === "string" || Buffer.isBuffer(body) || body instanceof Uint8Array) {
+    } else if (
+      typeof body === "string" ||
+      Buffer.isBuffer(body) ||
+      body instanceof Uint8Array
+    ) {
       req.end(body);
     } else {
       Readable.fromWeb(body as never).pipe(req);

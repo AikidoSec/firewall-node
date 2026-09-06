@@ -1,5 +1,12 @@
 import { ChildProcess, spawn } from "node:child_process";
-import { chmodSync, mkdirSync, openSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  closeSync,
+  mkdirSync,
+  openSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { AddressInfo, createServer } from "node:net";
@@ -20,7 +27,10 @@ function freePort(): Promise<number> {
   });
 }
 
-async function waitReady(metaPort: number, proc: ChildProcess): Promise<boolean> {
+async function waitReady(
+  metaPort: number,
+  proc: ChildProcess
+): Promise<boolean> {
   const deadline = Date.now() + READY_TIMEOUT_MS;
   while (Date.now() < deadline) {
     if (proc.exitCode !== null || proc.signalCode !== null) {
@@ -64,13 +74,17 @@ export class ProxySupervisor {
   }
 
   start() {
+    // mkdirSync's mode is masked by umask; chmod explicitly so the token stays unreadable to other users.
     mkdirSync(this.dataDir, { recursive: true });
+    chmodSync(this.dataDir, 0o700);
     mkdirSync(join(this.dataDir, "secrets"), { recursive: true });
+    chmodSync(join(this.dataDir, "secrets"), 0o700);
     // The proxy refuses to talk to any cloud-backed subsystem without this
     // file, even though we never point it at a real cloud.
     writeFileSync(
       join(this.dataDir, "config.json"),
-      JSON.stringify({ token: this.token, device_id: "zen-node-agent" })
+      JSON.stringify({ token: this.token, device_id: "zen-node-agent" }),
+      { mode: 0o600 }
     );
 
     this.runLoop().catch(() => {
@@ -83,6 +97,7 @@ export class ProxySupervisor {
     this.stopped = true;
     this.proc?.kill("SIGTERM");
     clearRuntimeInfo(this.token);
+    rmSync(this.dataDir, { recursive: true, force: true });
   }
 
   private async runLoop() {
@@ -91,12 +106,18 @@ export class ProxySupervisor {
       const proxyPort = await freePort();
       const metaPort = await freePort();
       const args = [
-        "--bind", `127.0.0.1:${proxyPort}`,
-        "--meta", `127.0.0.1:${metaPort}`,
-        "--secrets", join(this.dataDir, "secrets"),
-        "-D", this.dataDir,
-        "--aikido-url", this.coreUrl,
-        "--reporting-endpoint", this.coreUrl,
+        "--bind",
+        `127.0.0.1:${proxyPort}`,
+        "--meta",
+        `127.0.0.1:${metaPort}`,
+        "--secrets",
+        join(this.dataDir, "secrets"),
+        "-D",
+        this.dataDir,
+        "--aikido-url",
+        this.coreUrl,
+        "--reporting-endpoint",
+        this.coreUrl,
       ];
       if (this.upstreamProxyUrl) {
         args.push("--proxy", this.upstreamProxyUrl);
@@ -108,9 +129,14 @@ export class ProxySupervisor {
         stdio: ["ignore", logFd, logFd],
         detached: true,
       });
+      // The child inherits its own duplicate of the fd on spawn; close the
+      // parent's copy so restarts don't leak one descriptor per cycle.
+      closeSync(logFd);
       chmodSync(this.binaryPath, 0o755);
 
-      const exited = new Promise<void>((resolve) => this.proc?.once("exit", () => resolve()));
+      const exited = new Promise<void>((resolve) =>
+        this.proc?.once("exit", () => resolve())
+      );
 
       if (await waitReady(metaPort, this.proc)) {
         await this.fetchCaAndPublish(metaPort, proxyPort);
@@ -125,7 +151,9 @@ export class ProxySupervisor {
 
       const delay =
         Date.now() - startedAt < MIN_STABLE_UPTIME_MS
-          ? RESTART_BACKOFF_MS[Math.min(backoffIndex++, RESTART_BACKOFF_MS.length - 1)]
+          ? RESTART_BACKOFF_MS[
+              Math.min(backoffIndex++, RESTART_BACKOFF_MS.length - 1)
+            ]
           : RESTART_BACKOFF_MS[(backoffIndex = 0)];
       await new Promise((r) => setTimeout(r, delay));
     }
