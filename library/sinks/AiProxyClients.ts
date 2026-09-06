@@ -50,8 +50,14 @@ export class AiProxyClients implements Wrapper {
       .addPackage("@anthropic-ai/sdk")
       .withVersion("^0.20.0 || ^0.30.0 || ^0.40.0 || ^0.50.0 || ^0.56.0")
       .onRequire((exports, pkgInfo) => {
-        wrapNewInstance(exports, "Anthropic", pkgInfo, (instance, args) =>
-          this.pin(instance, args)
+        // Unlike openai's `{ OpenAI, AzureOpenAI }` named exports, this
+        // package's CJS export IS the Anthropic class itself -- must wrap
+        // the default export, not a same-named property on it (that
+        // property exists but is a distinct, never-constructed reference).
+        return (
+          wrapNewInstance(exports, undefined, pkgInfo, (instance, args) =>
+            this.pin(instance, args)
+          ) ?? exports
         );
       });
   }
