@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { AiProxyClients } from "./AiProxyClients";
 
@@ -16,10 +17,19 @@ function isPinned(fetchFn: unknown): boolean {
 const skipWithoutGlobalFetch =
   getMajorNodeVersion() < 18 ? "requires a global fetch (Node 18+)" : undefined;
 
+// Both SDKs' package.json points bare `import` at a real ESM build
+// (index.mjs/client.mjs, `export class` bindings) instead of the CJS one
+// (index.js/client.js) our file-instrumentation patches -- pinning only
+// takes effect there, so it doesn't apply when a caller imports the ESM
+// build directly. Fails open the same as an unhealthy proxy would.
+const skipUnderEsm = isEsmUnitTest()
+  ? "pinning targets the CJS build only"
+  : undefined;
+
 t.test(
   "pins openai clients with no fetch of their own",
   {
-    skip: skipWithoutGlobalFetch,
+    skip: skipWithoutGlobalFetch ?? skipUnderEsm,
   },
   async (t) => {
     const originalToken = process.env.AIKIDO_TOKEN;
@@ -43,7 +53,7 @@ t.test(
 t.test(
   "pins anthropic clients with no fetch of their own",
   {
-    skip: skipWithoutGlobalFetch,
+    skip: skipWithoutGlobalFetch ?? skipUnderEsm,
   },
   async (t) => {
     const originalToken = process.env.AIKIDO_TOKEN;
@@ -52,7 +62,11 @@ t.test(
       const agent = createTestAgent();
       agent.start([new AiProxyClients()]);
 
-      const Anthropic = require("@anthropic-ai/sdk");
+      let Anthropic: any = require("@anthropic-ai/sdk");
+      if (isEsmUnitTest()) {
+        // in ESM the default export is the Anthropic factory
+        Anthropic = Anthropic.default;
+      }
       const client = new Anthropic({ apiKey: "fake" });
 
       t.ok(isPinned(client.fetch));

@@ -16,7 +16,9 @@ const TOOLS = [
     description: "Run a SQL query against the production database",
     input_schema: {
       type: "object",
-      properties: { query: { type: "string", description: "The SQL to execute" } },
+      properties: {
+        query: { type: "string", description: "The SQL to execute" },
+      },
       required: ["query"],
     },
   },
@@ -38,7 +40,12 @@ const NON_STREAMING = {
     role: "assistant",
     model: "claude-sonnet-5",
     content: [
-      { type: "tool_use", id: "toolu_01", name: "run_sql", input: { query: "SELECT 1" } },
+      {
+        type: "tool_use",
+        id: "toolu_01",
+        name: "run_sql",
+        input: { query: "SELECT 1" },
+      },
     ],
     stop_reason: "tool_use",
     stop_sequence: null,
@@ -73,7 +80,10 @@ const BASH_ENV_STREAM = sse(
   ].join("\n")
 );
 
-async function waitUntil(predicate: () => boolean, timeoutMs = 25_000): Promise<boolean> {
+async function waitUntil(
+  predicate: () => boolean,
+  timeoutMs = 25_000
+): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (predicate()) {
@@ -86,7 +96,11 @@ async function waitUntil(predicate: () => boolean, timeoutMs = 25_000): Promise<
 
 async function withWiredProxy(
   opts: { blockedAiTools?: string[] },
-  fn: (ctx: { token: string; upstream: FakeUpstream; events: Record<string, unknown>[] }) => Promise<void>
+  fn: (ctx: {
+    token: string;
+    upstream: FakeUpstream;
+    events: Record<string, unknown>[];
+  }) => Promise<void>
 ) {
   const token = `test-token-${Math.random().toString(36).slice(2)}`;
   const events: Record<string, unknown>[] = [];
@@ -109,7 +123,10 @@ async function withWiredProxy(
   supervisor.start();
 
   try {
-    const ready = await waitUntil(() => readRuntimeInfo(token) !== undefined, 30_000);
+    const ready = await waitUntil(
+      () => readRuntimeInfo(token) !== undefined,
+      30_000
+    );
     if (!ready) {
       throw new Error("proxy never published its runtime file");
     }
@@ -133,11 +150,17 @@ function last<T>(arr: T[]): T {
 
 t.test(
   "ai proxy: tool descriptions, arg schemas, streaming hits, blocking",
-  { skip: binaryPath ? undefined : "No AI proxy binary found; set AIKIDO_AI_PROXY_BIN" },
+  {
+    skip: binaryPath
+      ? undefined
+      : "No AI proxy binary found; set AIKIDO_AI_PROXY_BIN",
+  },
   async (t) => {
     await t.test("reports tool descriptions and arg schemas", async (t) => {
       await withWiredProxy({}, async ({ token, upstream, events }) => {
-        upstream.responses = { "api.anthropic.com": [["/v1/messages", NON_STREAMING]] };
+        upstream.responses = {
+          "api.anthropic.com": [["/v1/messages", NON_STREAMING]],
+        };
 
         const zenFetch = createZenFetch(token);
         const res = await zenFetch("https://api.anthropic.com/v1/messages", {
@@ -165,7 +188,9 @@ t.test(
 
     await t.test("streaming tool call is reported as a tool hit", async (t) => {
       await withWiredProxy({}, async ({ upstream, events, token }) => {
-        upstream.responses = { "api.anthropic.com": [["/v1/messages", BASH_ENV_STREAM]] };
+        upstream.responses = {
+          "api.anthropic.com": [["/v1/messages", BASH_ENV_STREAM]],
+        };
 
         const zenFetch = createZenFetch(token);
         const res = await zenFetch("https://api.anthropic.com/v1/messages", {
@@ -181,59 +206,80 @@ t.test(
         // drain the SSE body so the proxy finishes scanning it
         await res.text();
 
-        t.ok(await waitUntil(() => eventsOf(events, "ai-tool-hits").length > 0));
+        t.ok(
+          await waitUntil(() => eventsOf(events, "ai-tool-hits").length > 0)
+        );
         const hits = last(eventsOf(events, "ai-tool-hits")).tools as any[];
         t.ok(hits.some((tl) => tl.name === "Bash"));
       });
     });
 
-    await t.test("blocked tool is stripped from the request the provider receives", async (t) => {
-      await withWiredProxy({ blockedAiTools: ["run_sql"] }, async ({ upstream, events, token }) => {
-        upstream.responses = { "api.anthropic.com": [["/v1/messages", NON_STREAMING]] };
+    await t.test(
+      "blocked tool is stripped from the request the provider receives",
+      async (t) => {
+        await withWiredProxy(
+          { blockedAiTools: ["run_sql"] },
+          async ({ upstream, events, token }) => {
+            upstream.responses = {
+              "api.anthropic.com": [["/v1/messages", NON_STREAMING]],
+            };
 
-        const zenFetch = createZenFetch(token);
-        const res = await zenFetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "claude-sonnet-5",
-            max_tokens: 64,
-            tools: TOOLS,
-            messages: [{ role: "user", content: "hi" }],
-          }),
-        });
-        await res.text();
+            const zenFetch = createZenFetch(token);
+            const res = await zenFetch(
+              "https://api.anthropic.com/v1/messages",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  model: "claude-sonnet-5",
+                  max_tokens: 64,
+                  tools: TOOLS,
+                  messages: [{ role: "user", content: "hi" }],
+                }),
+              }
+            );
+            await res.text();
 
-        await waitUntil(() => upstream.requests.length > 0);
-        const sent = JSON.parse(last(upstream.requests).body);
-        const sentToolNames = sent.tools.map((tl: any) => tl.name);
-        t.notOk(sentToolNames.includes("run_sql"));
-        t.ok(sentToolNames.includes("Bash"));
+            await waitUntil(() => upstream.requests.length > 0);
+            const sent = JSON.parse(last(upstream.requests).body);
+            const sentToolNames = sent.tools.map((tl: any) => tl.name);
+            t.notOk(sentToolNames.includes("run_sql"));
+            t.ok(sentToolNames.includes("Bash"));
 
-        await waitUntil(() => eventsOf(events, "ai-usage").length > 0);
-        const byName = Object.fromEntries(
-          (last(eventsOf(events, "ai-usage")).tools as any[]).map((tl) => [tl.name, tl])
+            await waitUntil(() => eventsOf(events, "ai-usage").length > 0);
+            const byName = Object.fromEntries(
+              (last(eventsOf(events, "ai-usage")).tools as any[]).map((tl) => [
+                tl.name,
+                tl,
+              ])
+            );
+            t.equal(byName.run_sql.blocked, true);
+          }
         );
-        t.equal(byName.run_sql.blocked, true);
-      });
-    });
+      }
+    );
 
-    await t.test("agent.reportEvent forwards AI events to the reporting API", async (t) => {
-      const testToken = new Token("test-agent-token");
-      const agent = createTestAgent({ token: testToken });
+    await t.test(
+      "agent.reportEvent forwards AI events to the reporting API",
+      async (t) => {
+        const testToken = new Token("test-agent-token");
+        const agent = createTestAgent({ token: testToken });
 
-      agent.reportEvent({
-        type: "ai-usage",
-        provider: "anthropic",
-        model: "claude-sonnet-5",
-        tools: [{ name: "run_sql", description: "desc", args: [], blocked: false }],
-      });
+        agent.reportEvent({
+          type: "ai-usage",
+          provider: "anthropic",
+          model: "claude-sonnet-5",
+          tools: [
+            { name: "run_sql", description: "desc", args: [], blocked: false },
+          ],
+        });
 
-      const reported = (agent as any).api.getEvents();
-      t.equal(reported.length, 1);
-      t.equal(reported[0].type, "ai-usage");
-      t.ok(reported[0].time);
-      t.ok(reported[0].agent);
-    });
+        const reported = (agent as any).api.getEvents();
+        t.equal(reported.length, 1);
+        t.equal(reported[0].type, "ai-usage");
+        t.ok(reported[0].time);
+        t.ok(reported[0].agent);
+      }
+    );
   }
 );

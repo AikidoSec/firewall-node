@@ -18,6 +18,10 @@ import { createZenFetch } from "../ai_proxy/fetch";
  * Only touches clients constructed with no `fetch` of their own. A caller
  * that supplies its own `fetch` is left untouched for now rather than risk
  * breaking their transport configuration.
+ *
+ * Patches the CJS build only; a caller that imports the SDK's real ESM build
+ * directly gets an unpinned client (same fail-open fallback as an unhealthy
+ * proxy) since the instrumentation here can't reassign live ESM bindings.
  */
 export class AiProxyClients implements Wrapper {
   private pin(instance: any, constructorArgs: unknown[]) {

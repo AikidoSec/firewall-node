@@ -285,7 +285,9 @@ export class Agent {
    * `agent` the same way onDetectedAttack/sendHeartbeat do, so every event
    * type gets a consistent envelope regardless of source.
    */
-  reportEvent(event: Omit<AiUsage, "agent" | "time"> | Omit<AiToolHits, "agent" | "time">) {
+  reportEvent(
+    event: Omit<AiUsage, "agent" | "time"> | Omit<AiToolHits, "agent" | "time">
+  ) {
     if (!this.token) {
       return;
     }
