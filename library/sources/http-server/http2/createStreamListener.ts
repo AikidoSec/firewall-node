@@ -81,6 +81,9 @@ function discoverRouteFromStream(
         statusCode: statusCode,
         route: context.route,
         method: context.method,
+        forceProtectionOff: agent
+          .getConfig()
+          .isForceProtectionOffRoute(context),
       });
 
       if (shouldDiscover) {
