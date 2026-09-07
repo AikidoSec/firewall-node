@@ -51,11 +51,8 @@ if (!isNewHookSystemUsed()) {
     if (isLibBundled()) {
       // oxlint-disable-next-line no-console
       console.warn(
-        colorText(
-          "red",
-          warnBox(
-            "Zen is NOT protecting your application. Your app uses a bundler without externalizing Zen and the packages it needs to protect. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md"
-          )
+        warnBox(
+          "AIKIDO: Your application seems to be using a bundler without using the Zen bundler plugin. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
         )
       );
     }

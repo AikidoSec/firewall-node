@@ -11,7 +11,8 @@ export function transformCode(
   path: string,
   code: string,
   pkgLoadFormat: PackageLoadFormat,
-  fileInstructions: PackageFileInstrumentationInstructionJSON
+  fileInstructions: PackageFileInstrumentationInstructionJSON,
+  isBundling = false
 ): string {
   try {
     const result = wasm_transform_code_str(
@@ -19,7 +20,8 @@ export function transformCode(
       pkgVersion,
       code,
       JSON.stringify(fileInstructions),
-      getSourceType(path, pkgLoadFormat)
+      getSourceType(path, pkgLoadFormat),
+      isBundling
     );
 
     // Rewrite import path for unit tests if environment variable is set to true
