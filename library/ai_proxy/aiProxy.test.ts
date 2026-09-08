@@ -95,7 +95,7 @@ async function waitUntil(
 }
 
 async function withWiredProxy(
-  opts: { blockedAiTools?: string[] },
+  opts: { blockedAiTools?: string[]; allowedAiTools?: string[] },
   fn: (ctx: {
     token: string;
     upstream: FakeUpstream;
@@ -109,7 +109,11 @@ async function withWiredProxy(
   await upstream.start();
 
   const coreServer = new AiCoreServer(
-    () => ({ aiEnabled: true, blockedAiTools: opts.blockedAiTools ?? [] }),
+    () => ({
+      aiEnabled: true,
+      blockedAiTools: opts.blockedAiTools ?? [],
+      allowedAiTools: opts.allowedAiTools ?? [],
+    }),
     (event) => events.push(event)
   );
   await coreServer.start();
@@ -254,6 +258,86 @@ t.test(
               ])
             );
             t.equal(byName.run_sql.blocked, true);
+          }
+        );
+      }
+    );
+
+    await t.test(
+      "lockdown strips every tool that does not match the allowlist",
+      async (t) => {
+        await withWiredProxy(
+          { allowedAiTools: ["(?i)^Bash$"] },
+          async ({ upstream, events, token }) => {
+            upstream.responses = {
+              "api.anthropic.com": [["/v1/messages", NON_STREAMING]],
+            };
+
+            const zenFetch = createZenFetch(token);
+            const res = await zenFetch(
+              "https://api.anthropic.com/v1/messages",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  model: "claude-sonnet-5",
+                  max_tokens: 64,
+                  tools: TOOLS,
+                  messages: [{ role: "user", content: "hi" }],
+                }),
+              }
+            );
+            await res.text();
+
+            await waitUntil(() => upstream.requests.length > 0);
+            const sent = JSON.parse(last(upstream.requests).body);
+            const sentToolNames = sent.tools.map((tl: any) => tl.name);
+            t.same(sentToolNames, ["Bash"]);
+
+            await waitUntil(() => eventsOf(events, "ai-usage").length > 0);
+            const byName = Object.fromEntries(
+              (last(eventsOf(events, "ai-usage")).tools as any[]).map((tl) => [
+                tl.name,
+                tl,
+              ])
+            );
+            t.equal(byName.run_sql.blocked, true);
+            t.notOk(byName.Bash.blocked);
+          }
+        );
+      }
+    );
+
+    await t.test(
+      "an explicit block wins over a matching allowlist",
+      async (t) => {
+        await withWiredProxy(
+          { blockedAiTools: ["(?i)^Bash$"], allowedAiTools: [".*"] },
+          async ({ upstream, token }) => {
+            upstream.responses = {
+              "api.anthropic.com": [["/v1/messages", NON_STREAMING]],
+            };
+
+            const zenFetch = createZenFetch(token);
+            const res = await zenFetch(
+              "https://api.anthropic.com/v1/messages",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  model: "claude-sonnet-5",
+                  max_tokens: 64,
+                  tools: TOOLS,
+                  messages: [{ role: "user", content: "hi" }],
+                }),
+              }
+            );
+            await res.text();
+
+            await waitUntil(() => upstream.requests.length > 0);
+            const sent = JSON.parse(last(upstream.requests).body);
+            const sentToolNames = sent.tools.map((tl: any) => tl.name);
+            t.same(sentToolNames, ["run_sql"]);
           }
         );
       }

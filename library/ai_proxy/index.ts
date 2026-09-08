@@ -21,7 +21,7 @@ export function maybeStartAiProxy(agent: Agent, token: string): void {
   }
 
   const coreServer = new AiCoreServer(
-    () => ({ aiEnabled: true, blockedAiTools: [] }),
+    () => ({ aiEnabled: true, blockedAiTools: [], allowedAiTools: [] }),
     // The proxy's wire payload isn't statically typed (it's JSON parsed from
     // an HTTP body); reportEvent's union describes the shape it's expected
     // to have.

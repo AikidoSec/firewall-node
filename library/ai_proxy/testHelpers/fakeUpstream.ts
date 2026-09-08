@@ -33,7 +33,7 @@ export class FakeUpstream {
   // a plain Duplex, not the more specific net.Socket.
   private sockets = new Set<{
     destroy(): void;
-    on(event: "close", cb: () => void): void;
+    on(event: "close" | "error", cb: () => void): void;
   }>();
 
   constructor(responses: Record<string, [string, CannedResponse][]> = {}) {
@@ -72,10 +72,13 @@ export class FakeUpstream {
 
   private track(socket: {
     destroy(): void;
-    on(event: "close", cb: () => void): void;
+    on(event: "close" | "error", cb: () => void): void;
   }) {
     this.sockets.add(socket);
     socket.on("close", () => this.sockets.delete(socket));
+    // stop() destroys these mid-flight; an unhandled 'error' would surface as
+    // a failure in whichever test happens to be running
+    socket.on("error", () => {});
   }
 
   private tlsPort = 0;
@@ -105,7 +108,7 @@ export class FakeUpstream {
 
   private handleTls(socket: TLSSocket) {
     let buffer = "";
-    socket.on("data", (chunk) => {
+    const onData = (chunk: Buffer) => {
       buffer += chunk.toString("utf8");
       const headerEnd = buffer.indexOf("\r\n\r\n");
       if (headerEnd === -1) {
@@ -129,6 +132,10 @@ export class FakeUpstream {
         return; // wait for the rest
       }
 
+      // one request per connection (the response below ends it); without
+      // disarming, a request split across TCP segments re-parses the same
+      // buffer and writes a second response onto an ended socket
+      socket.off("data", onData);
       this.requests.push({ host, path, body });
 
       const canned = this.match(host, path) ?? {
@@ -140,7 +147,8 @@ export class FakeUpstream {
           `Content-Length: ${Buffer.byteLength(canned.body)}\r\nConnection: close\r\n\r\n${canned.body}`
       );
       socket.end();
-    });
+    };
+    socket.on("data", onData);
   }
 
   private match(host: string, path: string): CannedResponse | undefined {

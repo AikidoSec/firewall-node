@@ -1,4 +1,5 @@
 import { ChildProcess, spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import {
   chmodSync,
   closeSync,
@@ -70,7 +71,12 @@ export class ProxySupervisor {
     // instead of the real internet. Never set in production.
     private readonly upstreamProxyUrl?: string
   ) {
-    this.dataDir = join(tmpdir(), `aikido_ai_proxy_${process.pid}_data`);
+    this.dataDir = join(
+      tmpdir(),
+      // per instance, not per process: stop() removes the dir while the child is
+      // still dying, so a shared path lets the next proxy race it over secrets/
+      `aikido_ai_proxy_${process.pid}_${randomBytes(4).toString("hex")}_data`
+    );
   }
 
   start() {

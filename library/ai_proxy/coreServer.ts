@@ -9,6 +9,8 @@ import { AddressInfo } from "node:net";
 export type AiProxyConfig = {
   aiEnabled: boolean;
   blockedAiTools: string[];
+  // lockdown mode; when non-empty every tool not matching is stripped too
+  allowedAiTools: string[];
 };
 
 const EVENT_TYPES = ["ai-usage", "ai-tool-hits"] as const;
@@ -63,6 +65,7 @@ export class AiCoreServer {
       const config = this.getConfig();
       this.sendJson(res, 200, {
         blocked_ai_tools: config.blockedAiTools,
+        allowed_ai_tools: config.allowedAiTools,
         // CEL rule findings are unwired for now (the proxy's rule engine
         // stays intact; we just never hand it any rules to evaluate).
         ai_rules: [],
