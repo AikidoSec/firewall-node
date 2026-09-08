@@ -335,6 +335,14 @@ t.test(
             "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
+
+        const events = api
+          .getEvents()
+          .filter((event) => event.type === "detected_attack");
+        t.same(events[events.length - 1].attack.metadata, {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: "80",
+        });
       }
     );
 
