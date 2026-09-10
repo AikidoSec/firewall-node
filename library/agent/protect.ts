@@ -66,6 +66,8 @@ import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 import { Mongoose } from "../sinks/Mongoose";
 import { NodeVm } from "../sinks/NodeVm";
 import { Zlib } from "../sinks/Zlib";
+import { AiProxyClients } from "../sinks/AiProxyClients";
+import { maybeStartAiProxy } from "../ai_proxy/index";
 import { WorkerThreads } from "../sinks/WorkerThreads";
 
 function getLogger(): Logger {
@@ -136,6 +138,13 @@ function startAgent({
 
   agent.start(getWrappers());
 
+  // AI proxy: no-op unless AIKIDO_FEATURE_AI_PROXY is set and a proxy
+  // binary can be found (AIKIDO_AI_PROXY_BIN).
+  const token = getTokenFromEnv();
+  if (token) {
+    maybeStartAiProxy(agent, token.asString());
+  }
+
   return agent;
 }
 
@@ -163,6 +172,7 @@ export function getWrappers() {
     new OpenAI(),
     new Mistral(),
     new Anthropic(),
+    new AiProxyClients(),
     new Xml2js(),
     new FastXmlParser(),
     new RawBody(),
