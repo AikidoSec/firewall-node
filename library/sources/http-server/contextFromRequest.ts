@@ -4,6 +4,7 @@ import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse } from "../../helpers/parseCookies";
 import { tryParseURLParams } from "../../helpers/tryParseURLParams";
+import { isTrustedProxyRequest } from "../../helpers/trustProxy";
 
 export function contextFromRequest(
   req: IncomingMessage,
@@ -18,6 +19,8 @@ export function contextFromRequest(
     }
   }
 
+  const rawRemoteAddress = req.socket?.remoteAddress;
+
   return {
     url: req.url,
     method: req.method,
@@ -30,7 +33,8 @@ export function contextFromRequest(
     body: body ? body : undefined,
     remoteAddress: getIPAddressFromRequest({
       headers: req.headers,
-      remoteAddress: req.socket?.remoteAddress,
+      remoteAddress: rawRemoteAddress,
     }),
+    isBehindTrustedProxy: isTrustedProxyRequest(rawRemoteAddress),
   };
 }
