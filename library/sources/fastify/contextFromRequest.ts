@@ -1,15 +1,13 @@
 import type { FastifyRequest } from "fastify";
 import { Context } from "../../agent/Context";
-import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
-import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
+import { getStableRouteAndRemoteAddress } from "../../helpers/getStableRouteAndRemoteAddress";
 
 export function contextFromRequest(req: FastifyRequest): Context {
+  const { route, remoteAddress } = getStableRouteAndRemoteAddress(req.raw);
+
   return {
     method: req.method,
-    remoteAddress: getIPAddressFromRequest({
-      headers: req.headers,
-      remoteAddress: req.socket?.remoteAddress,
-    }),
+    remoteAddress,
     body: req.body ? req.body : undefined,
     url: req.url,
     headers: req.headers,
@@ -21,6 +19,6 @@ export function contextFromRequest(req: FastifyRequest): Context {
     // @ts-expect-error not typed
     cookies: req.cookies ? req.cookies : {},
     source: "fastify",
-    route: buildRouteFromURL(req.url),
+    route,
   };
 }
