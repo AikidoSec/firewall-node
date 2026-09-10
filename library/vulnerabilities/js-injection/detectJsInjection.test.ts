@@ -106,3 +106,25 @@ t.test("test source type", async (t) => {
     true
   );
 });
+
+t.test("test source with tenary operator", async (t) => {
+  t.same(
+    detectJsInjection(
+      "const test = condition ? 'value1' : 'value2'; console.log('test'); //';",
+      "value1' : 'value2'; console.log('test'); //",
+      0
+    ),
+    true
+  );
+});
+
+t.test("test injection of else branch", async (t) => {
+  t.same(
+    detectJsInjection(
+      "if (status === 'ok') { resolve(data) } else if (status === 'retry') { retry() }",
+      "} else if (status === 'retry') { retry() }",
+      0
+    ),
+    true
+  );
+});
