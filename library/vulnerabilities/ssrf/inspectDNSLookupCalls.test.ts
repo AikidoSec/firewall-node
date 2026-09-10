@@ -111,6 +111,41 @@ t.test("it blocks lookup in blocking mode", (t) => {
   });
 });
 
+t.test("it blocks a scoped link-local IPv6 address", (t) => {
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
+  agent.start([]);
+
+  const wrappedLookup = inspectDNSLookupCalls(
+    (
+      _hostname: string,
+      _options: unknown,
+      callback: (err: null, address: string, family: number) => void
+    ) => callback(null, "fe80::1%eth0", 6),
+    agent,
+    "module",
+    "operation"
+  );
+
+  runWithContext(
+    { ...context, body: { image: "http://internal.host:8080" } },
+    () => {
+      wrappedLookup("internal.host", {}, (err, address) => {
+        t.same(err instanceof Error, true);
+        if (err instanceof Error) {
+          t.same(
+            err.message,
+            "Zen has blocked a server-side request forgery: operation(...) originating from body.image"
+          );
+        }
+        t.same(address, undefined);
+        t.end();
+      });
+    }
+  );
+});
+
 t.test("it allows resolved public IP", (t) => {
   const api = new ReportingAPIForTesting();
   const agent = createTestAgent({
