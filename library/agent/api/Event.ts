@@ -127,6 +127,16 @@ type Heartbeat = {
       output: number;
       total: number;
     };
+    routes: {
+      path: string;
+      method: string;
+      calls: number;
+      tokens: {
+        input: number;
+        output: number;
+        total: number;
+      };
+    }[];
   }[];
   packages: {
     name: string;
