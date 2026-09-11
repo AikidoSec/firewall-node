@@ -118,6 +118,19 @@ t.test("test source with tenary operator", async (t) => {
   );
 });
 
+t.test(
+  "it detects injections that only parse with original casing",
+  async (t) => {
+    t.same(
+      detectJsInjection(
+        'list.forEach((CLASS) => { return 1; }); require("fs").writeFileSync("pwn","x"); //);',
+        'CLASS) => { return 1; }); require("fs").writeFileSync("pwn","x"); //'
+      ),
+      true
+    );
+  }
+);
+
 t.test("test injection of else branch", async (t) => {
   t.same(
     detectJsInjection(

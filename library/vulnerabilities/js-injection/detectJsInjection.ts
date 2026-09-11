@@ -21,16 +21,9 @@ export function detectJsInjection(
   // See https://github.com/oxc-project/oxc/issues/18392
   sourceType: ZenInternalsJsSourceType = 2
 ): boolean {
-  const codeLowercase = code.toLowerCase();
-  const userInputLowercase = userInput.toLowerCase();
-
-  if (shouldReturnEarly(codeLowercase, userInputLowercase)) {
+  if (shouldReturnEarly(code.toLowerCase(), userInput.toLowerCase())) {
     return false;
   }
 
-  return wasm_detect_js_injection(
-    codeLowercase,
-    userInputLowercase,
-    sourceType
-  );
+  return wasm_detect_js_injection(code, userInput, sourceType);
 }
