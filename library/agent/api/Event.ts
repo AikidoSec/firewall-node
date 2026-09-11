@@ -169,7 +169,12 @@ export type DetectedAttackWave = {
   time: number;
 };
 
-export type Event = Started | DetectedAttack | Heartbeat | DetectedAttackWave;
+export type Event =
+  | Started
+  | DetectedAttack
+  | Heartbeat
+  | DetectedAttackWave
+  | CustomEvent;
 
 export type CustomEvent = {
   type: "custom";
