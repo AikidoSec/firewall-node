@@ -5,7 +5,15 @@ import { setTimeout } from "node:timers/promises";
 import { createTestAgent } from "../../helpers/createTestAgent";
 import { Token } from "../api/Token";
 import { type Context, runWithContext } from "../Context";
+import { getMajorNodeVersion } from "../../helpers/getNodeVersion";
 import { track } from "./track";
+
+const opts = {
+  skip:
+    getMajorNodeVersion() < 18
+      ? "@hono/node-server does not support Node.js < 18"
+      : false,
+};
 
 type SeenRequest = { token: string; body: unknown };
 type StopServer = () => Promise<SeenRequest[]>;
@@ -50,7 +58,7 @@ function createContext(): Context {
   };
 }
 
-t.test("it sends the expected payload to the API", async (t) => {
+t.test("it sends the expected payload to the API", opts, async (t) => {
   const { stop, port } = await createTestEndpoint();
   process.env.AIKIDO_REALTIME_ENDPOINT = `http://localhost:${port}/`;
 
@@ -70,7 +78,8 @@ t.test("it sends the expected payload to the API", async (t) => {
 
     t.same(seen.length, 1);
     t.same(seen[0].token, "abc123");
-    t.match(seen[0].body, {
+    const body = seen[0].body as { time: unknown };
+    t.match(body, {
       type: "custom",
       name: "my-custom-event",
       request: {
@@ -82,14 +91,14 @@ t.test("it sends the expected payload to the API", async (t) => {
         route: "/track-me",
       },
       user: { id: "user-1", name: "Jane Doe" },
-      time: Number,
     });
+    t.same(typeof body.time, "number");
   } finally {
     delete process.env.AIKIDO_REALTIME_ENDPOINT;
   }
 });
 
-t.test("it omits the user agent if it's not a string", async (t) => {
+t.test("it omits the user agent if it's not a string", opts, async (t) => {
   const { stop, port } = await createTestEndpoint();
   process.env.AIKIDO_REALTIME_ENDPOINT = `http://localhost:${port}/`;
 
@@ -116,7 +125,7 @@ t.test("it omits the user agent if it's not a string", async (t) => {
   }
 });
 
-t.test("it does not send an event without a token", async (t) => {
+t.test("it does not send an event without a token", opts, async (t) => {
   const { stop, port } = await createTestEndpoint();
   process.env.AIKIDO_REALTIME_ENDPOINT = `http://localhost:${port}/`;
 
