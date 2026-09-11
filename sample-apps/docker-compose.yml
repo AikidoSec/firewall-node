@@ -15,9 +15,9 @@ services:
     ports:
       - "27017:27017"
   postgres:
-    image: postgres:14-alpine
+    image: postgres:18-alpine
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql
     environment:
       - POSTGRES_PASSWORD=password
       - POSTGRES_USER=root
@@ -69,7 +69,7 @@ services:
       interval: 10s
       start_period: 30s
   google-pubsub-emulator:
-    image: gcr.io/google.com/cloudsdktool/google-cloud-cli@sha256:11e9b10b6d61177b0046fcb5f1e9479f567a5dacbf66d194baf5a8872653c857
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli@sha256:07e4b8c3075ca793552fcfaf4808f104ef155d7805d87ade8e01b440463be262 # 583.0.0-emulators
     command: gcloud beta emulators pubsub start --project=sample-project --host-port='0.0.0.0:8085'
     ports:
       - "8085:8085"

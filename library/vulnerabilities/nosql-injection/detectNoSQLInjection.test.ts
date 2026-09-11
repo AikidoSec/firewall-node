@@ -864,6 +864,168 @@ t.test("$where js inject with array in request in nested field", async (t) => {
   );
 });
 
+t.test(
+  "detects injection when app merges user operators with its own $ keys",
+  async (t) => {
+    t.same(
+      detectNoSQLInjection(
+        createContext({
+          body: { username: { $ne: null } },
+        }),
+        {
+          title: { $ne: null, $exists: true },
+        }
+      ),
+      {
+        injection: true,
+        source: "body",
+        pathsToPayload: [".username"],
+        payload: { $ne: null, $exists: true },
+      }
+    );
+  }
+);
+
+t.test(
+  "detects injection when app prepends its own $ key before user operators",
+  async (t) => {
+    t.same(
+      detectNoSQLInjection(
+        createContext({
+          body: { username: { $gt: "" } },
+        }),
+        {
+          title: { $exists: true, $gt: "" },
+        }
+      ),
+      {
+        injection: true,
+        source: "body",
+        pathsToPayload: [".username"],
+        payload: { $exists: true, $gt: "" },
+      }
+    );
+  }
+);
+
+t.test(
+  "does not flag when user operator value differs from filter operator value",
+  async (t) => {
+    t.same(
+      detectNoSQLInjection(
+        createContext({
+          body: { username: { $ne: "different" } },
+        }),
+        {
+          title: { $ne: null, $exists: true },
+        }
+      ),
+      { injection: false }
+    );
+  }
+);
+
+t.test(
+  "detects injection when app adds a non-$ key to a $ operator's subobject",
+  async (t) => {
+    t.same(
+      detectNoSQLInjection(
+        createContext({
+          body: { field: { $elemMatch: { $gt: 5 } } },
+        }),
+        {
+          items: { $elemMatch: { $gt: 5, verified: true } },
+        }
+      ),
+      {
+        injection: true,
+        source: "body",
+        pathsToPayload: [".field.$elemMatch"],
+        payload: { $gt: 5 },
+      }
+    );
+  }
+);
+
+t.test("does not flag when user sends empty object", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { username: {} },
+      }),
+      {
+        title: { $exists: true },
+      }
+    ),
+    { injection: false }
+  );
+});
+
+t.test("does not flag when user object has only non-$ keys", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { username: { name: "alice" } },
+      }),
+      {
+        title: { $exists: true },
+      }
+    ),
+    { injection: false }
+  );
+});
+
+t.test(
+  "does not flag when user $ key is absent from filter operators",
+  async (t) => {
+    t.same(
+      detectNoSQLInjection(
+        createContext({
+          body: { username: { $ne: null } },
+        }),
+        {
+          title: { $exists: true },
+        }
+      ),
+      { injection: false }
+    );
+  }
+);
+
+t.test(
+  "does not flag when filter only uses a subset of user operators",
+  async (t) => {
+    t.same(
+      detectNoSQLInjection(
+        createContext({
+          body: { username: { $ne: null, $gt: 0 } },
+        }),
+        {
+          title: { $ne: null },
+        }
+      ),
+      { injection: false }
+    );
+  }
+);
+
+t.test(
+  "does not flag when app ignores user operators and uses hardcoded filter",
+  async (t) => {
+    t.same(
+      detectNoSQLInjection(
+        createContext({
+          body: { username: { $ne: null } },
+        }),
+        {
+          username: "hardcoded",
+        }
+      ),
+      { injection: false }
+    );
+  }
+);
+
 t.test("not a valid injection attempt", async (t) => {
   t.same(
     detectNoSQLInjection(

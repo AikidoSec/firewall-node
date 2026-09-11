@@ -17,13 +17,14 @@ export function detectSQLInjection(
   userInput: string,
   dialect: SQLDialect
 ): SQLInjectionDetectionResultType {
-  if (shouldReturnEarly(query, userInput)) {
+  const userInputNormalized = userInput.toLowerCase().trim();
+  if (shouldReturnEarly(query, userInputNormalized)) {
     return SQLInjectionDetectionResult.SAFE;
   }
 
   const code = wasm_detect_sql_injection(
     query.toLowerCase(),
-    userInput.toLowerCase(),
+    userInputNormalized,
     dialect.getWASMDialectInt()
   );
 

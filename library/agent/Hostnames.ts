@@ -1,3 +1,4 @@
+import { hostnameToUnicode } from "../helpers/hostnameToUnicode";
 import { normalizeHostname } from "../helpers/normalizeHostname";
 
 type Ports = Map<number, number>;
@@ -12,7 +13,7 @@ export class Hostnames {
       return;
     }
 
-    hostname = normalizeHostname(hostname);
+    hostname = hostnameToUnicode(normalizeHostname(hostname));
 
     if (!this.map.has(hostname)) {
       this.map.set(hostname, new Map([[port, 1]]));

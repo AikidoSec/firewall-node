@@ -10,6 +10,10 @@ import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
+import { getInternalDispatcherOptions } from "./undici/getInternalDispatcherOptions";
+
+// Marks a dispatcher instance we've already patched to prevent double-patching
+const patchedDispatcherSymbol = Symbol.for("zen.dispatcher.patched");
 
 export class Fetch implements Wrapper {
   private patchedGlobalDispatcher = false;
@@ -117,8 +121,9 @@ export class Fetch implements Wrapper {
   // We'll set a global dispatcher that will allow us to inspect the resolved IPs (and thus preventing TOCTOU attacks)
   private patchGlobalDispatcher(agent: Agent) {
     const sym1 = Symbol.for("undici.globalDispatcher.1");
-    // Node.js v26+ introduced a second symbol where the real undici Agent lives.
-    // Symbol 1 becomes a Dispatcher1Wrapper (a compatibility shim)
+    // sym2 was introduced when undici v8 split the real Agent (sym2) from a legacy
+    // Dispatcher1Wrapper shim (sym1). In undici v7 after PR #5368, both symbols point
+    // to the same Agent with no wrapper.
     const sym2 = Symbol.for("undici.globalDispatcher.2");
 
     // @ts-expect-error Type is not defined
@@ -153,14 +158,23 @@ export class Fetch implements Wrapper {
       newAgent.dispatch = wrapDispatch(newAgent.dispatch, agent);
 
       if (dispatcher2) {
-        // Node.js v26+: replace the Agent at sym2 and wrap the Dispatcher1Wrapper at sym1.
         // @ts-expect-error Type is not defined
         globalThis[sym2] = newAgent;
-        const newWrapper = new dispatcher1.constructor(newAgent);
-        newWrapper.dispatch = wrapDispatch(newWrapper.dispatch, agent);
 
-        // @ts-expect-error Type is not defined
-        globalThis[sym1] = newWrapper;
+        if (dispatcher1.constructor.name === "Dispatcher1Wrapper") {
+          // undici v8 (Node.js v26+): sym1 holds a Dispatcher1Wrapper shim around the Agent.
+          const newWrapper = new dispatcher1.constructor(newAgent);
+          newWrapper.dispatch = wrapDispatch(newWrapper.dispatch, agent);
+          // @ts-expect-error Type is not defined
+          globalThis[sym1] = newWrapper;
+        } else {
+          // undici v7: PR #5368 (shipped in Node.js 24.17.0) changed setGlobalDispatcher to mirror
+          // the Agent directly to sym1 instead of wrapping it in Dispatcher1Wrapper.
+          // Creating a new agent would produce a broken dispatcher.
+
+          // @ts-expect-error Type is not defined
+          globalThis[sym1] = newAgent;
+        }
       } else {
         // Older Node.js: only sym1 exists and it is already an Agent.
         // @ts-expect-error Type is not defined
@@ -171,6 +185,82 @@ export class Fetch implements Wrapper {
         `Failed to patch global dispatcher for fetch, we can't provide protection!`
       );
     }
+  }
+
+  private patchCustomDispatcher(dispatcher: unknown, agent: Agent) {
+    if (!dispatcher || typeof dispatcher !== "object") {
+      return;
+    }
+
+    const instance = dispatcher as Record<PropertyKey, unknown>;
+
+    if (instance[patchedDispatcherSymbol]) {
+      // Already patched this exact dispatcher instance
+      return;
+    }
+
+    const originalDispatch = instance.dispatch;
+    if (typeof originalDispatch !== "function") {
+      return;
+    }
+
+    try {
+      instance.dispatch = wrapDispatch(originalDispatch.bind(instance), agent);
+      this.patchDispatcherConnectLookup(instance, agent);
+
+      Object.defineProperty(instance, patchedDispatcherSymbol, {
+        value: true,
+        enumerable: false,
+      });
+    } catch {
+      agent.log(
+        `Failed to patch custom dispatcher for fetch, we can't guarantee protection!`
+      );
+    }
+  }
+
+  private patchDispatcherConnectLookup(
+    instance: Record<PropertyKey, unknown>,
+    agent: Agent
+  ) {
+    const options = getInternalDispatcherOptions(instance);
+
+    if (!options) {
+      agent.log(
+        `Could not find internal options on custom dispatcher for fetch, we can only provide partial protection!`
+      );
+      return;
+    }
+
+    const canPatchConnect =
+      options.connect === undefined ||
+      (typeof options.connect === "object" && options.connect !== null);
+
+    if (!canPatchConnect) {
+      agent.log(
+        `Custom dispatcher for fetch uses a function-based connect option, we can only provide partial protection!`
+      );
+      return;
+    }
+
+    const existingConnect = options.connect as { lookup?: unknown } | undefined;
+
+    const existingLookup =
+      typeof existingConnect?.lookup === "function"
+        ? (existingConnect.lookup as typeof lookup)
+        : lookup;
+
+    const patchedLookupFn = inspectDNSLookupCalls(
+      existingLookup,
+      agent,
+      "fetch",
+      "fetch"
+    );
+
+    options.connect = {
+      ...existingConnect,
+      lookup: patchedLookupFn,
+    };
   }
 
   wrap(hooks: Hooks) {
@@ -193,6 +283,19 @@ export class Fetch implements Wrapper {
         if (!this.patchedGlobalDispatcher) {
           this.patchGlobalDispatcher(agent);
           this.patchedGlobalDispatcher = true;
+        }
+
+        if (
+          args.length > 1 &&
+          args[1] &&
+          typeof args[1] === "object" &&
+          !Array.isArray(args[1]) &&
+          "dispatcher" in args[1]
+        ) {
+          this.patchCustomDispatcher(
+            (args[1] as { dispatcher?: unknown }).dispatcher,
+            agent
+          );
         }
 
         return args;

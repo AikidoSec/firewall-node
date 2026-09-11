@@ -96,16 +96,18 @@ export class OpenAI implements Wrapper {
     });
   }
 
-  // The _client property is used to determine if the OpenAI client is an Azure OpenAI client or not.
-  // See https://github.com/openai/openai-node/blob/master/src/core/resource.ts
-  getProvider(exports: unknown, subject: unknown): Provider {
+  // The AzureOpenAI client always sets a non-empty `apiVersion`
+  // string on the client instance in its constructor (it throws if none is
+  // given), while plain OpenAI clients never set this property.
+  // See https://github.com/openai/openai-node/blob/master/src/azure.ts
+  getProvider(subject: unknown): Provider {
     if (
-      // @ts-expect-error We don't know the type of exports
-      exports.AzureOpenAI &&
       // @ts-expect-error We don't know the type of subject
       subject._client &&
       // @ts-expect-error We don't know the type of subject
-      subject._client instanceof exports.AzureOpenAI
+      typeof subject._client.apiVersion === "string" &&
+      // @ts-expect-error We don't know the type of subject
+      subject._client.apiVersion.length > 0
     ) {
       return "azure";
     }
@@ -144,11 +146,7 @@ export class OpenAI implements Wrapper {
       // Inspect the response after the promise resolves, it won't change the original promise
       returnValue
         .then((response) => {
-          this.inspectResponse(
-            agent,
-            response,
-            this.getProvider(exports, subject)
-          );
+          this.inspectResponse(agent, response, this.getProvider(subject));
         })
         .catch((error) => {
           agent.onErrorThrownByInterceptor({
@@ -174,7 +172,7 @@ export class OpenAI implements Wrapper {
           this.inspectCompletionResponse(
             agent,
             response,
-            this.getProvider(exports, subject)
+            this.getProvider(subject)
           );
         })
         .catch((error) => {
@@ -193,7 +191,7 @@ export class OpenAI implements Wrapper {
     // Note: Streaming is not supported yet
     hooks
       .addPackage("openai")
-      .withVersion("^5.0.0 || ^4.0.0 || ^6.0.0")
+      .withVersion("^5.0.0 || ^4.0.0 || ^6.0.0 || ^7.0.0")
       .onRequire((exports, pkgInfo) => {
         const responsesClass = this.getResponsesClass(exports);
         if (responsesClass) {

@@ -100,18 +100,20 @@ function incrementStatsAndDiscoverAPISpec(
   agent: Agent,
   statusCode: number
 ) {
-  if (
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress)
-  ) {
+  if (agent.getConfig().isBypassedRequest(context)) {
     return;
   }
+
+  const forceProtectionOff = agent
+    .getConfig()
+    .isForceProtectionOffRoute(context);
 
   if (context.route && context.method && Number.isInteger(statusCode)) {
     const shouldDiscover = shouldDiscoverRoute({
       statusCode: statusCode,
       method: context.method,
       route: context.route,
+      forceProtectionOff,
     });
 
     if (shouldDiscover) {
@@ -121,13 +123,17 @@ function incrementStatsAndDiscoverAPISpec(
     if (
       context.remoteAddress &&
       !context.blockedDueToIPOrBot &&
-      agent.getAttackWaveDetector().check(context)
+      agent.getAttackWaveDetector().check(context, statusCode)
     ) {
       agent.onDetectedAttackWave({
         request: context,
       });
       agent.getInspectionStatistics().onAttackWaveDetected();
     }
+  }
+
+  if (forceProtectionOff) {
+    return;
   }
 
   const stats = agent.getInspectionStatistics();

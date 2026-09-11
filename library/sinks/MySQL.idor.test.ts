@@ -88,6 +88,7 @@ t.test("IDOR protection for MySQL", async (t) => {
     agent.setIdorProtectionConfig({
       tenantColumnName: "tenant_id",
       excludedTables: ["migrations"],
+      requireTenantId: false,
     });
 
     await t.test("allows query with tenant filter", async () => {
@@ -132,7 +133,10 @@ t.test("IDOR protection for MySQL", async (t) => {
       });
 
       if (error instanceof Error) {
-        t.match(error.message, "setTenantId() was not called");
+        t.match(
+          error.message,
+          "Zen IDOR protection: query on table 'cats_idor' requires a tenant ID, but setTenantId() was not called (use runWithTenant(...) for background work)"
+        );
       }
     });
 
@@ -260,6 +264,146 @@ t.test("IDOR protection for MySQL", async (t) => {
             "Zen IDOR protection: query on table 'cats_idor' is missing a filter on column 'tenant_id'"
           );
         }
+      }
+    );
+
+    await t.test(
+      "allows query object format with values and correct tenant filter",
+      async () => {
+        t.same(
+          await runWithContext(context, () => {
+            return new Promise((resolve, reject) => {
+              connection.query(
+                {
+                  sql: "SELECT petname FROM cats_idor WHERE tenant_id = ?",
+                  values: ["org_123"],
+                },
+                (err, results) => {
+                  if (err) {
+                    return reject(err);
+                  }
+                  resolve(results);
+                }
+              );
+            });
+          }),
+          []
+        );
+      }
+    );
+
+    await t.test(
+      "allows Query object (mysql.createQuery) with values and correct tenant filter",
+      async () => {
+        t.same(
+          await runWithContext(context, () => {
+            return new Promise((resolve, reject) => {
+              // @ts-expect-error Wrong types
+              const q = mysql.createQuery(
+                "SELECT petname FROM cats_idor WHERE tenant_id = ?",
+                ["org_123"],
+                // @ts-expect-error Wrong types
+                (err, results) => {
+                  if (err) {
+                    return reject(err);
+                  }
+                  resolve(results);
+                }
+              );
+              connection.query(q);
+            });
+          }),
+          []
+        );
+      }
+    );
+
+    await t.test(
+      "blocks Query object (mysql.createQuery) with wrong tenant ID value",
+      async () => {
+        const error = await t.rejects(async () => {
+          await runWithContext(context, () => {
+            return new Promise((resolve, reject) => {
+              // @ts-expect-error Wrong types
+              const q = mysql.createQuery(
+                "SELECT petname FROM cats_idor WHERE tenant_id = ?",
+                ["org_456"],
+                // @ts-expect-error Wrong types
+                (err, results) => {
+                  if (err) {
+                    return reject(err);
+                  }
+                  resolve(results);
+                }
+              );
+              connection.query(q);
+            });
+          });
+        });
+
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+          );
+        }
+      }
+    );
+
+    await t.test(
+      "blocks Query object (mysql.createQuery) without tenant filter",
+      async () => {
+        const error = await t.rejects(async () => {
+          await runWithContext(context, () => {
+            return new Promise((resolve, reject) => {
+              // @ts-expect-error Wrong types
+              const q = mysql.createQuery(
+                "SELECT petname FROM cats_idor",
+                // @ts-expect-error Wrong types
+                (err, results) => {
+                  if (err) {
+                    return reject(err);
+                  }
+                  resolve(results);
+                }
+              );
+              connection.query(q);
+            });
+          });
+        });
+
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen IDOR protection: query on table 'cats_idor' is missing a filter on column 'tenant_id'"
+          );
+        }
+      }
+    );
+
+    await t.test(
+      "second argument's values override the object's own values",
+      async () => {
+        t.same(
+          await runWithContext(context, () => {
+            return new Promise((resolve, reject) => {
+              connection.query(
+                {
+                  sql: "SELECT petname FROM cats_idor WHERE tenant_id = ?",
+                  values: ["org_456"],
+                },
+                ["org_123"],
+                (err, results) => {
+                  if (err) {
+                    return reject(err);
+                  }
+                  resolve(results);
+                }
+              );
+            });
+          }),
+          []
+        );
       }
     );
 

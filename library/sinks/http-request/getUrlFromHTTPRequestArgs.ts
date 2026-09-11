@@ -43,7 +43,7 @@ export function getUrlFromHTTPRequestArgs(
  * Request options can be provided as the first argument or as the second argument.
  * But thy can also be not provided at all.
  */
-function getRequestOptions(args: unknown[]) {
+export function getRequestOptions(args: unknown[]) {
   if (isOptionsObject(args[0]) && !(args[0] instanceof URL)) {
     return args[0] as HTTPRequestOptions | HTTPSRequestOptions;
   } else if (

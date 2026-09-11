@@ -41,7 +41,7 @@ function matchFilterPartInUser(
 
   if (isPlainObject(userInput)) {
     const filteredInput = removeKeysThatDontStartWithDollarSign(userInput);
-    if (isDeepStrictEqual(filteredInput, filterPart)) {
+    if (isUserOperatorsSubsetOf(filteredInput, filterPart)) {
       return { match: true, pathToPayload: buildPathToPayload(pathToPayload) };
     }
 
@@ -100,6 +100,28 @@ function removeKeysThatDontStartWithDollarSign(
 
     return acc;
   }, {});
+}
+
+// Returns true if every operator in userOperators is present in filterOperators
+// with the same value — i.e. the user-supplied operators are a subset of the
+// filter. An empty userOperators object never matches (no operators = no injection).
+function isUserOperatorsSubsetOf(
+  userOperators: Record<string, unknown>,
+  filterOperators: Record<string, unknown>
+): boolean {
+  let hasKeys = false;
+  for (const key in userOperators) {
+    // Any missing key or value mismatch means the user input wasn't used as-is.
+    if (
+      !(key in filterOperators) ||
+      !isDeepStrictEqual(userOperators[key], filterOperators[key])
+    ) {
+      return false;
+    }
+    // Only count the key as seen after it passes the check above.
+    hasKeys = true;
+  }
+  return hasKeys;
 }
 
 function findFilterPartWithOperators(

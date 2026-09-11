@@ -1,6 +1,10 @@
 import { getInstance } from "../../agent/AgentSingleton";
-import { Context } from "../../agent/Context";
+import { getContext } from "../../agent/Context";
 import { isIdorProtectionIgnored } from "../../agent/context/withoutIdorProtection";
+import {
+  getTenantContext,
+  type TenantContext,
+} from "../../agent/context/tenantId";
 import { IdorViolationResult } from "../../agent/hooks/InterceptorResult";
 import { LRUMap } from "../../ratelimiting/LRUMap";
 import { wasm_idor_analyze_sql } from "../../internals/zen_internals";
@@ -10,12 +14,10 @@ import { IdorProtectionConfig } from "../../agent/IdorProtectionConfig";
 
 export function checkContextForIdor({
   sql,
-  context,
   dialect,
   resolvePlaceholder,
 }: {
   sql: string;
-  context: Context;
   dialect: SQLDialect;
   resolvePlaceholder: (
     placeholder: string,
@@ -36,12 +38,6 @@ export function checkContextForIdor({
     return undefined;
   }
 
-  if (!context.tenantId) {
-    return violation(
-      "Zen IDOR protection: setTenantId() was not called for this request. Every request must have a tenant ID when IDOR protection is enabled."
-    );
-  }
-
   const analysis = getAnalysisResults(sql, dialect);
 
   if (!analysis) {
@@ -52,12 +48,30 @@ export function checkContextForIdor({
     return violation(`Zen IDOR protection: ${analysis.error}`);
   }
 
+  const tenant = getTenantContext();
+  if (!tenant) {
+    // Requests always need a tenant, unless the query only touches excluded tables.
+    // Background work only needs one if requireTenantId is on.
+    if (getContext() || config.requireTenantId) {
+      for (const queryResult of analysis.results) {
+        const tables = nonExcludedTables(queryResult, config.excludedTables);
+        if (tables.length > 0) {
+          const noun = tables.length > 1 ? "tables" : "table";
+          return violation(
+            `Zen IDOR protection: query on ${noun} '${joinWithLimit(tables)}' requires a tenant ID, but setTenantId() was not called (use runWithTenant(...) for background work)`
+          );
+        }
+      }
+    }
+    return undefined;
+  }
+
   for (const queryResult of analysis.results) {
     if (queryResult.kind === "insert") {
       const insertViolation = checkInsert(
         queryResult,
         config,
-        context,
+        tenant,
         resolvePlaceholder
       );
       if (insertViolation) {
@@ -67,7 +81,7 @@ export function checkContextForIdor({
       const whereViolation = checkWhereFilters(
         queryResult,
         config,
-        context,
+        tenant,
         resolvePlaceholder
       );
       if (whereViolation) {
@@ -79,10 +93,27 @@ export function checkContextForIdor({
   return undefined;
 }
 
+function joinWithLimit(items: string[], limit = 5): string {
+  if (items.length <= limit) {
+    return items.join(", ");
+  }
+
+  return `${items.slice(0, limit).join(", ")}, ...`;
+}
+
+function nonExcludedTables(
+  queryResult: SqlQueryResult,
+  excludedTables: string[]
+): string[] {
+  return queryResult.tables
+    .filter((table) => !excludedTables.includes(table.name))
+    .map((table) => table.name);
+}
+
 function checkWhereFilters(
   queryResult: SqlQueryResult,
   config: IdorProtectionConfig,
-  context: Context,
+  context: TenantContext,
   resolvePlaceholder: (
     placeholder: string,
     placeholderNumber: number | undefined
@@ -121,25 +152,23 @@ function checkWhereFilters(
       tenantFilter.placeholder_number
     );
 
-    if (context.tenantId !== undefined) {
-      const resolved =
-        typeof resolvedValue === "string" || typeof resolvedValue === "number";
+    const resolved =
+      typeof resolvedValue === "string" || typeof resolvedValue === "number";
 
-      // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
-      if (tenantFilter.is_placeholder && !resolved) {
-        return violation(
-          `Zen IDOR protection: query on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
-        );
-      }
+    // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
+    if (tenantFilter.is_placeholder && !resolved) {
+      return violation(
+        `Zen IDOR protection: query on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
+      );
+    }
 
-      const value = resolved ? String(resolvedValue) : tenantFilter.value;
-      const tenantIdStr = context.tenantId.toString();
+    const value = resolved ? String(resolvedValue) : tenantFilter.value;
+    const tenantIdStr = context.tenantId.toString();
 
-      if (value !== tenantIdStr) {
-        return violation(
-          `Zen IDOR protection: query on table '${table.name}' filters '${config.tenantColumnName}' with value '${value}' but tenant ID is '${tenantIdStr}'`
-        );
-      }
+    if (value !== tenantIdStr) {
+      return violation(
+        `Zen IDOR protection: query on table '${table.name}' filters '${config.tenantColumnName}' with value '${value}' but tenant ID is '${tenantIdStr}'`
+      );
     }
   }
 
@@ -149,7 +178,7 @@ function checkWhereFilters(
 function checkInsert(
   queryResult: SqlQueryResult,
   config: IdorProtectionConfig,
-  context: Context,
+  context: TenantContext,
   resolvePlaceholder: (
     placeholder: string,
     placeholderNumber: number | undefined
@@ -181,26 +210,23 @@ function checkInsert(
         tenantCol.placeholder_number
       );
 
-      if (context.tenantId !== undefined) {
-        const resolved =
-          typeof resolvedValue === "string" ||
-          typeof resolvedValue === "number";
+      const resolved =
+        typeof resolvedValue === "string" || typeof resolvedValue === "number";
 
-        // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
-        if (tenantCol.is_placeholder && !resolved) {
-          return violation(
-            `Zen IDOR protection: INSERT on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
-          );
-        }
+      // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
+      if (tenantCol.is_placeholder && !resolved) {
+        return violation(
+          `Zen IDOR protection: INSERT on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
+        );
+      }
 
-        const value = resolved ? String(resolvedValue) : tenantCol.value;
-        const tenantIdStr = context.tenantId.toString();
+      const value = resolved ? String(resolvedValue) : tenantCol.value;
+      const tenantIdStr = context.tenantId.toString();
 
-        if (value !== tenantIdStr) {
-          return violation(
-            `Zen IDOR protection: INSERT on table '${table.name}' sets '${config.tenantColumnName}' to '${value}' but tenant ID is '${tenantIdStr}'`
-          );
-        }
+      if (value !== tenantIdStr) {
+        return violation(
+          `Zen IDOR protection: INSERT on table '${table.name}' sets '${config.tenantColumnName}' to '${value}' but tenant ID is '${tenantIdStr}'`
+        );
       }
     }
   }

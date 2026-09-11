@@ -72,9 +72,6 @@ export class NodeSQLite implements Wrapper {
 
   private inspectQuery(operation: string, args: unknown[]): InterceptorResult {
     const context = getContext();
-    if (!context) {
-      return undefined;
-    }
 
     if (
       args.length === 0 ||
@@ -86,20 +83,21 @@ export class NodeSQLite implements Wrapper {
 
     const sql = args[0];
 
-    const sqlResult = checkContextForSqlInjection({
-      operation: operation,
-      sql: sql,
-      context: context,
-      dialect: this.dialect,
-    });
+    if (context) {
+      const sqlResult = checkContextForSqlInjection({
+        operation: operation,
+        sql: sql,
+        context: context,
+        dialect: this.dialect,
+      });
 
-    if (sqlResult) {
-      return sqlResult;
+      if (sqlResult) {
+        return sqlResult;
+      }
     }
 
     return checkContextForIdor({
       sql,
-      context,
       dialect: this.dialect,
       resolvePlaceholder: () =>
         // node:sqlite does not support placeholders in exec
@@ -135,19 +133,21 @@ export class NodeSQLite implements Wrapper {
   ): InterceptorResult {
     const context = getContext();
     const rawQuery = statement[zenRawQuerySymbol];
-    if (!context || !rawQuery) {
+    if (!rawQuery) {
       return undefined;
     }
 
-    const sqlResult = checkContextForSqlInjection({
-      operation: operation,
-      sql: rawQuery,
-      context: context,
-      dialect: this.dialect,
-    });
+    if (context) {
+      const sqlResult = checkContextForSqlInjection({
+        operation: operation,
+        sql: rawQuery,
+        context: context,
+        dialect: this.dialect,
+      });
 
-    if (sqlResult) {
-      return sqlResult;
+      if (sqlResult) {
+        return sqlResult;
+      }
     }
 
     const { namedParameters, anonymousParameters } =
@@ -155,7 +155,6 @@ export class NodeSQLite implements Wrapper {
 
     return checkContextForIdor({
       sql: rawQuery,
-      context,
       dialect: this.dialect,
       resolvePlaceholder: (placeholder, placeholderNumber) =>
         this.resolvePlaceholder(
@@ -238,9 +237,6 @@ export class NodeSQLite implements Wrapper {
     args: unknown[]
   ): InterceptorResult {
     const context = getContext();
-    if (!context) {
-      return undefined;
-    }
 
     const { sql, params } =
       this.extractSqlAndParamsFromTaggedTemplate(args) || {};
@@ -248,20 +244,21 @@ export class NodeSQLite implements Wrapper {
       return undefined;
     }
 
-    const sqlResult = checkContextForSqlInjection({
-      operation: operation,
-      sql: sql,
-      context: context,
-      dialect: this.dialect,
-    });
+    if (context) {
+      const sqlResult = checkContextForSqlInjection({
+        operation: operation,
+        sql: sql,
+        context: context,
+        dialect: this.dialect,
+      });
 
-    if (sqlResult) {
-      return sqlResult;
+      if (sqlResult) {
+        return sqlResult;
+      }
     }
 
     return checkContextForIdor({
       sql: sql,
-      context,
       dialect: this.dialect,
       resolvePlaceholder: (placeholder, placeholderNumber) => {
         if (placeholder === "?" && placeholderNumber !== undefined && params) {

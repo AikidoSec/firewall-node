@@ -193,6 +193,81 @@ t.test("it decodes uri encoded strings", async () => {
   );
 });
 
+t.test("it decodes double-encoded strings iteratively", async () => {
+  t.same(
+    extractStringsFromUserInput({ str: "a%2520b" }),
+    fromArr(["str", "a%2520b", "a%20b", "a b"])
+  );
+});
+
+t.test("it decodes up to MAX_URL_DECODE_DEPTH (5) times", async () => {
+  t.same(
+    extractStringsFromUserInput({ str: "a%2525252520b" }),
+    fromArr([
+      "str",
+      "a%2525252520b",
+      "a%25252520b",
+      "a%252520b",
+      "a%2520b",
+      "a%20b",
+      "a b",
+    ])
+  );
+});
+
+t.test(
+  "it stops at MAX_URL_DECODE_DEPTH and does not fully decode",
+  async () => {
+    t.same(
+      extractStringsFromUserInput({ str: "a%252525252520b" }),
+      fromArr([
+        "str",
+        "a%252525252520b",
+        "a%2525252520b",
+        "a%25252520b",
+        "a%252520b",
+        "a%2520b",
+        "a%20b",
+      ])
+    );
+    t.notOk(extractStringsFromUserInput({ str: "a%252525252520b" }).has("a b"));
+  }
+);
+
+t.test("it stops decoding on invalid percent encoding", async () => {
+  t.same(
+    extractStringsFromUserInput({ str: "test%ZZfoo" }),
+    fromArr(["str", "test%ZZfoo"])
+  );
+});
+
+t.test(
+  "it handles encoded percent sign (%25) becoming an invalid sequence",
+  async () => {
+    t.same(
+      extractStringsFromUserInput({ str: "a%25b" }),
+      fromArr(["str", "a%25b", "a%b"])
+    );
+  }
+);
+
+t.test(
+  "it does not partially decode strings with mixed valid and invalid sequences",
+  async () => {
+    t.same(
+      extractStringsFromUserInput({ str: "foo%20bar%ZZbaz" }),
+      fromArr(["str", "foo%20bar%ZZbaz"])
+    );
+  }
+);
+
+t.test("it decodes multi-byte UTF-8 percent sequences", async () => {
+  t.same(
+    extractStringsFromUserInput({ str: "%C3%A9" }),
+    fromArr(["str", "%C3%A9", "é"])
+  );
+});
+
 function buildNestedDictIterative(depth: number): Record<string, unknown> {
   let result: Record<string, unknown> = { a: "b" };
   for (let i = 1; i <= depth; i++) {

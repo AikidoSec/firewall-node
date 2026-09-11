@@ -11,7 +11,7 @@ if (process.argv.includes("--ci")) {
 }
 
 if (process.env.CI) {
-  args += " --coverage-report=lcov";
+  args += " --coverage-report=lcov --bail";
 }
 
 if (process.argv.includes("--test-new-instrumentation")) {
@@ -24,6 +24,9 @@ if (process.argv.includes("--test-new-instrumentation")) {
     process.exit(1);
   }
 }
+
+// Allows memory tests to access the garbage collector
+args += " --node-arg=--expose-gc";
 
 execSync(`tap run ${args}`, {
   stdio: "inherit",

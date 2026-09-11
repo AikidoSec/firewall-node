@@ -149,3 +149,20 @@ t.test("throws when original property is non-configurable", async (t) => {
     "Cannot redefine property: fn"
   );
 });
+
+t.test(
+  "isWrapped returns false for a class extending an already wrapped class",
+  async (t) => {
+    class Base {}
+    const module: any = { Base };
+    wrap(module, "Base", () => {
+      return function wrapped() {
+        return new Base();
+      };
+    });
+
+    class Sub extends module.Base {}
+
+    t.same(isWrapped(Sub), false);
+  }
+);

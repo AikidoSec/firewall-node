@@ -68,6 +68,7 @@ t.test("IDOR protection for Postgres Pool (pg)", async (t) => {
     agent.setIdorProtectionConfig({
       tenantColumnName: "tenant_id",
       excludedTables: ["migrations_pool"],
+      requireTenantId: false,
     });
 
     await t.test("allows query with tenant filter", async () => {
@@ -113,7 +114,10 @@ t.test("IDOR protection for Postgres Pool (pg)", async (t) => {
       });
 
       if (error instanceof Error) {
-        t.match(error.message, "setTenantId() was not called");
+        t.match(
+          error.message,
+          "Zen IDOR protection: query on table 'cats_pg_idor_pool' requires a tenant ID, but setTenantId() was not called (use runWithTenant(...) for background work)"
+        );
       }
     });
 
@@ -265,6 +269,90 @@ t.test("IDOR protection for Postgres Pool (pg)", async (t) => {
         }
       }
     );
+  } finally {
+    await pool.end();
+  }
+});
+
+t.test("IDOR protection for Postgres Pool (pg)", async (t) => {
+  const agent = createTestAgent();
+  agent.start([new Postgres()]);
+
+  const { Pool } = require("pg") as typeof import("pg");
+  const pool = new Pool({
+    user: "root",
+    host: "127.0.0.1",
+    database: "main_db",
+    password: "password",
+    port: 27016,
+
+    // Sends multiple queries in a single round trip to the db
+    pipeline: true,
+  });
+
+  agent.setIdorProtectionConfig({
+    tenantColumnName: "tenant_id",
+    excludedTables: [],
+    requireTenantId: false,
+  });
+
+  try {
+    const numberOfQueries = 50;
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS cats_pg_idor_pool_pipe (
+          petname varchar(255),
+          tenant_id varchar(255)
+      );
+    `);
+    await pool.query("TRUNCATE cats_pg_idor_pool_pipe");
+
+    const results = await Promise.allSettled(
+      Array.from({ length: numberOfQueries }, (_, index) => {
+        return runWithContext(context, async () => {
+          const sometimesWithoutIdor =
+            index % 2 === 0 ? withoutIdorProtection : (fn: any) => fn();
+
+          return await sometimesWithoutIdor(async () => {
+            try {
+              await pool.query("SELECT petname FROM cats_pg_idor_pool_pipe");
+              return {
+                index,
+                error: null,
+              };
+            } catch (error: any) {
+              return {
+                index,
+                error,
+              };
+            }
+          });
+        });
+      })
+    );
+
+    t.equal(results.length, numberOfQueries);
+
+    for (const result of results) {
+      t.equal(result.status, "fulfilled");
+
+      if (result.status === "fulfilled") {
+        const { index, error } = result.value;
+
+        if (index % 2 === 0) {
+          t.ok(!error, `Query ${index} should not have an error`);
+        } else {
+          t.ok(error instanceof Error, `Query ${index} should have an error`);
+
+          if (error instanceof Error) {
+            t.match(
+              error.message,
+              "Zen IDOR protection: query on table 'cats_pg_idor_pool_pipe' is missing a filter on column 'tenant_id'"
+            );
+          }
+        }
+      }
+    }
   } finally {
     await pool.end();
   }

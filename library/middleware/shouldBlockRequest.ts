@@ -43,6 +43,12 @@ export function shouldBlockRequest(): Result {
   updateContext(context, "executedMiddleware", true);
   agent.onMiddlewareExecuted();
 
+  const isBypassedRequest = agent.getConfig().isBypassedRequest(context);
+
+  if (isBypassedRequest) {
+    return { block: false };
+  }
+
   if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
     return { block: true, type: "blocked", trigger: "user" };
   }

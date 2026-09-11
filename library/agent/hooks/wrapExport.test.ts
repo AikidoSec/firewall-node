@@ -183,6 +183,84 @@ t.test("Wrap non existing method", async (t) => {
   ]);
 });
 
+t.test("Does not double wrap the same method", async (t) => {
+  let firstInterceptorCalls = 0;
+  let secondInterceptorCalls = 0;
+  const toWrap = {
+    test(input: string) {
+      return input;
+    },
+  };
+
+  const wrapped1 = wrapExport(
+    toWrap,
+    "test",
+    { name: "test", type: "external" },
+    {
+      kind: "outgoing_http_op",
+      inspectArgs: () => {
+        firstInterceptorCalls++;
+      },
+    }
+  );
+
+  const wrapped2 = wrapExport(
+    toWrap,
+    "test",
+    { name: "test", type: "external" },
+    {
+      kind: "outgoing_http_op",
+      inspectArgs: () => {
+        secondInterceptorCalls++;
+      },
+    }
+  );
+
+  t.equal(wrapped1, wrapped2);
+  t.equal(toWrap.test, wrapped1);
+
+  toWrap.test("input");
+
+  t.same(firstInterceptorCalls, 1);
+  t.same(secondInterceptorCalls, 0);
+});
+
+t.test("Does not double wrap an already wrapped default export", async (t) => {
+  let calls = 0;
+  const toWrap = (input: string) => {
+    return input;
+  };
+
+  const wrapped1 = wrapExport(
+    toWrap,
+    undefined,
+    { name: "test", type: "external" },
+    {
+      kind: "outgoing_http_op",
+      inspectArgs: () => {
+        calls++;
+      },
+    }
+  );
+
+  const wrapped2 = wrapExport(
+    wrapped1,
+    undefined,
+    { name: "test", type: "external" },
+    {
+      kind: "outgoing_http_op",
+      inspectArgs: () => {
+        calls += 100;
+      },
+    }
+  );
+
+  t.equal(wrapped1, wrapped2);
+
+  (wrapped2 as Function)("input");
+  t.same(calls, 1);
+});
+
 t.test("Wrap default export", async (t) => {
   let executedCallback = false;
   const toWrap = (input: string) => {

@@ -20,6 +20,12 @@ export function throws(...args) {
         );
         return err;
       }
+
+      if (args[1] instanceof RegExp) {
+        assert.match(err.message ?? err.toString(), args[1]);
+        return err;
+      }
+
       throw new TypeError(
         `Second argument of throws must be a string, got ${typeof args[1]}`
       );

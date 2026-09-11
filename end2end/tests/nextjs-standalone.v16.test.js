@@ -123,6 +123,7 @@ t.test(
           t.match(stdout, /Starting agent/);
           t.match(stderr, /Zen has blocked a shell injection/);
           t.match(stderr, /Zen has blocked an SQL injection/);
+          t.notMatch(stderr, /Zen is NOT protecting your application./);
         }
       )
       .catch((error) => {
@@ -218,8 +219,64 @@ t.test(
           t.match(stdout, /Starting agent/);
           t.notMatch(stderr, /Zen has blocked a shell injection/);
           t.notMatch(stderr, /Zen has blocked an SQL injection/);
+          t.notMatch(stderr, /Zen is NOT protecting your application/);
         }
       )
+      .catch((error) => {
+        t.fail(error.message);
+      })
+      .finally(() => {
+        server.kill();
+      });
+  }
+);
+
+t.test(
+  "it prints warning if using old instrumentation system with Turbopack",
+  {
+    skip:
+      majorNodeVersion < 24
+        ? "Node.js v24 or higher is required for the new instrumentation system"
+        : false,
+  },
+  (t) => {
+    const server = spawn(`node`, ["-r", "@aikidosec/firewall", "server.js"], {
+      env: {
+        ...process.env,
+        AIKIDO_DEBUG: "true",
+        AIKIDO_BLOCK: "true",
+        PORT: 4002,
+      },
+      cwd: join(pathToApp, ".next/standalone"),
+    });
+
+    server.on("close", () => {
+      t.end();
+    });
+
+    server.on("error", (err) => {
+      t.fail(err.message);
+    });
+
+    let stdout = "";
+    server.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    // Wait for the server to start
+    timeout(5000)
+      .then(() => {
+        t.match(stdout, /Starting agent/);
+        t.match(
+          stderr,
+          /Zen is NOT protecting your application\. Your app is using.*Turbopack, which requires the new hook system/s
+        );
+      })
       .catch((error) => {
         t.fail(error.message);
       })

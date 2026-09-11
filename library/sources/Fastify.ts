@@ -19,6 +19,19 @@ const requestFunctions = [
   "all",
 ];
 
+const hookOptionNames = [
+  "onRequest",
+  "preParsing",
+  "preValidation",
+  "preHandler",
+  "preSerialization",
+  "onError",
+  "onSend",
+  "onResponse",
+  "onTimeout",
+  "onRequestAbort",
+];
+
 export class Fastify implements Wrapper {
   private wrapRequestArgs(args: unknown[]) {
     return args.map((arg) => {
@@ -35,22 +48,9 @@ export class Fastify implements Wrapper {
       return args;
     }
 
-    const hooksToWrap = [
-      "onRequest",
-      "preParsing",
-      "preValidation",
-      "preHandler",
-      "preSerialization",
-      "onError",
-      "onSend",
-      "onResponse",
-      "onTimeout",
-      "onRequestAbort",
-    ];
-
     const hookName = args[0] as string;
 
-    if (!hooksToWrap.includes(hookName)) {
+    if (!hookOptionNames.includes(hookName)) {
       return args;
     }
 
@@ -77,6 +77,19 @@ export class Fastify implements Wrapper {
     for (const [key, value] of Object.entries(options)) {
       if (typeof value === "function") {
         options[key] = wrapHandler(value);
+        continue;
+      }
+
+      // Route options accept hooks as either a single function or an
+      // array of functions, e.g. preHandler: [validate, authorize]
+      if (Array.isArray(value) && hookOptionNames.includes(key)) {
+        options[key] = value.map((item) => {
+          if (typeof item !== "function") {
+            return item;
+          }
+
+          return wrapHandler(item);
+        });
       }
     }
 

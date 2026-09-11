@@ -16,7 +16,7 @@ type ZenInternalsJsSourceType =
 export function detectJsInjection(
   code: string,
   userInput: string,
-  // Assume CommonJS by default, as eval() and new Function() can not execute ESM directly
+  // Assume CommonJS by default, as the eval-function and new Function-constructor can not execute ESM directly
   // The oxc parser has a bug that causes HTML-like comments to not be parsed in the unambiguous mode
   // See https://github.com/oxc-project/oxc/issues/18392
   sourceType: ZenInternalsJsSourceType = 2

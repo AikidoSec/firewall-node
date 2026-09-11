@@ -16,6 +16,7 @@ type AppConfig = {
   failureRate?: number;
   timeout?: number;
   excludedUserIdsFromRateLimiting?: string[];
+  enabledFeatures: string[];
 };
 
 const configs: AppConfig[] = [];
@@ -32,6 +33,7 @@ export function generateConfig(app: App): AppConfig {
     blockNewOutgoingRequests: false,
     domains: [],
     excludedUserIdsFromRateLimiting: [],
+    enabledFeatures: [],
   };
 }
 

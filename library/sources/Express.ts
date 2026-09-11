@@ -6,8 +6,12 @@ import { wrapRequestHandler } from "./express/wrapRequestHandler";
 import { wrapExport } from "../agent/hooks/wrapExport";
 
 export class Express implements Wrapper {
-  private wrapArgs(args: unknown[]) {
+  private wrapArgs(args: unknown[]): unknown[] {
     return args.map((arg) => {
+      if (Array.isArray(arg)) {
+        return this.wrapArgs(arg);
+      }
+
       // Ignore non-function arguments
       if (typeof arg !== "function") {
         return arg;
