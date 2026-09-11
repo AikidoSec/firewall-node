@@ -17,7 +17,10 @@ const opts = {
 type SeenRequest = { token: string; body: unknown };
 type StopServer = () => Promise<SeenRequest[]>;
 
-function createTestEndpoint(): Promise<{ stop: StopServer; port: number }> {
+async function createTestEndpoint(): Promise<{
+  stop: StopServer;
+  port: number;
+}> {
   const { serve } =
     require("@hono/node-server") as typeof import("@hono/node-server");
 
