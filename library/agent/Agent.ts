@@ -12,8 +12,9 @@ import type {
   AgentInfo,
   DetectedAttack,
   DetectedAttackWave,
+  CustomEvent,
 } from "./api/Event";
-import { sendUserEvent, type UserEvent } from "./api/UserEventsAPI";
+import { sendUserEvent } from "./api/UserEventsAPI";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { type Config, Endpoint } from "./Config";
@@ -40,6 +41,7 @@ import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 import { warnIfReactRouterServeIsUsed } from "../helpers/warnIfReactRouterServeIsUsed";
 import { pollForChanges } from "./realtime/pollForChanges";
+import { getRealtimeURL } from "./realtime/getRealtimeURL";
 import { isFeatureEnabled } from "../helpers/featureFlags";
 
 type WrappedPackage = { version: string; supported: boolean };
@@ -789,13 +791,20 @@ export class Agent {
     }
   }
 
-  onTrackEvent(event: UserEvent) {
+  onTrackEvent(event: Omit<CustomEvent, "agent">) {
     if (!this.token) {
       return;
     }
 
-    const promise = sendUserEvent(this.token, event).catch(() => {
-      this.logger.log("Failed to report tracked event");
+    const completeEvent: CustomEvent = {
+      ...event,
+      agent: this.getAgentInfo(),
+    };
+
+    const promise = sendUserEvent(this.token, completeEvent).catch(() => {
+      this.logger.log(
+        `Can't send tracked event, make sure ${getRealtimeURL().hostname} is in your outbound firewall allowlist`
+      );
     });
     this.pendingEvents.onAPICall(promise);
   }

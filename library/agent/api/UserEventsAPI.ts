@@ -1,16 +1,11 @@
 import { fetch } from "../../helpers/fetch";
 import { getRealtimeURL } from "../realtime/getRealtimeURL";
 import type { Token } from "./Token";
-
-export type UserEvent = {
-  name: string;
-  userId: string | undefined;
-  ipAddress: string | undefined;
-};
+import type { CustomEvent } from "./Event";
 
 export async function sendUserEvent(
   token: Token,
-  event: UserEvent
+  event: CustomEvent
 ): Promise<void> {
   await fetch({
     url: new URL(`${getRealtimeURL().toString()}api/runtime/events`),

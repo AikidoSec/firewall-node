@@ -1,5 +1,6 @@
 import { getInstance } from "../AgentSingleton";
 import { ContextStorage } from "./ContextStorage";
+import type { CustomEvent } from "../api/Event";
 
 export function track(eventName: string): void {
   const agent = getInstance();
@@ -19,10 +20,24 @@ export function track(eventName: string): void {
     return;
   }
 
-  agent.onTrackEvent({
-    name: eventName,
-    userId: context.user?.id,
+  const request: CustomEvent["request"] = {
+    url: context.url,
+    method: context.method,
     ipAddress: context.remoteAddress,
+    userAgent:
+      typeof context.headers["user-agent"] === "string"
+        ? context.headers["user-agent"]
+        : undefined,
+    source: context.source,
+    route: context.route,
+  };
+
+  agent.onTrackEvent({
+    type: "custom",
+    name: eventName,
+    request: request,
+    user: context.user,
+    time: Date.now(),
   });
 }
 
