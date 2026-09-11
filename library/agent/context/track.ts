@@ -19,11 +19,14 @@ export function track(eventName: string): void {
     return;
   }
 
+  if (agent.getConfig().isBypassedRequest(context)) {
+    return;
+  }
+
   agent.onTrackEvent({
     type: "custom",
     name: eventName,
     request: {
-      url: context.url,
       method: context.method,
       ipAddress: context.remoteAddress,
       userAgent:

@@ -169,7 +169,12 @@ export type DetectedAttackWave = {
   time: number;
 };
 
-export type Event = Started | DetectedAttack | Heartbeat | DetectedAttackWave;
+export type Event =
+  | Started
+  | DetectedAttack
+  | Heartbeat
+  | DetectedAttackWave
+  | CustomEvent;
 
 export type CustomEvent = {
   type: "custom";
@@ -178,7 +183,6 @@ export type CustomEvent = {
     method: string | undefined;
     ipAddress: string | undefined;
     userAgent: string | undefined;
-    url: string | undefined;
     source: string;
     route: string | undefined;
   };

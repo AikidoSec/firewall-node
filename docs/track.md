@@ -1,6 +1,6 @@
-# Tracking events
+# Track custom events
 
-`track` lets you record things happening in your app — like failed logins, signups, or password resets. Zen sends these to Aikido so patterns can be detected, like someone failing to log in 50 times in a minute.
+Use `Zen.track()` to report events that only your application knows about, such as failed logins. [Playbooks](https://help.aikido.dev/zen-firewall/zen-features/playbooks) can act when an event occurs repeatedly, for example by blocking an IP after three failed logins in five minutes.
 
 ```js
 const Zen = require("@aikidosec/firewall");
@@ -19,30 +19,8 @@ app.post("/login", async (req, res) => {
 });
 ```
 
-Zen automatically picks up the IP address, user agent, and current user (if you called [`setUser`](./user.md)) from the request — you don't need to pass those yourself.
+After adding `Zen.track()`, trigger the event at least once. It will then appear on the Playbooks page in the Aikido dashboard. From there, you can create a playbook and choose what should happen when the event occurs. Calling `Zen.track()` by itself does not create a playbook or block anything.
 
-## More examples
+Call `Zen.track()` while handling an HTTP request. Zen associates the event with the request's IP address. Playbook counts are per IP, not across your whole app. If you call [`Zen.setUser()`](./user.md) before `Zen.track()`, Zen also includes the current user. `Zen.setUser()` is optional. Events without a user are still tracked.
 
-```js
-Zen.track("user.signed_up");
-Zen.track("user.password_reset_requested");
-Zen.track("plan.invite_sent");
-Zen.track("payment.failed");
-```
-
-## Naming events
-
-Use lowercase with dots to group related events:
-
-- `user.login_failed`
-- `user.login_succeeded`
-- `user.signed_up`
-- `user.password_reset_requested`
-- `payment.failed`
-- `plan.invite_sent`
-
-## Things to know
-
-`track` only works inside an HTTP request. If you call it in a background job or a script, nothing gets sent and you'll see a warning in the console.
-
-If you haven't called `setUser` yet, the event still goes through — it just won't have a user ID attached.
+Event names can use any format. We recommend lowercase, dot-separated names such as `user.login_failed`.

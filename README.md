@@ -159,6 +159,7 @@ For framework- and provider- specific instructions, check out our docs:
 - [Bundlers](docs/bundler.md) — using Zen with esbuild and other bundlers
 - [Proxy / IP headers](docs/proxy.md) — configure client IP detection behind load balancers
 - [Set the current user](docs/user.md) — identify users for rate limiting, blocking, and attack reports
+- [Track custom events](docs/track.md) — trigger events that Playbooks can act on
 - [IDOR protection](docs/idor-protection.md) — prevent data leaks in multi-tenant apps
 - [Bypassing requests](docs/bypassRequest.md) — disable Zen for specific requests
 
