@@ -1,4 +1,3 @@
-import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import * as t from "tap";
 import { setTimeout } from "node:timers/promises";
@@ -19,6 +18,9 @@ type SeenRequest = { token: string; body: unknown };
 type StopServer = () => Promise<SeenRequest[]>;
 
 function createTestEndpoint(): Promise<{ stop: StopServer; port: number }> {
+  const { serve } =
+    require("@hono/node-server") as typeof import("@hono/node-server");
+
   const seen: SeenRequest[] = [];
 
   const app = new Hono();
