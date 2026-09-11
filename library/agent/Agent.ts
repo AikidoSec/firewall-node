@@ -12,8 +12,9 @@ import type {
   AgentInfo,
   DetectedAttack,
   DetectedAttackWave,
+  CustomEvent,
 } from "./api/Event";
-import { sendUserEvent, type UserEvent } from "./api/UserEventsAPI";
+import { sendUserEvent } from "./api/UserEventsAPI";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { type Config, Endpoint } from "./Config";
@@ -790,12 +791,17 @@ export class Agent {
     }
   }
 
-  onTrackEvent(event: UserEvent) {
+  onTrackEvent(event: Omit<CustomEvent, "agent">) {
     if (!this.token) {
       return;
     }
 
-    const promise = sendUserEvent(this.token, event).catch(() => {
+    const completeEvent: CustomEvent = {
+      ...event,
+      agent: this.getAgentInfo(),
+    };
+
+    const promise = sendUserEvent(this.token, completeEvent).catch(() => {
       this.logger.log(
         `Can't send tracked event, make sure ${getRealtimeURL().hostname} is in your outbound firewall allowlist`
       );

@@ -170,3 +170,19 @@ export type DetectedAttackWave = {
 };
 
 export type Event = Started | DetectedAttack | Heartbeat | DetectedAttackWave;
+
+export type CustomEvent = {
+  type: "custom";
+  name: string; // Name of the event controlled by the user
+  request: {
+    method: string | undefined;
+    ipAddress: string | undefined;
+    userAgent: string | undefined;
+    url: string | undefined;
+    source: string;
+    route: string | undefined;
+  };
+  agent: AgentInfo;
+  user?: User; // Only set if setUser(...) was called in the request
+  time: number; // Unix timestamp in milliseconds
+};
