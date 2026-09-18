@@ -71,6 +71,7 @@ const https = require("https") as typeof import("https");
 const oldUrl = require("url");
 
 t.test("it works", (t) => {
+  agent.getHostnames().clear();
   t.same(agent.getHostnames().asArray(), []);
 
   runWithContext(createContext(), () => {

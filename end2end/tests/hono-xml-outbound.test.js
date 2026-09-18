@@ -132,6 +132,8 @@ t.test("blockNewOutgoingRequests is true", (t) => {
           domains: [
             { hostname: "ssrf-redirects.testssandbox.com", mode: "block" },
             { hostname: "aikido.dev", mode: "allow" },
+            // Otherwise we cannot communicate with the mock server
+            { hostname: "localhost", mode: "allow" },
           ],
         }),
       });
