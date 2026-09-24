@@ -12,6 +12,7 @@ import type {
   AgentInfo,
   DetectedAttack,
   DetectedAttackWave,
+  CustomEvent,
 } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
@@ -786,6 +787,24 @@ export class Agent {
         });
       this.pendingEvents.onAPICall(promise);
     }
+  }
+
+  onTrackEvent(event: Omit<CustomEvent, "agent">) {
+    if (!this.token) {
+      return;
+    }
+
+    const completeEvent: CustomEvent = {
+      ...event,
+      agent: this.getAgentInfo(),
+    };
+
+    const promise = this.api
+      .report(this.token, completeEvent, this.timeoutInMS)
+      .catch(() => {
+        this.logger.log("Failed to send tracked event");
+      });
+    this.pendingEvents.onAPICall(promise);
   }
 
   public async shutdown(timeoutInMS = 1000): Promise<void> {
