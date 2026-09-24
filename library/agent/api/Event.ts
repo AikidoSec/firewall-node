@@ -169,4 +169,35 @@ export type DetectedAttackWave = {
   time: number;
 };
 
-export type Event = Started | DetectedAttack | Heartbeat | DetectedAttackWave;
+// Reported by the local AI proxy (see library/ai_proxy): which tools an app
+// offered a model, with description/arg schema/blocked status.
+export type AiUsage = {
+  type: "ai-usage";
+  provider: string;
+  model?: string;
+  tools: {
+    name: string;
+    description?: string;
+    args?: unknown[];
+    blocked?: boolean;
+  }[];
+  agent: AgentInfo;
+  time: number;
+};
+
+// Which tools the model actually called, with counts for this report.
+export type AiToolHits = {
+  type: "ai-tool-hits";
+  provider: string;
+  tools: { name: string; hits: number }[];
+  agent: AgentInfo;
+  time: number;
+};
+
+export type Event =
+  | Started
+  | DetectedAttack
+  | Heartbeat
+  | DetectedAttackWave
+  | AiUsage
+  | AiToolHits;
