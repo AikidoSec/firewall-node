@@ -10,6 +10,8 @@ type AnthropicMessageResponse = {
   usage?: {
     input_tokens: number;
     output_tokens: number;
+    cache_read_input_tokens?: number | null;
+    cache_creation_input_tokens?: number | null;
   };
 };
 
@@ -48,9 +50,13 @@ export class Anthropic implements Wrapper {
 
     let inputTokens = 0;
     let outputTokens = 0;
+    let cacheReadTokens = 0;
+    let cacheWriteTokens = 0;
     if (response.usage) {
       inputTokens = response.usage.input_tokens;
       outputTokens = response.usage.output_tokens;
+      cacheReadTokens = response.usage.cache_read_input_tokens ?? 0;
+      cacheWriteTokens = response.usage.cache_creation_input_tokens ?? 0;
     }
 
     const aiStats = agent.getAIStatistics();
@@ -59,6 +65,8 @@ export class Anthropic implements Wrapper {
       model: response.model ?? "",
       inputTokens: inputTokens,
       outputTokens: outputTokens,
+      cacheReadTokens,
+      cacheWriteTokens,
     });
   }
 
