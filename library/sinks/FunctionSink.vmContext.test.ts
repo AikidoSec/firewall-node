@@ -215,7 +215,7 @@ t.test(
 
 t.test(
   "denial survives an async continuation scheduled from inside the sandbox",
-  (t) => {
+  async (t) => {
     const vm = require("vm");
 
     runWithContext(requestContext, () => {
