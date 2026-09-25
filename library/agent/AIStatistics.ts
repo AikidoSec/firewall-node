@@ -6,6 +6,8 @@ type AIProviderStats = {
     input: number;
     output: number;
     total: number;
+    cacheRead: number;
+    cacheWrite: number;
   };
 };
 
@@ -35,6 +37,8 @@ export class AIStatistics {
           input: 0,
           output: 0,
           total: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
         },
       });
     }
@@ -47,11 +51,15 @@ export class AIStatistics {
     model,
     inputTokens,
     outputTokens,
+    cacheReadTokens = 0,
+    cacheWriteTokens = 0,
   }: {
     provider: string;
     model: string;
     inputTokens: number;
     outputTokens: number;
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
   }) {
     if (!provider || !model) {
       return;
@@ -62,6 +70,8 @@ export class AIStatistics {
     providerStats.tokens.input += inputTokens;
     providerStats.tokens.output += outputTokens;
     providerStats.tokens.total += inputTokens + outputTokens;
+    providerStats.tokens.cacheRead += cacheReadTokens;
+    providerStats.tokens.cacheWrite += cacheWriteTokens;
   }
 
   getStats() {
@@ -74,6 +84,8 @@ export class AIStatistics {
           input: stats.tokens.input,
           output: stats.tokens.output,
           total: stats.tokens.total,
+          cacheRead: stats.tokens.cacheRead,
+          cacheWrite: stats.tokens.cacheWrite,
         },
       };
     });

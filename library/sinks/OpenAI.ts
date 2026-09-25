@@ -9,6 +9,10 @@ type Response = {
   usage?: {
     input_tokens: number;
     output_tokens: number;
+    input_tokens_details?: {
+      cached_tokens?: number;
+      cache_write_tokens?: number;
+    };
   };
 };
 
@@ -26,6 +30,10 @@ type CompletionResponse = {
   usage?: {
     prompt_tokens: number;
     completion_tokens: number;
+    prompt_tokens_details?: {
+      cached_tokens?: number;
+      cache_write_tokens?: number;
+    };
   };
 };
 
@@ -49,12 +57,26 @@ export class OpenAI implements Wrapper {
 
     let inputTokens = 0;
     let outputTokens = 0;
+    let cacheReadTokens = 0;
+    let cacheWriteTokens = 0;
     if (response.usage) {
       if (typeof response.usage.input_tokens === "number") {
         inputTokens = response.usage.input_tokens;
       }
       if (typeof response.usage.output_tokens === "number") {
         outputTokens = response.usage.output_tokens;
+      }
+      if (
+        typeof response.usage.input_tokens_details?.cached_tokens === "number"
+      ) {
+        cacheReadTokens = response.usage.input_tokens_details.cached_tokens;
+      }
+      if (
+        typeof response.usage.input_tokens_details?.cache_write_tokens ===
+        "number"
+      ) {
+        cacheWriteTokens =
+          response.usage.input_tokens_details.cache_write_tokens;
       }
     }
 
@@ -64,6 +86,8 @@ export class OpenAI implements Wrapper {
       model: response.model ?? "",
       inputTokens: inputTokens,
       outputTokens: outputTokens,
+      cacheReadTokens,
+      cacheWriteTokens,
     });
   }
 
@@ -78,12 +102,26 @@ export class OpenAI implements Wrapper {
 
     let inputTokens = 0;
     let outputTokens = 0;
+    let cacheReadTokens = 0;
+    let cacheWriteTokens = 0;
     if (response.usage) {
       if (typeof response.usage.prompt_tokens === "number") {
         inputTokens = response.usage.prompt_tokens;
       }
       if (typeof response.usage.completion_tokens === "number") {
         outputTokens = response.usage.completion_tokens;
+      }
+      if (
+        typeof response.usage.prompt_tokens_details?.cached_tokens === "number"
+      ) {
+        cacheReadTokens = response.usage.prompt_tokens_details.cached_tokens;
+      }
+      if (
+        typeof response.usage.prompt_tokens_details?.cache_write_tokens ===
+        "number"
+      ) {
+        cacheWriteTokens =
+          response.usage.prompt_tokens_details.cache_write_tokens;
       }
     }
 
@@ -93,6 +131,8 @@ export class OpenAI implements Wrapper {
       model: response.model ?? "",
       inputTokens: inputTokens,
       outputTokens: outputTokens,
+      cacheReadTokens,
+      cacheWriteTokens,
     });
   }
 

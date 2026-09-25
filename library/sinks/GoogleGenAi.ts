@@ -24,6 +24,7 @@ type InteractionResponse = {
   usage?: {
     total_input_tokens?: number;
     total_output_tokens?: number;
+    total_cached_tokens?: number;
   };
 };
 
@@ -45,12 +46,12 @@ export class GoogleGenAi implements Wrapper {
     | {
         inputTokens: number;
         outputTokens: number;
+        cacheReadTokens: number;
       }
     | undefined {
+    // promptTokenCount already includes cachedContentTokenCount.
     const inputTokens =
-      (usage.promptTokenCount ?? 0) +
-      (usage.cachedContentTokenCount ?? 0) +
-      (usage.toolUsePromptTokenCount ?? 0);
+      (usage.promptTokenCount ?? 0) + (usage.toolUsePromptTokenCount ?? 0);
 
     const outputTokens =
       (usage.responseTokenCount ?? 0) +
@@ -64,6 +65,7 @@ export class GoogleGenAi implements Wrapper {
     return {
       inputTokens,
       outputTokens,
+      cacheReadTokens: usage.cachedContentTokenCount ?? 0,
     };
   }
 
@@ -121,6 +123,7 @@ export class GoogleGenAi implements Wrapper {
 
     const inputTokens = usage.total_input_tokens ?? 0;
     const outputTokens = usage.total_output_tokens ?? 0;
+    const cacheReadTokens = usage.total_cached_tokens ?? 0;
 
     if (inputTokens === 0 && outputTokens === 0) {
       return;
@@ -132,6 +135,7 @@ export class GoogleGenAi implements Wrapper {
       model: response.model ?? "unknown",
       inputTokens,
       outputTokens,
+      cacheReadTokens,
     });
   }
 
@@ -177,6 +181,7 @@ export class GoogleGenAi implements Wrapper {
       model: response.modelVersion,
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
+      cacheReadTokens: usage.cacheReadTokens,
     });
   }
 
