@@ -85,6 +85,10 @@ entrypoints.forEach((entrypoint) => {
           t.equal(normalSearch.status, 200);
           t.match(stdout, /Starting agent/);
           t.match(stderr, /Zen has blocked an SQL injection/);
+          t.notMatch(
+            stderr,
+            /Your application seems to be using a bundler without using the Zen bundler plugin/
+          );
           t.notMatch(stderr, /Zen is NOT protecting your application/);
         }
       )
@@ -246,6 +250,10 @@ t.test("it prints warning before crashing if bundled", (t) => {
   });
 
   server.on("close", () => {
+    t.match(
+      stderr,
+      /Your application seems to be using a bundler without using the Zen bundler plugin/
+    );
     t.match(stderr, /Zen is NOT protecting your application/);
     t.match(stderr, /ENOENT: no such file or directory/); // Can't load wasm
 
