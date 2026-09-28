@@ -44,6 +44,14 @@ t.test("it detects JS injections", async (t) => {
   );
 });
 
+t.test("it recovers after deeply nested parentheses", async (t) => {
+  const payload = "(".repeat(10_000);
+
+  t.equal(detectJsInjection(payload, payload), false);
+  t.equal(detectJsInjection(payload, payload), false);
+  t.equal(detectJsInjection("const x = 1 + 1; fetch();", "+ 1; fetch()"), true);
+});
+
 t.test("does not detect JS injections", async (t) => {
   t.same(detectJsInjection("1 + 1", "1 + 1"), false);
   t.same(detectJsInjection("1 + 1", "const x = 1 + 1; x"), false);

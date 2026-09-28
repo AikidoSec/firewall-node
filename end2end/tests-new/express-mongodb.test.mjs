@@ -11,6 +11,7 @@ const pathToAppDir = resolve(
 );
 const port = await getRandomPort();
 const port2 = await getRandomPort();
+const port3 = await getRandomPort();
 
 test("it blocks request in blocking mode", async () => {
   const server = spawn(
@@ -62,6 +63,53 @@ test("it blocks request in blocking mode", async () => {
     match(stdout, /Starting agent/);
     match(stderr, /Zen has blocked a NoSQL injection/);
     doesNotMatch(stderr, /@react-router\/serve/);
+  } catch (err) {
+    fail(err);
+  } finally {
+    server.kill();
+  }
+});
+
+test("it keeps blocking code injections after deeply nested parentheses", async () => {
+  const server = spawn(
+    `node`,
+    ["--require", "@aikidosec/firewall/instrument", "./app.js", port3],
+    {
+      cwd: pathToAppDir,
+      env: {
+        ...process.env,
+        AIKIDO_DEBUG: "true",
+        AIKIDO_BLOCK: "true",
+      },
+    }
+  );
+
+  try {
+    server.on("error", (err) => {
+      fail(err.message);
+    });
+
+    await timeout(2000);
+
+    const nestedExpression = `${"(".repeat(1_200)}1${")".repeat(1_200)}`;
+    const deeplyNestedPayload = `"; return ${nestedExpression}; //`;
+    const deeplyNestedResponse = await fetch(
+      `http://127.0.0.1:${port3}/hello/${encodeURIComponent(deeplyNestedPayload)}`,
+      { signal: AbortSignal.timeout(5000) }
+    );
+
+    equal(deeplyNestedResponse.status, 200);
+
+    const injectionResponse = await fetch(
+      `http://127.0.0.1:${port3}/hello/${encodeURIComponent('"; return 1; //')}`,
+      { signal: AbortSignal.timeout(5000) }
+    );
+
+    equal(injectionResponse.status, 500);
+    match(
+      await injectionResponse.text(),
+      /Zen has blocked a JavaScript injection/
+    );
   } catch (err) {
     fail(err);
   } finally {
