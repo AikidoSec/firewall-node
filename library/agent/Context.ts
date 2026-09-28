@@ -39,6 +39,8 @@ export type Context = {
   rateLimitedEndpoint?: Endpoint; // The route that was rate limited
   tenantId?: string; // Used for IDOR protection - set via setTenantId() (runWithTenant() overrides this)
   bypassRequest?: boolean; // Used to disable protection (like bypassed Ips)
+  customEventsTracked?: number;
+  customEventLimitWarningLogged?: boolean;
 };
 
 /**

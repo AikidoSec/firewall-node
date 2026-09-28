@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { createTestAgent } from "../../helpers/createTestAgent";
+import { wrap } from "../../helpers/wrap";
 import { ReportingAPIForTesting } from "../api/ReportingAPIForTesting";
 import { Token } from "../api/Token";
 import { type Context, runWithContext } from "../Context";
@@ -75,4 +76,33 @@ t.test("it does not send events for bypassed requests", async (t) => {
 
     t.same(api.getEvents(), [], bypass);
   }
+});
+
+t.test("it limits tracked events to 25 per request", async (t) => {
+  const api = new ReportingAPIForTesting();
+  createTestAgent({ api, token: new Token("abc123") });
+
+  const warnings: string[] = [];
+  wrap(console, "warn", function warn() {
+    return function warn(message: string) {
+      warnings.push(message);
+    };
+  });
+
+  runWithContext(createContext(), () => {
+    for (let i = 0; i < 30; i++) {
+      track(`event-${i}`);
+    }
+  });
+
+  runWithContext(createContext(), () => {
+    track("event-from-next-request");
+  });
+
+  const events = api.getEvents();
+  t.equal(events.length, 26);
+  t.match(events[25], { name: "event-from-next-request" });
+  t.same(warnings, [
+    "Zen.track(...) was called more than 25 times during one request. Only the first 25 events were tracked.",
+  ]);
 });
