@@ -78,11 +78,47 @@ t.test("it does not send events for bypassed requests", async (t) => {
   }
 });
 
+t.test(
+  "it warns only once when the agent event limit is reached",
+  async (t) => {
+    const api = new ReportingAPIForTesting({
+      success: false,
+      error: "max_custom_events_reached",
+    });
+    const agent = createTestAgent({ api, token: new Token("abc123") });
+
+    const warnings: string[] = [];
+    const originalWarn = Reflect.get(console, "warn");
+    t.teardown(() => {
+      Reflect.set(console, "warn", originalWarn);
+    });
+    wrap(console, "warn", function warn() {
+      return function warn(message: string) {
+        warnings.push(message);
+      };
+    });
+
+    runWithContext(createContext(), () => {
+      track("first-event");
+      track("second-event");
+    });
+    await agent.getPendingEvents().waitUntilSent(1000);
+
+    t.equal(warnings.length, 1);
+    t.match(warnings[0], "┌──AIKIDO");
+    t.match(warnings[0], "Zen is dropping custom events");
+  }
+);
+
 t.test("it limits tracked events to 25 per request", async (t) => {
   const api = new ReportingAPIForTesting();
   createTestAgent({ api, token: new Token("abc123") });
 
   const warnings: string[] = [];
+  const originalWarn = Reflect.get(console, "warn");
+  t.teardown(() => {
+    Reflect.set(console, "warn", originalWarn);
+  });
   wrap(console, "warn", function warn() {
     return function warn(message: string) {
       warnings.push(message);

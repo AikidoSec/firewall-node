@@ -21,7 +21,7 @@ import { Hono } from "../sources/Hono";
 import { HTTPServer } from "../sources/HTTPServer";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
-import { Agent } from "./Agent";
+import { Agent, MAX_CUSTOM_EVENTS_PER_MINUTE } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { ReportingAPI } from "./api/ReportingAPI";
 import { ReportingAPINodeHTTP } from "./api/ReportingAPINodeHTTP";
@@ -81,9 +81,15 @@ function validatesToken(api: ReportingAPI) {
 }
 
 function clientSideRateLimited(api: ReportingAPI) {
-  return new ReportingAPIRateLimitedClientSide(api, {
+  const attackRateLimitedAPI = new ReportingAPIRateLimitedClientSide(api, {
     maxEventsPerInterval: 100,
     intervalInMs: 60 * 60 * 1000,
+  });
+
+  return new ReportingAPIRateLimitedClientSide(attackRateLimitedAPI, {
+    maxEventsPerInterval: MAX_CUSTOM_EVENTS_PER_MINUTE,
+    intervalInMs: 60 * 1000,
+    eventGroup: "custom",
   });
 }
 

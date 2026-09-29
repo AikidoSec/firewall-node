@@ -96,6 +96,22 @@ function generateAttackWaveEvent(): Event {
   };
 }
 
+function generateCustomEvent(name: string, route: string): Event {
+  return {
+    type: "custom",
+    name,
+    time: Date.now(),
+    request: {
+      method: "POST",
+      ipAddress: "1.2.3.4",
+      userAgent: "test-agent",
+      source: "express",
+      route,
+    },
+    agent: generateAttackEvent().agent,
+  };
+}
+
 t.test("it throttles attack events", async () => {
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
@@ -153,6 +169,41 @@ function generateStartedEvent(): Event {
     },
   };
 }
+
+t.test("it throttles custom events across names and requests", async () => {
+  const api = new ReportingAPIForTesting();
+  const token = new Token("123");
+  const throttled = new ReportingAPIRateLimitedClientSide(api, {
+    maxEventsPerInterval: 2,
+    intervalInMs: 60_000,
+    eventGroup: "custom",
+  });
+
+  await throttled.report(
+    token,
+    generateCustomEvent("user.login_failed", "/login"),
+    5000
+  );
+  await throttled.report(
+    token,
+    generateCustomEvent("payment.failed", "/checkout"),
+    5000
+  );
+  const result = await throttled.report(
+    token,
+    generateCustomEvent("user.signed_up", "/signup"),
+    5000
+  );
+
+  t.same(result, { success: false, error: "max_custom_events_reached" });
+  t.same(
+    api.getEvents().map((event) => event.type),
+    ["custom", "custom"]
+  );
+
+  await throttled.report(token, generateAttackEvent(), 5000);
+  t.equal(api.getEvents().length, 3);
+});
 
 t.test("it always allows started events", async () => {
   const api = new ReportingAPIForTesting();

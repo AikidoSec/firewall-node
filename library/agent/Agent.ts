@@ -39,10 +39,13 @@ import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 import { warnIfReactRouterServeIsUsed } from "../helpers/warnIfReactRouterServeIsUsed";
+import { warnBox } from "../helpers/warnBox";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { isFeatureEnabled } from "../helpers/featureFlags";
 
 type WrappedPackage = { version: string; supported: boolean };
+
+export const MAX_CUSTOM_EVENTS_PER_MINUTE = 10_000;
 
 export class Agent {
   private started = false;
@@ -70,6 +73,7 @@ export class Agent {
   private attackLogger = new AttackLogger(1000);
   private attackWaveDetector = new AttackWaveDetector();
   private pendingEvents = new PendingEvents();
+  private customEventRateLimitWarningLogged = false;
   private idorProtectionConfig: IdorProtectionConfig | undefined = undefined;
   public firewallListsUpdate = Promise.resolve();
 
@@ -801,10 +805,31 @@ export class Agent {
 
     const promise = this.api
       .report(this.token, completeEvent, this.timeoutInMS)
+      .then((result) => {
+        if (!result.success && result.error === "max_custom_events_reached") {
+          this.logCustomEventRateLimitWarning();
+        }
+      })
       .catch(() => {
         this.logger.log("Failed to send tracked event");
       });
     this.pendingEvents.onAPICall(promise);
+  }
+
+  private logCustomEventRateLimitWarning(): void {
+    if (this.customEventRateLimitWarningLogged) {
+      return;
+    }
+
+    this.customEventRateLimitWarningLogged = true;
+    console.warn(
+      colorText(
+        "red",
+        warnBox(
+          `Zen is dropping custom events because this application process exceeded ${MAX_CUSTOM_EVENTS_PER_MINUTE.toLocaleString("en-US")} events in one minute. Check how often Zen.track(...) is called. Dropped events may prevent Playbooks from triggering.`
+        )
+      )
+    );
   }
 
   public async shutdown(timeoutInMS = 1000): Promise<void> {
