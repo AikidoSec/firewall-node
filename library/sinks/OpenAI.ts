@@ -4,12 +4,18 @@ import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
 
+type ResponseFunctionToolCall = {
+  type?: string;
+  name?: string;
+};
+
 type Response = {
   model: string;
   usage?: {
     input_tokens: number;
     output_tokens: number;
   };
+  output?: ResponseFunctionToolCall[];
 };
 
 function isResponse(response: unknown): response is Response {
@@ -91,6 +97,26 @@ export class OpenAI implements Wrapper {
         }
       );
     }
+  }
+
+  private stripBlockedResponseToolCalls(agent: Agent, response: unknown) {
+    if (!isResponse(response) || !Array.isArray(response.output)) {
+      return;
+    }
+
+    const config = agent.getConfig();
+
+    response.output = response.output.filter((item) => {
+      if (item.type !== "function_call" || typeof item.name !== "string") {
+        return true;
+      }
+
+      const { name } = item;
+      const blocked = config.isAIToolBlocked(name);
+      agent.getAIStatistics().onAIToolCall({ name, blocked });
+
+      return !blocked;
+    });
   }
 
   private inspectResponse(agent: Agent, response: unknown, provider: Provider) {
@@ -194,18 +220,20 @@ export class OpenAI implements Wrapper {
     subject: unknown
   ) {
     if (returnValue instanceof Promise) {
-      // Inspect the response after the promise resolves, it won't change the original promise
-      returnValue
-        .then((response) => {
+      return returnValue.then((response) => {
+        try {
           this.inspectResponse(agent, response, this.getProvider(subject));
-        })
-        .catch((error) => {
+          this.stripBlockedResponseToolCalls(agent, response);
+        } catch (error: unknown) {
           agent.onErrorThrownByInterceptor({
-            error: error,
+            error: error instanceof Error ? error : new Error(String(error)),
             method: "create.<promise>",
             module: "openai",
           });
-        });
+        }
+
+        return response;
+      });
     }
 
     return returnValue;

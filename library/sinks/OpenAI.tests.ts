@@ -217,4 +217,71 @@ export function createOpenAITests(openAiPkgName: string) {
       ]);
     }
   );
+
+  t.test(
+    "It strips a blocked AI tool call from a responses.create response and records stats",
+    async (t) => {
+      agent.getAIStatistics().reset();
+      agent.getConfig().setBlockedAIToolNames(["dangerous_response_tool"]);
+
+      const response = {
+        id: "resp-tool-test",
+        object: "response",
+        created_at: 0,
+        model: "gpt-5-mini",
+        output: [
+          {
+            type: "function_call",
+            id: "fc_1",
+            call_id: "call_1",
+            name: "dangerous_response_tool",
+            arguments: "{}",
+          },
+          {
+            type: "function_call",
+            id: "fc_2",
+            call_id: "call_2",
+            name: "safe_response_tool",
+            arguments: "{}",
+          },
+        ],
+        usage: {
+          input_tokens: 10,
+          output_tokens: 5,
+          total_tokens: 15,
+        },
+      };
+
+      const server = createServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(response));
+      });
+
+      await new Promise<void>((resolve) => server.listen(0, resolve));
+      t.teardown(() => server.close());
+
+      const baseURL = `http://localhost:${
+        (server.address() as AddressInfo).port
+      }/v1`;
+
+      const client = new OpenAI({ apiKey: "test", baseURL });
+
+      const result = await client.responses.create({
+        model: "gpt-5-mini",
+        input: "Do something",
+      });
+
+      t.same(
+        (result.output ?? []).map((item) =>
+          item.type === "function_call" ? item.name : undefined
+        ),
+        ["safe_response_tool"]
+      );
+
+      t.match(agent.getAIStatistics().getToolCallStats(), [
+        { name: "dangerous_response_tool", calls: 1, blocked: 1 },
+        { name: "safe_response_tool", calls: 1, blocked: 0 },
+      ]);
+    }
+  );
 }
