@@ -1,5 +1,6 @@
 import { fetch } from "../../helpers/fetch";
 import { Token } from "../api/Token";
+import { getCommonAgentHeaders } from "../getCommonAgentHeaders";
 import { getRealtimeURL } from "./getRealtimeURL";
 
 type RealtimeResponse = { configUpdatedAt: number };
@@ -9,6 +10,7 @@ export async function getConfigLastUpdatedAt(token: Token): Promise<number> {
     url: new URL(`${getRealtimeURL().toString()}config`),
     method: "GET",
     headers: {
+      ...getCommonAgentHeaders(),
       Authorization: token.asString(),
     },
     timeoutInMS: 3000,

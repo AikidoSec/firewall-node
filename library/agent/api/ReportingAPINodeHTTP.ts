@@ -1,4 +1,5 @@
 import { fetch } from "../../helpers/fetch";
+import { getCommonAgentHeaders } from "../getCommonAgentHeaders";
 import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
 import { Event } from "./Event";
 import { Token } from "./Token";
@@ -40,6 +41,7 @@ export class ReportingAPINodeHTTP implements ReportingAPI {
         url: new URL(`${this.reportingUrl.toString()}api/runtime/events`),
         method: "POST",
         headers: {
+          ...getCommonAgentHeaders(),
           "Content-Type": "application/json",
           Authorization: token.asString(),
         },

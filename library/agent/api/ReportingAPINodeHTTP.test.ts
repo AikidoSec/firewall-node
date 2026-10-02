@@ -1,6 +1,10 @@
 import * as express from "express";
 import * as asyncHandler from "express-async-handler";
 import * as t from "tap";
+import { getAgentSessionId } from "../../helpers/getAgentSessionId";
+import { getAgentVersion } from "../../helpers/getAgentVersion";
+import { getInstanceHostname } from "../../helpers/getInstanceHostname";
+import { ip } from "../../helpers/ipAddress";
 import { ReportingAPINodeHTTP } from "./ReportingAPINodeHTTP";
 import { Event } from "./Event";
 import { Token } from "./Token";
@@ -35,7 +39,11 @@ function generateStartedEvent(): Event {
   };
 }
 
-type SeenPayload = { token: string; body: unknown };
+type SeenPayload = {
+  token: string;
+  body: unknown;
+  headers: Record<string, string | undefined>;
+};
 type StopServer = () => Promise<SeenPayload[]>;
 
 function createTestEndpoint({
@@ -67,6 +75,13 @@ function createTestEndpoint({
       seen.push({
         token: req.header("Authorization") || "",
         body: req.body,
+        headers: {
+          platform: req.header("X-Agent-Platform"),
+          version: req.header("X-Agent-Version"),
+          hostname: req.header("X-Agent-Hostname"),
+          ipAddress: req.header("X-Agent-IP-Address"),
+          sessionId: req.header("X-Agent-Session-Id"),
+        },
       });
 
       if (throwError) {
@@ -108,6 +123,13 @@ t.test("it reports event to API endpoint", async () => {
   t.same(seen[0].token, "123");
   // @ts-expect-error Type is not known
   t.same(seen[0].body.type, "started");
+  t.same(seen[0].headers, {
+    platform: "node",
+    version: getAgentVersion(),
+    hostname: getInstanceHostname() || "unknown",
+    ipAddress: ip() || "unknown",
+    sessionId: getAgentSessionId(),
+  });
 });
 
 t.test("it respects timeout", async () => {
