@@ -1,3 +1,4 @@
+// oxlint-disable no-console
 import * as t from "tap";
 import { LoggerForTesting } from "../../agent/logger/LoggerForTesting";
 import {
@@ -50,8 +51,9 @@ t.test("it lets agent know", async () => {
 t.test(
   "it warns and lets agent know when an incompatible package is found",
   async (t) => {
-    const originalGetPackageVersion =
-      getPackageVersionModule.getPackageVersion;
+    const originalGetPackageVersion = getPackageVersionModule.getPackageVersion;
+    // @ts-expect-error Mocking for test
+    // oxlint-disable-next-line no-import-assign
     getPackageVersionModule.getPackageVersion = ((pkg: string) => {
       return pkg === "mongoose" ? "4.0.0" : originalGetPackageVersion(pkg);
     }) as typeof originalGetPackageVersion;
@@ -76,6 +78,8 @@ t.test(
       t.match(warnings[0], "Zen did NOT freeze JavaScript built-ins");
     } finally {
       console.warn = originalWarn;
+      // @ts-expect-error Mocking for test
+      // oxlint-disable-next-line no-import-assign
       getPackageVersionModule.getPackageVersion = originalGetPackageVersion;
     }
   }
