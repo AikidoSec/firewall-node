@@ -264,6 +264,7 @@ for await (const entry of testFiles) {
               break;
             case "end":
             case "equal":
+            case "not":
             case "ok":
             case "notOk":
             case "fail":
@@ -277,6 +278,9 @@ for await (const entry of testFiles) {
               switch (node.callee.property.name) {
                 case "equal":
                   node.callee.property.name = "strictEqual";
+                  break;
+                case "not":
+                  node.callee.property.name = "notStrictEqual";
                   break;
                 case "throws":
                   node.callee.property.name = "throws";

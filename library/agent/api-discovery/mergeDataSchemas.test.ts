@@ -2,6 +2,17 @@ import * as t from "tap";
 import { mergeDataSchemas } from "./mergeDataSchemas";
 import { getDataSchema } from "./getDataSchema";
 
+t.test("it is not vulnerable to prototype pollution", async (t) => {
+  const first = getDataSchema(JSON.parse('{"__proto__": {"a": 1}}'));
+  const second = getDataSchema(JSON.parse('{"__proto__": {"b": 2}}'));
+
+  const merged = mergeDataSchemas(first, second);
+
+  t.equal(Object.getPrototypeOf(merged.properties), null);
+  t.same((Object.prototype as { a?: number; b?: number }).a, undefined);
+  t.same((Object.prototype as { a?: number; b?: number }).b, undefined);
+});
+
 t.test("it works", async (t) => {
   t.same(
     mergeDataSchemas(

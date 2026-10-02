@@ -1,4 +1,5 @@
 import { addIPv4MappedAddresses } from "../helpers/addIPv4MappedAddresses";
+import { createSafeObject } from "../helpers/createSafeObject";
 import { hostnameToUnicode } from "../helpers/hostnameToUnicode";
 import { IPMatcher as JavaScriptIPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import {
@@ -72,7 +73,9 @@ export class ServiceConfig {
         );
       }
 
-      const endpointConfig = { ...endpoint, allowedIPAddresses };
+      const endpointConfig: Endpoint = createSafeObject(endpoint, {
+        allowedIPAddresses,
+      });
 
       if (endpoint.graphql) {
         this.graphqlFields.push(endpointConfig);
