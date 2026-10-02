@@ -11,6 +11,10 @@ type MistralChatCompletionResponse = {
     promptTokens: number;
     completionTokens: number;
     totalTokens: number;
+    cached_tokens?: number;
+    additionalProperties?: {
+      cached_tokens?: number;
+    };
   };
 };
 
@@ -32,12 +36,20 @@ export class Mistral implements Wrapper {
 
     let inputTokens = 0;
     let outputTokens = 0;
+    let cacheReadTokens = 0;
     if (response.usage) {
       if (typeof response.usage.promptTokens === "number") {
         inputTokens = response.usage.promptTokens;
       }
       if (typeof response.usage.completionTokens === "number") {
         outputTokens = response.usage.completionTokens;
+      }
+      if (typeof response.usage.cached_tokens === "number") {
+        cacheReadTokens = response.usage.cached_tokens;
+      } else if (
+        typeof response.usage.additionalProperties?.cached_tokens === "number"
+      ) {
+        cacheReadTokens = response.usage.additionalProperties.cached_tokens;
       }
     }
 
@@ -47,6 +59,7 @@ export class Mistral implements Wrapper {
       model: response.model ?? "",
       inputTokens: inputTokens,
       outputTokens: outputTokens,
+      cacheReadTokens,
     });
   }
 
