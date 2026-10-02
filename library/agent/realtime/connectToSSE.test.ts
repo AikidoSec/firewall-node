@@ -5,7 +5,10 @@ import { Token } from "../api/Token";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
 import { connectToSSE } from "./connectToSSE";
 import type { EventSourceMessage } from "../../helpers/eventsource-parser/types";
+import { getAgentSessionId } from "../../helpers/getAgentSessionId";
 import { getAgentVersion } from "../../helpers/getAgentVersion";
+import { getInstanceHostname } from "../../helpers/getInstanceHostname";
+import { ip } from "../../helpers/ipAddress";
 
 t.test(
   "it connects with auth header and receives events, ignoring pings",
@@ -54,6 +57,12 @@ t.test(
       t.equal(receivedHeaders?.["cache-control"], "no-cache");
       t.equal(receivedHeaders?.["x-agent-platform"], "node");
       t.equal(receivedHeaders?.["x-agent-version"], getAgentVersion());
+      t.equal(
+        receivedHeaders?.["x-agent-hostname"],
+        getInstanceHostname() || "unknown"
+      );
+      t.equal(receivedHeaders?.["x-agent-ip-address"], ip() || "unknown");
+      t.equal(receivedHeaders?.["x-agent-session-id"], getAgentSessionId());
       t.equal(events.length, 1);
       t.equal(events[0].event, "config-updated");
       t.same(JSON.parse(events[0].data), {
