@@ -22,14 +22,20 @@ t.test("it does not mutate the given sources", async (t) => {
   t.not(obj, source);
 });
 
-t.test("it is not vulnerable to prototype pollution via __proto__", async (t) => {
-  const payload = JSON.parse('{"__proto__": {"polluted": true}}');
-  const obj = createSafeObject(payload);
+t.test(
+  "it is not vulnerable to prototype pollution via __proto__",
+  async (t) => {
+    const payload = JSON.parse('{"__proto__": {"polluted": true}}');
+    const obj = createSafeObject(payload);
 
-  t.equal(Object.getPrototypeOf(obj), null);
-  t.same((Object.prototype as unknown as { polluted?: boolean }).polluted, undefined);
-  t.ok(!("polluted" in {}));
-});
+    t.equal(Object.getPrototypeOf(obj), null);
+    t.same(
+      (Object.prototype as unknown as { polluted?: boolean }).polluted,
+      undefined
+    );
+    t.ok(!("polluted" in {}));
+  }
+);
 
 t.test("it returns a plain merge when no sources are given", async (t) => {
   const obj = createSafeObject({});
