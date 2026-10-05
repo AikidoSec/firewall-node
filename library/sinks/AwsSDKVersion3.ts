@@ -8,6 +8,8 @@ import { isPlainObject } from "../helpers/isPlainObject";
 type InvokeUsage = {
   input_tokens?: number;
   output_tokens?: number;
+  cache_read_input_tokens?: number;
+  cache_creation_input_tokens?: number;
 };
 
 function isUsage(usage: unknown): usage is InvokeUsage {
@@ -29,6 +31,8 @@ function isInvokeResponse(response: unknown): response is InvokeResponse {
 type ConverseUsage = {
   inputTokens?: number;
   outputTokens?: number;
+  cacheReadInputTokens?: number;
+  cacheWriteInputTokens?: number;
 };
 
 function isConverseUsage(usage: unknown): usage is ConverseUsage {
@@ -72,10 +76,14 @@ export class AwsSDKVersion3 implements Wrapper {
     if (command && command.input && typeof command.input.modelId === "string") {
       let inputTokens = 0;
       let outputTokens = 0;
+      let cacheReadTokens = 0;
+      let cacheWriteTokens = 0;
 
       if (isUsage(body.usage)) {
         inputTokens = body.usage.input_tokens;
         outputTokens = body.usage.output_tokens;
+        cacheReadTokens = body.usage.cache_read_input_tokens ?? 0;
+        cacheWriteTokens = body.usage.cache_creation_input_tokens ?? 0;
       }
 
       let modelId: string | undefined = undefined;
@@ -98,6 +106,8 @@ export class AwsSDKVersion3 implements Wrapper {
         model: modelId,
         inputTokens: inputTokens,
         outputTokens: outputTokens,
+        cacheReadTokens,
+        cacheWriteTokens,
       });
     }
   }
@@ -127,10 +137,14 @@ export class AwsSDKVersion3 implements Wrapper {
 
     let inputTokens = 0;
     let outputTokens = 0;
+    let cacheReadTokens = 0;
+    let cacheWriteTokens = 0;
 
     if (isConverseUsage(response.usage)) {
       inputTokens = response.usage.inputTokens || 0;
       outputTokens = response.usage.outputTokens || 0;
+      cacheReadTokens = response.usage.cacheReadInputTokens ?? 0;
+      cacheWriteTokens = response.usage.cacheWriteInputTokens ?? 0;
     }
 
     const aiStats = agent.getAIStatistics();
@@ -139,6 +153,8 @@ export class AwsSDKVersion3 implements Wrapper {
       model: modelId,
       inputTokens: inputTokens,
       outputTokens: outputTokens,
+      cacheReadTokens,
+      cacheWriteTokens,
     });
   }
 
