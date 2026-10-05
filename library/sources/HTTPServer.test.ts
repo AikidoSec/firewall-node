@@ -1318,3 +1318,70 @@ t.test("Invalid multipart form data is ignored", async (t) => {
     });
   });
 });
+
+t.test(
+  "it does not block a request whose path matches the exact absolute file being served",
+  async (t) => {
+    const tmpDir = await mkdtemp("/tmp/aikido-");
+    const tmpFile = join(tmpDir, "generated-style-test.css");
+    await writeFile(tmpFile, "body { color: red; }", { encoding: "utf-8" });
+
+    const server = http.createServer((req, res) => {
+      try {
+        const file = readFileSync(req.url || "");
+
+        res.statusCode = 200;
+        res.end(file);
+      } catch (error) {
+        res.statusCode = 500;
+        if (error instanceof Error) {
+          res.end(error.message);
+          return;
+        }
+        res.end("Internal server error");
+      }
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3398, async () => {
+        const response = await new Promise<{
+          statusCode: number | undefined;
+          body: string;
+        }>((resolve, reject) => {
+          const req = http.request(
+            {
+              hostname: "localhost",
+              port: 3398,
+              path: tmpFile,
+              method: "GET",
+            },
+            (res) => {
+              let data = "";
+
+              res.on("data", (chunk) => {
+                data += chunk;
+              });
+
+              res.on("end", () => {
+                resolve({ statusCode: res.statusCode, body: data });
+              });
+            }
+          );
+
+          req.on("error", (err) => {
+            reject(err);
+          });
+
+          req.end();
+        });
+
+        t.equal(response.statusCode, 200);
+        t.equal(response.body, "body { color: red; }");
+
+        server.close();
+        await unlink(tmpFile);
+        resolve();
+      });
+    });
+  }
+);
