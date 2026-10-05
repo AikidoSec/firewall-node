@@ -119,6 +119,7 @@ t.test("it transforms callback handler to async handler", async (t) => {
     },
     source: "lambda/gateway",
     route: "/dev/{proxy+}",
+    isBehindTrustedProxy: true,
   });
 });
 
@@ -155,6 +156,7 @@ t.test("it also works with event v2", async (t) => {
     },
     source: "lambda/gateway",
     route: "/dev/some/path",
+    isBehindTrustedProxy: true,
   });
 });
 
@@ -217,6 +219,7 @@ t.test("json header is missing for gateway event", async (t) => {
     },
     source: "lambda/gateway",
     route: "/dev/{proxy+}",
+    isBehindTrustedProxy: true,
   });
 });
 
@@ -511,6 +514,7 @@ t.test("undefined values", async () => {
     cookies: {},
     routeParams: {},
     source: "lambda/gateway",
+    isBehindTrustedProxy: true,
   });
 });
 
@@ -811,6 +815,7 @@ t.test("it detects attack waves", async (t) => {
       routeParams: {},
       source: "lambda/gateway",
       route: path,
+      isBehindTrustedProxy: true,
     });
   }
 
@@ -995,5 +1000,6 @@ t.test("it works with v2 event with removed cookie header", async (t) => {
     },
     source: "lambda/gateway",
     route: "/some/path",
+    isBehindTrustedProxy: true,
   });
 });

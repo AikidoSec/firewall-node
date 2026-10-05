@@ -37,6 +37,7 @@ export function checkContextForSSRF({
       serverUrl: context.url,
       outboundHostname: hostname,
       outboundPort: port,
+      isBehindTrustedProxy: context.isBehindTrustedProxy,
     })
   ) {
     // We don't want to block outgoing requests to the same host as the server

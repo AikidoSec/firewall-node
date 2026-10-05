@@ -4,6 +4,7 @@ import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { parse } from "../../helpers/parseCookies";
+import { isTrustedProxyRequest } from "../../helpers/trustProxy";
 
 // See https://github.com/restify/node-restify/blob/master/lib/request.js
 export type RestifyRequest = IncomingMessage & {
@@ -14,12 +15,15 @@ export type RestifyRequest = IncomingMessage & {
 };
 
 export function contextFromRequest(req: RestifyRequest): Context {
+  const rawRemoteAddress = req.socket?.remoteAddress;
+
   return {
     method: req.method,
     remoteAddress: getIPAddressFromRequest({
       headers: req.headers || {},
-      remoteAddress: req.socket?.remoteAddress,
+      remoteAddress: rawRemoteAddress,
     }),
+    isBehindTrustedProxy: isTrustedProxyRequest(rawRemoteAddress),
     body: req.body ? req.body : undefined,
     url: req.href(),
     headers: req.headers || {},
