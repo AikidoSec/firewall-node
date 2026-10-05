@@ -44,12 +44,25 @@ function getDecoder(charset) {
   }
 }
 
+function isAscii(data) {
+  for (var i = 0, len = data.length; i < len; ++i) {
+    // eslint-disable-line no-var
+    if (data.charCodeAt(i) > 0x7f) {
+      return false;
+    }
+  }
+  return true;
+}
+
 const decoders = {
   utf8: (data, sourceEncoding) => {
     if (data.length === 0) {
       return "";
     }
     if (typeof data === "string") {
+      if (isAscii(data)) {
+        return data;
+      }
       data = Buffer.from(data, sourceEncoding);
     }
     return data.utf8Slice(0, data.length);
