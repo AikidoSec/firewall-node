@@ -9,6 +9,7 @@ A bundler plugin and specific instructions are available for the following bundl
 
 - [esbuild](./bundlers/esbuild.md)
 - [rolldown](./bundlers/rolldown.md)
+- [tsup](./bundlers/tsup.md)
 
 If your bundler is not listed here, please refer to the general guidelines below and consider reaching out to us for assistance.
 
