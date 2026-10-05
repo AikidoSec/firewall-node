@@ -1,7 +1,6 @@
 import { IncomingMessage } from "http";
 import { Context } from "../../agent/Context";
-import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
-import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
+import { getStableRouteAndRemoteAddress } from "../../helpers/getStableRouteAndRemoteAddress";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { parse } from "../../helpers/parseCookies";
 
@@ -14,12 +13,11 @@ export type RestifyRequest = IncomingMessage & {
 };
 
 export function contextFromRequest(req: RestifyRequest): Context {
+  const { route, remoteAddress } = getStableRouteAndRemoteAddress(req);
+
   return {
     method: req.method,
-    remoteAddress: getIPAddressFromRequest({
-      headers: req.headers || {},
-      remoteAddress: req.socket?.remoteAddress,
-    }),
+    remoteAddress,
     body: req.body ? req.body : undefined,
     url: req.href(),
     headers: req.headers || {},
@@ -27,6 +25,6 @@ export function contextFromRequest(req: RestifyRequest): Context {
     query: isPlainObject(req.query) ? req.query : {},
     cookies: req.headers?.cookie ? parse(req.headers.cookie) : {},
     source: "restify",
-    route: buildRouteFromURL(req.href()),
+    route,
   };
 }
