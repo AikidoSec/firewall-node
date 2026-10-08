@@ -21,6 +21,12 @@ t.test("it detects dangerous path parts", async () => {
   t.same(containsUnsafePathParts("..\\..\\..\\..\\test.txt"), true);
   t.same(containsUnsafePathParts("/test/../test.txt"), true);
   t.same(containsUnsafePathParts("/test/..\\test.txt"), true);
+  // Terminal ".." segments
+  t.same(containsUnsafePathParts("/trusted/root/.."), true);
+  t.same(containsUnsafePathParts("/srv/uploads/.."), true);
+  t.same(containsUnsafePathParts("C:\\uploads\\.."), true);
+  // Bare ".." input
+  t.same(containsUnsafePathParts(".."), true);
 });
 
 t.test(

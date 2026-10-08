@@ -159,6 +159,18 @@ t.test(
           );
         }
       );
+
+      // Test bare ".." is also detected
+      runWithContext(
+        { ...contextBeforeBodyIsParsed, body: { name: ".." } },
+        () => {
+          t.same(
+            extractPathStringsFromUserInputCached(getContext()!),
+            new Set([".."]),
+            "bare '..' must be detected as a path traversal attack"
+          );
+        }
+      );
     });
   }
 );

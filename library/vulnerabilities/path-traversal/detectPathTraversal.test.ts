@@ -238,3 +238,12 @@ t.test(
     t.same(detectPathTraversal("../test.txt", "../"), true);
   }
 );
+
+t.test("it detects bare '..' and terminal '..' segments", async () => {
+  // Bare ".." input
+  t.same(detectPathTraversal("..", ".."), true);
+  // Terminal ".." segments
+  t.same(detectPathTraversal("/srv/uploads/..", ".."), true);
+  t.same(detectPathTraversal("/trusted/root/..", "/trusted/root/.."), true);
+  t.same(detectPathTraversal("/path/to/file/..", "/path/to/file/.."), true);
+});

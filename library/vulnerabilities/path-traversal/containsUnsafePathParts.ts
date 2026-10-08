@@ -14,6 +14,17 @@ export function containsUnsafePathParts(filePath: string) {
     }
   }
 
+  // Check for ".." as a complete path segment (standalone, at start, at end, or between separators)
+  // This catches cases like:
+  // - Bare ".." input
+  // - Terminal ".." like "/trusted/root/.."
+  // - Leading ".." like "../file.txt" (already caught above, but this is more explicit)
+  // - Embedded ".." like "/path/../file" (already caught above, but this is more explicit)
+  const segments = filePath.split(/[/\\]/);
+  if (segments.includes("..")) {
+    return true;
+  }
+
   return false;
 }
 

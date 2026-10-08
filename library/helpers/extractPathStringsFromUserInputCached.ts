@@ -23,7 +23,8 @@ export function extractPathStringsFromUserInputCached(
       // Performance optimization: only keep strings that contain a path separator
       // as only those can be used for path traversal
       // keeps the set smaller and speeds up `fs` and `path` operations
-      if (item.includes(sep)) {
+      // Exception: also keep bare ".." as it's a valid parent directory traversal
+      if (item.includes(sep) || item === "..") {
         userStrings.add(item);
       }
     }
