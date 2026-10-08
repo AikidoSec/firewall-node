@@ -56,7 +56,10 @@ export function getDataSchema(data: unknown, depth = 0): DataSchema {
     return {
       type: "array",
       // Assume that the array is homogenous (for performance reasons)
-      items: data.length > 0 ? getDataSchema(data[0], depth + 1) : null,
+      items:
+        data.length > 0 && depth < maxDepth
+          ? getDataSchema(data[0], depth + 1)
+          : null,
     };
   }
 
