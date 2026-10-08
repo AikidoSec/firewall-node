@@ -189,3 +189,37 @@ t.test("it works", async (t) => {
     customWorker.on("exit", () => resolve());
   });
 });
+
+t.test(
+  "it blocks injection using ESM-only syntax (top level await)",
+  async () => {
+    const agent = createTestAgent();
+    agent.start([new WorkerThreads()]);
+
+    const { Worker } =
+      require("worker_threads") as typeof import("worker_threads");
+
+    const payload = "'; process.exit(1); //";
+    const context: Context = {
+      ...dangerousCodeContext,
+      body: { code: payload },
+    };
+
+    await runWithContext(context, async () => {
+      const source = `await 1; const x = '${payload}';`;
+
+      throws(
+        () =>
+          new Worker(
+            new URL(`data:text/javascript,${encodeURIComponent(source)}`)
+          ),
+        "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+      );
+
+      throws(
+        () => new Worker(`await 1; const x = '${payload}';`, { eval: true }),
+        "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+      );
+    });
+  }
+);
