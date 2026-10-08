@@ -1318,3 +1318,36 @@ t.test("Invalid multipart form data is ignored", async (t) => {
     });
   });
 });
+
+t.test(
+  "Multipart form data without boundary does not crash the process",
+  async (t) => {
+    // Enables body parsing
+    process.env.NEXT_DEPLOYMENT_ID = "1";
+
+    const server = http.createServer((req, res) => {
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify(getContext()));
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3235, () => {
+        fetch({
+          url: new URL("http://localhost:3235"),
+          method: "POST",
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          body: "test",
+          timeoutInMS: 500,
+        }).then(({ statusCode, body }) => {
+          t.same(statusCode, 200);
+          const context = JSON.parse(body);
+          t.same(context.body, undefined);
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
