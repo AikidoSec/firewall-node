@@ -78,14 +78,17 @@ function parseAsFileUrl(path: string) {
 
 /**
  * Checks if a string starts with "file:" to determine if it is a file URL.
- * Removes control characters and spaces at the start of the path and checks lowercase.
+ * Applies the same normalization as the WHATWG URL parser:
+ * 1. Remove leading and trailing C0 controls and space (U+0000 to U+0020)
+ * 2. Remove all ASCII tab or newline (U+0009 TAB, U+000A LF, U+000D CR) from anywhere in the string
  * See https://url.spec.whatwg.org/#url-parsing
  */
 function isFileUrlString(path: string): boolean {
   return (
     path
       // oxlint-disable-next-line no-control-regex
-      .replace(/^[\u0000-\u0020]+/, "")
+      .replace(/^[\u0000-\u0020]+|[\u0000-\u0020]+$/g, "")
+      .replace(/[\t\n\r]/g, "")
       .toLowerCase()
       .startsWith("file:")
   );
