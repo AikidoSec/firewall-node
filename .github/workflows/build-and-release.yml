@@ -56,7 +56,28 @@ jobs:
           rustup default stable
           cargo install wasm-pack
       - name: Setup Aikido safe-chain
-        run: curl -fsSL https://github.com/AikidoSec/safe-chain/releases/latest/download/install-safe-chain.sh | sh -s -- --ci
+        run: |
+          # Pinned to specific version v1.0.0 instead of mutable 'latest'
+          SAFE_CHAIN_VERSION="v1.0.0"
+          SCRIPT_URL="https://github.com/AikidoSec/safe-chain/releases/download/${SAFE_CHAIN_VERSION}/install-safe-chain.sh"
+          SCRIPT_PATH="/tmp/install-safe-chain.sh"
+          # SHA256 checksum of install-safe-chain.sh for v1.0.0
+          # Verify this matches: curl -fsSL "${SCRIPT_URL}" | sha256sum
+          EXPECTED_CHECKSUM="a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+          
+          curl -fsSL "${SCRIPT_URL}" -o "${SCRIPT_PATH}"
+          ACTUAL_CHECKSUM=$(sha256sum "${SCRIPT_PATH}" | awk '{print $1}')
+          
+          if [ "${ACTUAL_CHECKSUM}" != "${EXPECTED_CHECKSUM}" ]; then
+            echo "ERROR: Checksum verification failed for safe-chain install script"
+            echo "Expected: ${EXPECTED_CHECKSUM}"
+            echo "Actual:   ${ACTUAL_CHECKSUM}"
+            rm -f "${SCRIPT_PATH}"
+            exit 1
+          fi
+          
+          sh "${SCRIPT_PATH}" --ci
+          rm -f "${SCRIPT_PATH}"
       - name: Downgrade npm
         # https://github.com/npm/cli/issues/8669
         run: npm i -g npm@11.6.0
