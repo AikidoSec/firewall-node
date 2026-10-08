@@ -8,10 +8,6 @@ import {
 import { IdorViolationResult } from "../../agent/hooks/InterceptorResult";
 import { LRUMap } from "../../ratelimiting/LRUMap";
 import { isDebugging } from "../../helpers/isDebugging";
-import {
-  __wbg_reset_state as resetWasmInstance,
-  wasm_idor_analyze_sql,
-} from "../../internals/zen_internals";
 import { SQLDialect } from "../sql-injection/dialects/SQLDialect";
 import type { SqlQueryResult } from "./IdorAnalysisResult";
 import { IdorProtectionConfig } from "../../agent/IdorProtectionConfig";
@@ -81,6 +77,21 @@ export function checkContextForIdor({
       if (insertViolation) {
         return insertViolation;
       }
+
+      // UPSERT statements (ON CONFLICT / ON DUPLICATE KEY UPDATE) are analyzed as
+      // INSERT but can update existing rows. Check filters to ensure conflict targets
+      // and update conditions respect tenant isolation.
+      if (isUpsertStatement(sql)) {
+        const upsertViolation = checkWhereFilters(
+          queryResult,
+          config,
+          tenant,
+          resolvePlaceholder
+        );
+        if (upsertViolation) {
+          return upsertViolation;
+        }
+      }
     } else {
       const whereViolation = checkWhereFilters(
         queryResult,
@@ -95,6 +106,15 @@ export function checkContextForIdor({
   }
 
   return undefined;
+}
+
+function isUpsertStatement(sql: string): boolean {
+  // Check for PostgreSQL ON CONFLICT or MySQL ON DUPLICATE KEY UPDATE
+  const normalized = sql.toUpperCase();
+  return (
+    normalized.includes("ON CONFLICT") ||
+    normalized.includes("ON DUPLICATE KEY UPDATE")
+  );
 }
 
 function joinWithLimit(items: string[], limit = 5): string {

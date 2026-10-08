@@ -425,4 +425,321 @@ t.test("checkContextForIdor", async (t) => {
       t.equal(result, undefined);
     }
   );
+
+  await t.test(
+    "blocks PostgreSQL ON CONFLICT DO UPDATE without tenant filter",
+    async () => {
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', 'org_123') ON CONFLICT (id) DO UPDATE SET product = 'Updated'",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "query on table 'orders' is missing a filter on column 'tenant_id'"
+      );
+    }
+  );
+
+  await t.test(
+    "allows PostgreSQL ON CONFLICT DO UPDATE with correct tenant filter",
+    async () => {
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', 'org_123') ON CONFLICT (id) WHERE tenant_id = 'org_123' DO UPDATE SET product = 'Updated'",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.equal(result, undefined);
+    }
+  );
+
+  await t.test(
+    "blocks PostgreSQL ON CONFLICT DO UPDATE with wrong tenant filter",
+    async () => {
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', 'org_123') ON CONFLICT (id) WHERE tenant_id = 'org_456' DO UPDATE SET product = 'Updated'",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+      );
+    }
+  );
+
+  await t.test(
+    "blocks MySQL ON DUPLICATE KEY UPDATE without tenant filter",
+    async () => {
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', 'org_123') ON DUPLICATE KEY UPDATE product = 'Updated'",
+        dialect: mysql,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "query on table 'orders' is missing a filter on column 'tenant_id'"
+      );
+    }
+  );
+
+  await t.test(
+    "blocks PostgreSQL ON CONFLICT DO NOTHING without tenant filter",
+    async () => {
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', 'org_123') ON CONFLICT (id) DO NOTHING",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "query on table 'orders' is missing a filter on column 'tenant_id'"
+      );
+    }
+  );
+
+  await t.test(
+    "blocks UPSERT with wrong tenant in INSERT but correct conflict target",
+    async () => {
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', 'org_456') ON CONFLICT (id) WHERE tenant_id = 'org_123' DO UPDATE SET product = 'Updated'",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "sets 'tenant_id' to 'org_456' but tenant ID is 'org_123'"
+      );
+    }
+  );
+
+  await t.test(
+    "blocks PostgreSQL UPSERT attempting cross-tenant update via globally unique key",
+    async () => {
+      // This is the core exploit scenario: tenant A tries to insert with their tenant_id
+      // but uses an ID that belongs to tenant B. Without the fix, the INSERT check passes
+      // (tenant_id = org_123 is correct) but the conflict action updates tenant B's row.
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (999, 'Malicious', 'org_123') ON CONFLICT (id) DO UPDATE SET product = 'Hacked'",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "query on table 'orders' is missing a filter on column 'tenant_id'"
+      );
+    }
+  );
+
+  await t.test(
+    "blocks MySQL UPSERT attempting cross-tenant update via globally unique key",
+    async () => {
+      // Same exploit for MySQL ON DUPLICATE KEY UPDATE
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (999, 'Malicious', 'org_123') ON DUPLICATE KEY UPDATE product = 'Hacked'",
+        dialect: mysql,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "query on table 'orders' is missing a filter on column 'tenant_id'"
+      );
+    }
+  );
+
+  await t.test(
+    "allows PostgreSQL UPSERT with placeholder in conflict WHERE clause",
+    async () => {
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', $1) ON CONFLICT (id) WHERE tenant_id = $1 DO UPDATE SET product = 'Updated'",
+        dialect: postgres,
+        resolvePlaceholder: () => "org_123",
+      });
+
+      t.equal(result, undefined);
+    }
+  );
+
+  await t.test(
+    "blocks PostgreSQL UPSERT with unresolved placeholder in conflict WHERE clause",
+    async () => {
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', 'org_123') ON CONFLICT (id) WHERE tenant_id = $1 DO UPDATE SET product = 'Updated'",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "has a placeholder for 'tenant_id' that could not be resolved"
+      );
+    }
+  );
+
+  await t.test(
+    "blocks PostgreSQL UPSERT with mismatched placeholders",
+    async () => {
+      // INSERT uses $1 (org_123) but conflict WHERE uses $2 (org_456)
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', $1) ON CONFLICT (id) WHERE tenant_id = $2 DO UPDATE SET product = 'Updated'",
+        dialect: postgres,
+        resolvePlaceholder: (placeholder, placeholderNumber) => {
+          if (placeholderNumber === 1) return "org_123";
+          if (placeholderNumber === 2) return "org_456";
+          return undefined;
+        },
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+      );
+    }
+  );
+
+  await t.test(
+    "blocks PostgreSQL ON CONFLICT DO NOTHING that could skip tenant isolation",
+    async () => {
+      // Even DO NOTHING can leak information about existence of rows in other tenants
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (999, 'Test', 'org_123') ON CONFLICT (id) DO NOTHING",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "query on table 'orders' is missing a filter on column 'tenant_id'"
+      );
+    }
+  );
+
+  await t.test(
+    "allows PostgreSQL ON CONFLICT DO NOTHING with proper tenant filter",
+    async () => {
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Test', 'org_123') ON CONFLICT (id) WHERE tenant_id = 'org_123' DO NOTHING",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.equal(result, undefined);
+    }
+  );
+
+  await t.test(
+    "blocks MySQL UPSERT with UPDATE clause modifying tenant_id",
+    async () => {
+      // Attempt to change tenant_id in the UPDATE clause
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', 'org_123') ON DUPLICATE KEY UPDATE product = 'Updated', tenant_id = 'org_456'",
+        dialect: mysql,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "query on table 'orders' is missing a filter on column 'tenant_id'"
+      );
+    }
+  );
+
+  await t.test(
+    "blocks PostgreSQL UPSERT with complex conflict target but no tenant filter",
+    async () => {
+      // Multi-column conflict target without tenant isolation
+      const result = check({
+        sql: "INSERT INTO orders (id, user_id, product, tenant_id) VALUES (1, 100, 'Widget', 'org_123') ON CONFLICT (id, user_id) DO UPDATE SET product = 'Updated'",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "query on table 'orders' is missing a filter on column 'tenant_id'"
+      );
+    }
+  );
+
+  await t.test(
+    "allows PostgreSQL UPSERT with complex conflict target and tenant filter",
+    async () => {
+      const result = check({
+        sql: "INSERT INTO orders (id, user_id, product, tenant_id) VALUES (1, 100, 'Widget', 'org_123') ON CONFLICT (id, user_id) WHERE tenant_id = 'org_123' DO UPDATE SET product = 'Updated'",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.equal(result, undefined);
+    }
+  );
+
+  await t.test(
+    "blocks case-insensitive ON CONFLICT variant",
+    async () => {
+      // Test that detection works regardless of case
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', 'org_123') on conflict (id) do update set product = 'Updated'",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "query on table 'orders' is missing a filter on column 'tenant_id'"
+      );
+    }
+  );
+
+  await t.test(
+    "blocks case-insensitive ON DUPLICATE KEY UPDATE variant",
+    async () => {
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', 'org_123') on duplicate key update product = 'Updated'",
+        dialect: mysql,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "query on table 'orders' is missing a filter on column 'tenant_id'"
+      );
+    }
+  );
+
+  await t.test(
+    "allows regular INSERT without UPSERT clauses",
+    async () => {
+      // Ensure the fix doesn't break normal INSERTs
+      const result = check({
+        sql: "INSERT INTO orders (id, product, tenant_id) VALUES (1, 'Widget', 'org_123')",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.equal(result, undefined);
+    }
+  );
 });
