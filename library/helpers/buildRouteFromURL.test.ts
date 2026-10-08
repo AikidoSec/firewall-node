@@ -198,3 +198,31 @@ t.test("it detects numeric comma separated arrays", async (t) => {
   t.same(buildRouteFromURL("/users/1,2,3_"), "/users/1,2,3_");
   t.same(buildRouteFromURL("/users/1,2,3a"), "/users/1,2,3a");
 });
+
+t.test("it handles encoded slashes correctly to prevent bypass", async (t) => {
+  // Encoded slashes should remain encoded to prevent creating new path segments
+  // This prevents bypassing endpoint-specific access controls and rate limits
+  // For example, /posts/a%2Fb should match /posts/:id, not /posts/:id/:id
+  t.same(buildRouteFromURL("/posts/a%2Fb"), "/posts/a%2Fb");
+  t.same(buildRouteFromURL("/posts/a%2fb"), "/posts/a%2Fb");
+  
+  // Numbers with encoded slashes should still be recognized as a single segment
+  t.same(buildRouteFromURL("/posts/123%2F456"), "/posts/123%2F456");
+  
+  // Regular path should work as before
+  t.same(buildRouteFromURL("/api/users/john"), "/api/users/john");
+  
+  // Double-encoded slashes should decode to %2F (one level of decoding)
+  t.same(buildRouteFromURL("/posts/a%252Fb"), "/posts/a%2Fb");
+  
+  // Multiple encoded slashes in one segment
+  t.same(buildRouteFromURL("/posts/a%2Fb%2Fc"), "/posts/a%2Fb%2Fc");
+  
+  // Encoded backslashes should also remain encoded
+  t.same(buildRouteFromURL("/posts/a%5Cb"), "/posts/a%5Cb");
+  t.same(buildRouteFromURL("/posts/a%5cb"), "/posts/a%5Cb");
+  
+  // Combination of encoded slash and other encoded characters
+  t.same(buildRouteFromURL("/posts/hello%20world%2Ftest"), "/posts/hello world%2Ftest");
+  t.same(buildRouteFromURL("/posts/%2Ftest"), "/posts/%2Ftest");
+});

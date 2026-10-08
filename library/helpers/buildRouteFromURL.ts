@@ -22,14 +22,36 @@ export function buildRouteFromURL(url: string) {
     return undefined;
   }
 
-  if (path.includes("%") && path.length >= 3) {
-    const decoded = safeDecodeURIComponent(path);
-    if (decoded) {
-      path = decoded;
+  // Split the path into segments BEFORE decoding to prevent encoded slashes
+  // from creating additional segments. We decode each segment individually,
+  // but we must NOT decode %2F or %5C as these are path separators that
+  // should remain encoded to preserve the path structure.
+  const segments = path.split("/");
+  
+  // Decode each segment individually and apply parameter replacement
+  const processedSegments = segments.map((segment) => {
+    // Decode the segment if it contains percent-encoded characters
+    // Note: We don't decode %2F (/) or %5C (\) to prevent path traversal
+    let decodedSegment = segment;
+    if (segment.includes("%") && segment.length >= 3) {
+      // Replace %2F and %5C with placeholders before decoding
+      const withPlaceholders = segment
+        .replace(/%2F/gi, "\x00SLASH\x00")
+        .replace(/%5C/gi, "\x00BACKSLASH\x00");
+      
+      const decoded = safeDecodeURIComponent(withPlaceholders);
+      if (decoded) {
+        // Restore the placeholders as the original encoded values
+        decodedSegment = decoded
+          .replace(/\x00SLASH\x00/g, "%2F")
+          .replace(/\x00BACKSLASH\x00/g, "%5C");
+      }
     }
-  }
+    
+    return replaceURLSegmentWithParam(decodedSegment);
+  });
 
-  const route = path.split("/").map(replaceURLSegmentWithParam).join("/");
+  const route = processedSegments.join("/");
 
   if (route === "/") {
     return "/";
