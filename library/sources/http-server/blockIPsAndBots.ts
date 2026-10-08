@@ -150,7 +150,7 @@ function sendResponse(
   message: string
 ) {
   if (isStream(res)) {
-    res.respond({ ":status": statusCode, "Content-Type": "text/plain" });
+    res.respond({ ":status": statusCode, "content-type": "text/plain" });
     res.end(message);
     return;
   }
