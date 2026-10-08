@@ -1,7 +1,8 @@
 /* oxlint-disable no-console */
 
-import { hostname, platform, release } from "os";
+import { platform, release } from "os";
 import { getAgentVersion } from "../helpers/getAgentVersion";
+import { getInstanceHostname } from "../helpers/getInstanceHostname";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
@@ -12,6 +13,7 @@ import type {
   AgentInfo,
   DetectedAttack,
   DetectedAttackWave,
+  CustomEvent,
 } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
@@ -490,20 +492,11 @@ export class Agent {
     });
   }
 
-  private getHostname() {
-    const instanceName = process.env.AIKIDO_INSTANCE_NAME;
-    if (instanceName && instanceName.trim().length > 0) {
-      return instanceName.trim();
-    }
-
-    return hostname() || "";
-  }
-
   private getAgentInfo(): AgentInfo {
     return {
       dryMode: !this.block,
       /* c8 ignore next */
-      hostname: this.getHostname(),
+      hostname: getInstanceHostname(),
       version: getAgentVersion(),
       library: "firewall-node",
       /* c8 ignore next */
@@ -786,6 +779,24 @@ export class Agent {
         });
       this.pendingEvents.onAPICall(promise);
     }
+  }
+
+  onTrackEvent(event: Omit<CustomEvent, "agent">) {
+    if (!this.token) {
+      return;
+    }
+
+    const completeEvent: CustomEvent = {
+      ...event,
+      agent: this.getAgentInfo(),
+    };
+
+    const promise = this.api
+      .report(this.token, completeEvent, this.timeoutInMS)
+      .catch(() => {
+        this.logger.log("Failed to send tracked event");
+      });
+    this.pendingEvents.onAPICall(promise);
   }
 
   public async shutdown(timeoutInMS = 1000): Promise<void> {

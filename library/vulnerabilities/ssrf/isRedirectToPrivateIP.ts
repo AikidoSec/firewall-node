@@ -1,4 +1,5 @@
 import { Context } from "../../agent/Context";
+import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInContext } from "./findHostnameInContext";
 import { getRedirectOrigin } from "./getRedirectOrigin";
@@ -25,7 +26,7 @@ export function isRedirectToPrivateIP(url: URL, context: Context) {
       return findHostnameInContext(
         redirectOrigin.hostname,
         context,
-        parseInt(redirectOrigin.port, 10)
+        getPortFromURL(redirectOrigin)
       );
     }
   }

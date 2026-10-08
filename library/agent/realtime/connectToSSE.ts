@@ -5,9 +5,9 @@ import { createParser } from "../../helpers/eventsource-parser/parse";
 import type { EventSourceMessage } from "../../helpers/eventsource-parser/types";
 import { isDebuggingSSE } from "../../helpers/isDebuggingSSE";
 import { Token } from "../api/Token";
+import { getCommonAgentHeaders } from "../getCommonAgentHeaders";
 import { Logger } from "../logger/Logger";
 import { getRealtimeURL } from "./getRealtimeURL";
-import { getAgentVersion } from "../../helpers/getAgentVersion";
 
 const INITIAL_RECONNECT_MS = 5000;
 const MAX_RECONNECT_MS = 60 * 1000;
@@ -51,11 +51,10 @@ function connect({
       {
         method: "GET",
         headers: {
+          ...getCommonAgentHeaders(),
           Authorization: token.asString(),
           Accept: "text/event-stream",
           "Cache-Control": "no-cache",
-          "X-Agent-Platform": "node",
-          "X-Agent-Version": getAgentVersion(),
         },
       },
       (response) => {

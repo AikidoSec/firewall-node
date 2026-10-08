@@ -44,6 +44,14 @@ t.test("it detects JS injections", async (t) => {
   );
 });
 
+t.test("it recovers after deeply nested parentheses", async (t) => {
+  const payload = "(".repeat(10_000);
+
+  t.equal(detectJsInjection(payload, payload), false);
+  t.equal(detectJsInjection(payload, payload), false);
+  t.equal(detectJsInjection("const x = 1 + 1; fetch();", "+ 1; fetch()"), true);
+});
+
 t.test("does not detect JS injections", async (t) => {
   t.same(detectJsInjection("1 + 1", "1 + 1"), false);
   t.same(detectJsInjection("1 + 1", "const x = 1 + 1; x"), false);
@@ -102,6 +110,41 @@ t.test("test source type", async (t) => {
       "const test: string = 'Hello World!'; console.log('test'); //';",
       "Hello World!'; console.log('test'); //",
       1
+    ),
+    true
+  );
+});
+
+t.test("test source with tenary operator", async (t) => {
+  t.same(
+    detectJsInjection(
+      "const test = condition ? 'value1' : 'value2'; console.log('test'); //';",
+      "value1' : 'value2'; console.log('test'); //",
+      0
+    ),
+    true
+  );
+});
+
+t.test(
+  "it detects injections that only parse with original casing",
+  async (t) => {
+    t.same(
+      detectJsInjection(
+        'list.forEach((CLASS) => { return 1; }); require("fs").writeFileSync("pwn","x"); //);',
+        'CLASS) => { return 1; }); require("fs").writeFileSync("pwn","x"); //'
+      ),
+      true
+    );
+  }
+);
+
+t.test("test injection of else branch", async (t) => {
+  t.same(
+    detectJsInjection(
+      "if (status === 'ok') { resolve(data) } else if (status === 'retry') { retry() }",
+      "} else if (status === 'retry') { retry() }",
+      0
     ),
     true
   );

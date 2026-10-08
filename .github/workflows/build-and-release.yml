@@ -1,26 +1,30 @@
 name: 🚀 Build and release
+
+permissions:
+  contents: read
+
 on:
   release:
     types: [created]
 jobs:
   build-artifacts:
-    uses: ./.github/workflows/build.yml
+    uses: $/.github/workflows/build.yml
     permissions:
       contents: read
   run-unit-tests:
     needs: build-artifacts
-    uses: ./.github/workflows/unit-test.yml
+    uses: $/.github/workflows/unit-test.yml
     permissions:
       contents: read
       id-token: write
   run-end-to-end-tests:
     needs: build-artifacts
-    uses: ./.github/workflows/end-to-end-tests.yml
+    uses: $/.github/workflows/end-to-end-tests.yml
     permissions:
       contents: read
   run-benchmarks:
     needs: build-artifacts
-    uses: ./.github/workflows/benchmark.yml
+    uses: $/.github/workflows/benchmark.yml
     permissions:
       contents: read
   build:
@@ -34,12 +38,12 @@ jobs:
       id-token: write
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Use Node.js 24.x
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24.x"
           registry-url: "https://registry.npmjs.org"

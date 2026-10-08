@@ -1,9 +1,15 @@
 import * as express from "express";
 import * as asyncHandler from "express-async-handler";
 import * as t from "tap";
+import { getAgentSessionId } from "../../helpers/getAgentSessionId";
+import { getAgentVersion } from "../../helpers/getAgentVersion";
+import { getInstanceHostname } from "../../helpers/getInstanceHostname";
+import { ip } from "../../helpers/ipAddress";
 import { Token } from "./Token";
 import { FetchListsAPINodeHTTP } from "./FetchListsAPINodeHTTP";
 import { FetchListsAPIResponse } from "./FetchListsAPI";
+
+let receivedHeaders: Record<string, string | string[] | undefined> = {};
 
 function createTestEndpoint({
   statusCode,
@@ -36,6 +42,7 @@ function createTestEndpoint({
   app.get(
     "/api/runtime/firewall/lists",
     asyncHandler(async (req, res) => {
+      receivedHeaders = req.headers;
       if (sleepInMs) {
         await new Promise((resolve) => setTimeout(resolve, sleepInMs));
       }
@@ -79,6 +86,14 @@ t.test("it fetches the lists", async (t) => {
     monitoredUserAgents: "",
     userAgentDetails: [],
   });
+  t.equal(receivedHeaders["x-agent-platform"], "node");
+  t.equal(receivedHeaders["x-agent-version"], getAgentVersion());
+  t.equal(
+    receivedHeaders["x-agent-hostname"],
+    getInstanceHostname() || "unknown"
+  );
+  t.equal(receivedHeaders["x-agent-ip-address"], ip() || "unknown");
+  t.equal(receivedHeaders["x-agent-session-id"], getAgentSessionId());
 
   await stop();
 });

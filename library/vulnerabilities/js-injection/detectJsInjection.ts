@@ -1,5 +1,9 @@
 import { shouldReturnEarly } from "./shouldReturnEarly";
-import { wasm_detect_js_injection } from "../../internals/zen_internals";
+import { isDebugging } from "../../helpers/isDebugging";
+import {
+  __wbg_reset_state as resetWasmInstance,
+  wasm_detect_js_injection,
+} from "../../internals/zen_internals";
 
 export type ZenInternalsJsSourceType =
   | 0 // js (auto-detect CJS or ESM)
@@ -21,16 +25,25 @@ export function detectJsInjection(
   // See https://github.com/oxc-project/oxc/issues/18392
   sourceType: ZenInternalsJsSourceType = 2
 ): boolean {
-  const codeLowercase = code.toLowerCase();
-  const userInputLowercase = userInput.toLowerCase();
-
-  if (shouldReturnEarly(codeLowercase, userInputLowercase)) {
+  if (shouldReturnEarly(code.toLowerCase(), userInput.toLowerCase())) {
     return false;
   }
 
-  return wasm_detect_js_injection(
-    codeLowercase,
-    userInputLowercase,
-    sourceType
-  );
+  try {
+    return wasm_detect_js_injection(code, userInput, sourceType);
+  } catch {
+    if (isDebugging()) {
+      // oxlint-disable-next-line no-console
+      console.warn(
+        "AIKIDO: Zen could not check for JavaScript injection due to an internal error."
+      );
+    }
+    // A failed WASM call poisons the current instance, so replace it.
+    try {
+      resetWasmInstance();
+    } catch {
+      // The WASM error is already handled, so a failed reset should not throw.
+    }
+    return false;
+  }
 }

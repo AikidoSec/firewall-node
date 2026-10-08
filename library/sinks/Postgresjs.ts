@@ -6,29 +6,50 @@ import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/ch
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 
 export class Postgresjs implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectPostgres();
 
-  private inspectQuery(args: unknown[]): InterceptorResult {
-    const context = getContext();
-
-    if (!context) {
+  private resolvePlaceholder(
+    placeholder: string,
+    params: unknown[] | undefined
+  ): unknown {
+    const match = /^\$(\d+)$/.exec(placeholder);
+    if (!match || !params) {
       return undefined;
     }
 
-    if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
-      const sql: string = args[0];
+    return params[Number.parseInt(match[1], 10) - 1];
+  }
 
-      return checkContextForSqlInjection({
-        sql: sql,
-        context: context,
+  private inspectQuery(args: unknown[]): InterceptorResult {
+    if (typeof args[0] !== "string" || args[0].length === 0) {
+      return undefined;
+    }
+
+    const sql = args[0];
+    const params = Array.isArray(args[1]) ? args[1] : undefined;
+    const context = getContext();
+
+    if (context) {
+      const sqlInjectionResult = checkContextForSqlInjection({
+        sql,
+        context,
         operation: "sql.unsafe",
         dialect: this.dialect,
       });
+      if (sqlInjectionResult) {
+        return sqlInjectionResult;
+      }
     }
 
-    return undefined;
+    return checkContextForIdor({
+      sql,
+      dialect: this.dialect,
+      resolvePlaceholder: (placeholder) =>
+        this.resolvePlaceholder(placeholder, params),
+    });
   }
 
   wrap(hooks: Hooks) {

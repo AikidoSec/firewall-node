@@ -2,12 +2,14 @@ import { fetch } from "../../helpers/fetch";
 import { Token } from "../api/Token";
 import { Config } from "../Config";
 import { getAPIURL } from "../getAPIURL";
+import { getCommonAgentHeaders } from "../getCommonAgentHeaders";
 
 export async function getConfig(token: Token): Promise<Config> {
   const { body, statusCode } = await fetch({
     url: new URL(`${getAPIURL().toString()}api/runtime/config`),
     method: "GET",
     headers: {
+      ...getCommonAgentHeaders(),
       Authorization: token.asString(),
     },
     timeoutInMS: 3000,
