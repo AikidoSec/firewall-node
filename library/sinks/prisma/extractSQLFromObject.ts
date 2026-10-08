@@ -47,13 +47,29 @@ function extractSQLFromTaggedTemplate(
   template: { strings: unknown[]; values: unknown[] },
   dialect: SQLDialect
 ): string | undefined {
-  const { strings } = template;
+  const { strings, values } = template;
 
   let sql = "";
   for (let i = 0; i < strings.length; i++) {
     sql += strings[i];
-    if (i < template.values.length) {
-      sql += getPlaceholderForDialect(dialect, i);
+    if (i < values.length) {
+      // Check if the value is a nested Prisma.raw() fragment (also a tagged template)
+      if (isTaggedTemplate(values[i])) {
+        // Recursively extract SQL from nested raw fragments
+        const nestedSQL = extractSQLFromTaggedTemplate(
+          values[i] as { strings: unknown[]; values: unknown[] },
+          dialect
+        );
+        if (nestedSQL) {
+          sql += nestedSQL;
+        } else {
+          // If we can't extract SQL from the nested fragment, use a placeholder
+          sql += getPlaceholderForDialect(dialect, i);
+        }
+      } else {
+        // For regular values, use a placeholder
+        sql += getPlaceholderForDialect(dialect, i);
+      }
     }
   }
   return sql;
