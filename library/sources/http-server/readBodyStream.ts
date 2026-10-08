@@ -34,17 +34,24 @@ export async function readBodyStream(
   if (req.headers["content-type"] !== undefined) {
     const bodyType = getBodyDataType(req.headers);
     if (bodyType === "form-data" || bodyType === "form-urlencoded") {
-      busboy = new Busboy({
-        headers: req.headers as BusboyHeaders,
-      });
+      try {
+        busboy = new Busboy({
+          headers: req.headers as BusboyHeaders,
+        });
+      } catch (err) {
+        // e.g. multipart/form-data without a boundary
+        getInstance()?.log(
+          `Error parsing form data body: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
 
-      busboy.on("error", (err) => {
+      busboy?.on("error", (err) => {
         getInstance()?.log(
           `Error parsing form data body: ${err instanceof Error ? err.message : String(err)}`
         );
       });
 
-      busboy.on("field", (fieldname, val) => {
+      busboy?.on("field", (fieldname, val) => {
         if (typeof val !== "string") {
           return;
         }
