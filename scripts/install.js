@@ -98,8 +98,11 @@ async function installDependencies(folder) {
 }
 
 /**
- * We need to manually rebuild native packages (the ones we trust)
- * Because we installed dependencies with --ignore-scripts flag
+ * Install prebuilt native binaries for packages that require them.
+ * We only use prebuilt binaries and do not fall back to node-gyp rebuild
+ * to maintain the security boundary established by --ignore-scripts.
+ * Building from source via node-gyp would execute package-controlled build
+ * actions in binding.gyp, which could contain malicious code.
  */
 async function rebuildNativePackages(folder) {
   const packageJsonPath = join(projectRoot, folder, "package.json");
@@ -126,7 +129,7 @@ async function rebuildNativePackages(folder) {
 
   if (packagesToRebuild.length > 0) {
     console.log(
-      `Rebuilding native packages for ${folder}: ${packagesToRebuild.join(", ")}`
+      `Installing prebuilt binaries for ${folder}: ${packagesToRebuild.join(", ")}`
     );
 
     for (const pkgName of packagesToRebuild) {
@@ -137,19 +140,15 @@ async function rebuildNativePackages(folder) {
           await execAsync("../.bin/prebuild-install -r napi", {
             cwd: packagePath,
           });
+          console.log(`✓ Installed prebuilt binary for ${pkgName} in ${folder}`);
         } catch (error) {
           console.error(
-            `prebuild-install failed for ${pkgName} in ${folder}: ${error.message}, falling back to node-gyp rebuild`
+            `❌ Failed to install prebuilt binary for ${pkgName} in ${folder}: ${error.message}`
           );
-          try {
-            await execAsync("node-gyp rebuild", {
-              cwd: packagePath,
-            });
-          } catch (error) {
-            console.error(
-              `❌ node-gyp rebuild failed for ${pkgName} in ${folder}: ${error.message}`
-            );
-          }
+          console.error(
+            `   Prebuilt binaries are required. Building from source is disabled for security.`
+          );
+          process.exit(1);
         }
       }
 
@@ -158,19 +157,15 @@ async function rebuildNativePackages(folder) {
           await execAsync("../.bin/prebuild-install", {
             cwd: packagePath,
           });
+          console.log(`✓ Installed prebuilt binary for ${pkgName} in ${folder}`);
         } catch (error) {
           console.error(
-            `prebuild-install failed for ${pkgName} in ${folder}: ${error.message}, falling back to node-gyp rebuild`
+            `❌ Failed to install prebuilt binary for ${pkgName} in ${folder}: ${error.message}`
           );
-          try {
-            await execAsync("node-gyp rebuild --release", {
-              cwd: packagePath,
-            });
-          } catch (error) {
-            console.error(
-              `❌ node-gyp rebuild failed for ${pkgName} in ${folder}: ${error.message}`
-            );
-          }
+          console.error(
+            `   Prebuilt binaries are required. Building from source is disabled for security.`
+          );
+          process.exit(1);
         }
       }
     }
