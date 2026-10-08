@@ -101,6 +101,7 @@ function discoverRouteFromStream(
 
       if (
         context.remoteAddress &&
+        !context.blockedDueToIPOrBot &&
         agent.getAttackWaveDetector().check(context, statusCode)
       ) {
         agent.onDetectedAttackWave({
