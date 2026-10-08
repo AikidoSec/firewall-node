@@ -1,44 +1,87 @@
-import { getCurrentAndNextSegments } from "../../helpers/getCurrentAndNextSegments";
-
-const escapeChars = ['"', "'"];
 const dangerousCharsInsideDoubleQuotes = ["$", "`", "\\", "!"];
 
+/**
+ * Determines the shell quote state at a given position in a command string.
+ * Returns the active quote character ('"' or "'") or null if not quoted.
+ */
+function getQuoteStateAt(command: string, position: number): string | null {
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let escaped = false;
+
+  for (let i = 0; i < position; i++) {
+    const char = command[i];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      // Backslash escapes the next character (except inside single quotes)
+      if (!inSingleQuote) {
+        escaped = true;
+      }
+      continue;
+    }
+
+    if (char === "'" && !inDoubleQuote) {
+      inSingleQuote = !inSingleQuote;
+    } else if (char === '"' && !inSingleQuote) {
+      inDoubleQuote = !inDoubleQuote;
+    }
+  }
+
+  if (inSingleQuote) {
+    return "'";
+  }
+  if (inDoubleQuote) {
+    return '"';
+  }
+  return null;
+}
+
 export function isSafelyEncapsulated(command: string, userInput: string) {
-  return getCurrentAndNextSegments(command.split(userInput)).every(
-    ({ currentSegment, nextSegment }) => {
-      const charBeforeUserInput = currentSegment.slice(-1);
-      const charAfterUserInput = nextSegment.slice(0, 1);
+  if (!command.includes(userInput)) {
+    return true;
+  }
 
-      const isEscapeChar = escapeChars.find(
-        (char) => char === charBeforeUserInput
-      );
+  // Find all occurrences of userInput in command
+  let index = command.indexOf(userInput);
+  while (index !== -1) {
+    const startPos = index;
+    const endPos = index + userInput.length;
 
-      if (!isEscapeChar) {
-        return false;
-      }
+    // Check the quote state at the start of the user input
+    const quoteState = getQuoteStateAt(command, startPos);
 
-      if (charBeforeUserInput !== charAfterUserInput) {
-        return false;
-      }
+    // If not quoted, it's not safely encapsulated
+    if (quoteState === null) {
+      return false;
+    }
 
-      if (userInput.includes(charBeforeUserInput)) {
-        return false;
-      }
+    // Verify the quote state remains consistent throughout the user input
+    // by checking that the quote state at the end is the same
+    const endQuoteState = getQuoteStateAt(command, endPos);
+    if (endQuoteState !== quoteState) {
+      return false;
+    }
 
-      // There are no dangerous characters inside single quotes
-      // You can use certain characters inside double quotes
-      // https://www.gnu.org/software/bash/manual/html_node/Single-Quotes.html
-      // https://www.gnu.org/software/bash/manual/html_node/Double-Quotes.html
+    // If in single quotes, any content is safe (no escaping possible)
+    // If in double quotes, check for dangerous characters
+    if (quoteState === '"') {
       if (
-        isEscapeChar === '"' &&
         dangerousCharsInsideDoubleQuotes.some((char) =>
           userInput.includes(char)
         )
       ) {
         return false;
       }
-
-      return true;
     }
-  );
+
+    // Check next occurrence
+    index = command.indexOf(userInput, index + 1);
+  }
+
+  return true;
 }

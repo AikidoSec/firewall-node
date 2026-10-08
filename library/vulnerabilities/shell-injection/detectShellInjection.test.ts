@@ -465,6 +465,58 @@ t.test("form feed as separator between commands", async () => {
   isShellInjection("rm\fls", "rm");
 });
 
+t.test("quote adjacency bypass is prevented", async () => {
+  // Pentest finding: adjacent quotes don't mean the input is encapsulated
+  isShellInjection("echo 'prefix';id;'suffix'", ";id;");
+  isShellInjection("echo 'prefix';whoami;'suffix'", ";whoami;");
+  isShellInjection(`echo "prefix";id;"suffix"`, ";id;");
+  isShellInjection("echo 'a'; rm -rf /; 'b'", "; rm -rf /; ");
+});
+
+t.test("pentest exploit scenarios are blocked", async () => {
+  // Direct reproduction of pentest finding examples
+  isShellInjection("echo 'prefix';id;'suffix'", ";id;");
+  isShellInjection("cat 'file1';cat /etc/passwd;'file2'", ";cat /etc/passwd;");
+  isShellInjection("ls 'dir1';whoami;'dir2'", ";whoami;");
+  
+  // Command chaining with adjacent quotes
+  isShellInjection("echo 'x'&&id&&'y'", "&&id&&");
+  isShellInjection("echo 'x'||whoami||'y'", "||whoami||");
+  isShellInjection("echo 'test'|cat /etc/passwd|'end'", "|cat /etc/passwd|");
+  
+  // Mixed quote types (single and double)
+  isShellInjection(`echo "prefix";id;'suffix'`, ";id;");
+  isShellInjection(`echo 'prefix';id;"suffix"`, ";id;");
+  
+  // Multiple commands in payload
+  isShellInjection("echo 'a';echo 'b';id;'c'", ";echo 'b';id;");
+  isShellInjection("cmd 'arg1';malicious;'arg2' 'arg3'", ";malicious;");
+});
+
+t.test("properly quoted dangerous input remains safe", async () => {
+  // These should NOT be flagged - input is actually inside quotes
+  isNotShellInjection("echo ';id;'", ";id;");
+  isNotShellInjection(`echo ";id;"`, ";id;");
+  isNotShellInjection("echo 'prefix;id;suffix'", ";id;");
+  isNotShellInjection(`echo "prefix;id;suffix"`, ";id;");
+  isNotShellInjection("echo ';whoami;'", ";whoami;");
+  isNotShellInjection("echo '&&id&&'", "&&id&&");
+  isNotShellInjection("echo '||whoami||'", "||whoami||");
+});
+
+t.test("quote state tracking prevents false negatives", async () => {
+  // Verify the fix properly tracks quote state, not just adjacency
+  isShellInjection(`echo "a" 'b' "c";id;"d"`, ";id;");
+  isShellInjection(`echo 'a' "b" 'c';id;'d'`, ";id;");
+  
+  // Payload at start or end
+  isShellInjection(`;id;echo 'suffix'`, ";id;");
+  isShellInjection(`echo 'prefix';id;`, ";id;");
+  
+  // Complex nesting scenarios
+  isShellInjection("echo 'safe';echo 'also safe';id;'still safe'", ";id;");
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
