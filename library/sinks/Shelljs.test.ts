@@ -191,3 +191,112 @@ t.test("invalid arguments are passed to shelljs", async () => {
     t.same(result.code, 1);
   });
 });
+
+// Test for the security fix: ShellJS 0.10.x bypass vulnerability
+t.test(
+  "shelljs 0.10.x is instrumented and blocks shell injection",
+  async (t) => {
+    // Verify that shelljs version 0.10.x is being used
+    const shelljsPackage = require("shelljs/package.json");
+    t.match(
+      shelljsPackage.version,
+      /^0\.10\./,
+      "Test should run with shelljs 0.10.x"
+    );
+
+    // Test that shell injection is detected in version 0.10.x
+    const error = await t.rejects(async () => {
+      runWithContext(dangerousContext, () => {
+        return shelljs.exec("echo xyz;pwd||x=");
+      });
+    });
+
+    t.ok(error instanceof Error);
+    if (error instanceof Error) {
+      t.match(
+        error.message,
+        /Zen has blocked a shell injection/,
+        "Shell injection should be blocked for shelljs 0.10.x"
+      );
+      t.match(
+        error.message,
+        /shelljs\.exec/,
+        "Error should reference shelljs.exec operation"
+      );
+    }
+  }
+);
+
+t.test(
+  "shelljs 0.10.x execSync is instrumented and blocks shell injection",
+  async (t) => {
+    // Test that the execSync instrumentation works for 0.10.x
+    const error = await t.rejects(async () => {
+      runWithContext(dangerousContext, () => {
+        // execSync is the internal function that gets instrumented
+        return shelljs.exec("ls xyz;pwd||x=", { silent: true });
+      });
+    });
+
+    t.ok(error instanceof Error);
+    if (error instanceof Error) {
+      t.match(
+        error.message,
+        /Zen has blocked a shell injection/,
+        "execSync should be instrumented in shelljs 0.10.x"
+      );
+    }
+  }
+);
+
+t.test(
+  "shelljs 0.10.x allows safe commands without user input",
+  async (t) => {
+    // Verify that safe commands still work in 0.10.x
+    try {
+      runWithContext(safeContext, () => {
+        const result = shelljs.exec("echo test", { silent: true });
+        t.ok(result.code === 0 || result.code === 1); // Command may succeed or fail, but shouldn't throw
+      });
+      t.pass("Safe commands should execute without blocking");
+    } catch (error) {
+      t.fail("Safe commands should not be blocked");
+    }
+  }
+);
+
+t.test(
+  "shelljs 0.10.x blocks injection with various shell metacharacters",
+  async (t) => {
+    const dangerousCommands = [
+      "ls; cat /etc/passwd",
+      "ls && cat /etc/passwd",
+      "ls || cat /etc/passwd",
+      "ls | cat /etc/passwd",
+      "ls `cat /etc/passwd`",
+      "ls $(cat /etc/passwd)",
+    ];
+
+    for (const cmd of dangerousCommands) {
+      const contextWithCmd: Context = {
+        ...dangerousContext,
+        body: { myTitle: cmd },
+      };
+
+      const error = await t.rejects(async () => {
+        runWithContext(contextWithCmd, () => {
+          return shelljs.exec(cmd, { silent: true });
+        });
+      });
+
+      t.ok(error instanceof Error, `Should block: ${cmd}`);
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          /Zen has blocked a shell injection/,
+          `Should detect injection in: ${cmd}`
+        );
+      }
+    }
+  }
+);
