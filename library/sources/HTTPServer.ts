@@ -70,6 +70,31 @@ export class HTTPServer implements Wrapper {
     return args;
   }
 
+  private instrumentServerInstance(
+    instance: unknown,
+    module: string,
+    pkgInfo: any
+  ) {
+    // Wrap all EventEmitter listener registration methods to ensure
+    // all handlers go through firewall protection
+    const methods = [
+      "on",
+      "addListener",
+      "once",
+      "prependListener",
+      "prependOnceListener",
+    ];
+
+    methods.forEach((method) => {
+      wrapExport(instance, method, pkgInfo, {
+        kind: undefined,
+        modifyArgs: (args, agent) => {
+          return this.wrapOn(args, module, agent);
+        },
+      });
+    });
+  }
+
   wrap(hooks: Hooks) {
     ["http", "https", "http2"].forEach((module) => {
       hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
@@ -81,6 +106,10 @@ export class HTTPServer implements Wrapper {
               this.warnIfNoSourceWrapped(agent);
               return this.wrapRequestListener(args, module, agent);
             },
+            modifyReturnValue: (args, instance) => {
+              this.instrumentServerInstance(instance, module, pkgInfo);
+              return instance;
+            },
           });
         }
 
@@ -91,12 +120,7 @@ export class HTTPServer implements Wrapper {
             return this.wrapRequestListener(args, module, agent);
           },
           modifyReturnValue: (args, instance) => {
-            wrapExport(instance, "on", pkgInfo, {
-              kind: undefined,
-              modifyArgs: (args, agent) => {
-                return this.wrapOn(args, module, agent);
-              },
-            });
+            this.instrumentServerInstance(instance, module, pkgInfo);
             return instance;
           },
         });
@@ -109,12 +133,7 @@ export class HTTPServer implements Wrapper {
               return this.wrapRequestListener(args, module, agent);
             },
             modifyReturnValue: (args, instance) => {
-              wrapExport(instance, "on", pkgInfo, {
-                kind: undefined,
-                modifyArgs: (args, agent) => {
-                  return this.wrapOn(args, module, agent);
-                },
-              });
+              this.instrumentServerInstance(instance, module, pkgInfo);
               return instance;
             },
           });
