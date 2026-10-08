@@ -25,6 +25,21 @@ async function execAsyncWithPipe(command, options) {
 // Zen Internals configuration
 const INTERNALS_VERSION = "v0.1.73";
 const INTERNALS_URL = `https://github.com/AikidoSec/zen-internals/releases/download/${INTERNALS_VERSION}`;
+// Repository-pinned checksum to prevent coordinated archive/checksum replacement attacks
+// This checksum must be independently verified and updated whenever INTERNALS_VERSION changes
+// To obtain and verify the legitimate checksum for a new version:
+// 1. Download from multiple independent sources and compare
+// 2. Verify the publisher's identity through GitHub's verified badge
+// 3. Compute: sha256sum zen_internals.tgz
+// 4. Cross-reference with the published .sha256sum file as a sanity check only
+// 5. Update INTERNALS_SHA256 below with the verified checksum
+//
+// To obtain the checksum for the current version, run:
+// node -e "const https = require('https'); https.get('https://github.com/AikidoSec/zen-internals/releases/download/v0.1.73/zen_internals.tgz.sha256sum', (res) => { let data = ''; res.on('data', (chunk) => { data += chunk; }); res.on('end', () => { console.log('Current published checksum:', data.split(' ')[0]); console.log('WARNING: Verify this checksum through multiple independent channels before pinning!'); }); });"
+//
+// SECURITY: This checksum is the trust anchor for the Zen Internals dependency.
+// It must be verified through multiple independent channels before being committed.
+const INTERNALS_SHA256 = ""; // Must be set to a valid SHA256 hex string (64 characters)
 // ---
 
 // Node Internals configuration
@@ -183,19 +198,89 @@ async function dlZenInternals() {
   }
   console.log("Downloading Zen Internals...");
 
+  // Verify that a repository-pinned checksum is configured
+  if (!INTERNALS_SHA256 || typeof INTERNALS_SHA256 !== "string" || INTERNALS_SHA256.length !== 64) {
+    // Helper mode: download and display the current checksum for manual verification
+    console.error("\n" + "=".repeat(80));
+    console.error("ERROR: INTERNALS_SHA256 is not configured");
+    console.error("=".repeat(80));
+    console.error("\nFor security reasons, the Zen Internals checksum must be pinned in the");
+    console.error("repository to prevent supply chain attacks.");
+    console.error("\nTo obtain and verify the checksum:");
+    console.error("1. Download the checksum file from the release:");
+    console.error(`   curl -sL ${INTERNALS_URL}/${checksumFile}`);
+    console.error("\n2. Download the archive and compute its checksum independently:");
+    console.error(`   curl -sL ${INTERNALS_URL}/${tarballFile} | sha256sum`);
+    console.error("\n3. Verify both checksums match and cross-reference through multiple channels");
+    console.error("\n4. Update INTERNALS_SHA256 in scripts/build.js with the verified checksum");
+    console.error("\nAttempting to download and compute checksum for reference...");
+    
+    try {
+      // Download the archive
+      await downloadFile(
+        `${INTERNALS_URL}/${tarballFile}`,
+        join(internalsDir, tarballFile)
+      );
+      
+      // Compute its checksum
+      const { createReadStream } = require("fs");
+      const { createHash } = require("crypto");
+      const { pipeline } = require("stream/promises");
+      const input = createReadStream(join(internalsDir, tarballFile));
+      const hashBuilder = createHash("sha256");
+      await pipeline(input, hashBuilder);
+      const computedChecksum = hashBuilder.digest("hex");
+      
+      // Also download the published checksum for comparison
+      await downloadFile(
+        `${INTERNALS_URL}/${checksumFile}`,
+        join(internalsDir, checksumFile)
+      );
+      const publishedChecksum = (await readFile(join(internalsDir, checksumFile), "utf8")).split(" ")[0];
+      
+      console.error(`\nComputed checksum:  ${computedChecksum}`);
+      console.error(`Published checksum: ${publishedChecksum}`);
+      
+      if (computedChecksum === publishedChecksum) {
+        console.error("\n✓ Checksums match");
+        console.error("\nTo fix this error, add the following line to scripts/build.js:");
+        console.error(`const INTERNALS_SHA256 = "${computedChecksum}";`);
+      } else {
+        console.error("\n✗ WARNING: Checksums DO NOT match!");
+        console.error("This could indicate a compromised release or download corruption.");
+        console.error("DO NOT proceed without investigating this discrepancy.");
+      }
+      
+      // Clean up
+      await rm(join(internalsDir, tarballFile));
+      await rm(join(internalsDir, checksumFile));
+      
+      console.error("\nWARNING: Verify this checksum through multiple independent channels");
+      console.error("before pinning it in the repository!");
+    } catch (error) {
+      console.error("\nFailed to fetch and compute checksum:", error.message);
+    }
+    
+    console.error("\n" + "=".repeat(80) + "\n");
+    throw new Error(
+      "INTERNALS_SHA256 must be set to a valid 64-character SHA256 hex string. " +
+      "See error message above for instructions."
+    );
+  }
+
   await downloadFile(
     `${INTERNALS_URL}/${tarballFile}`,
     join(internalsDir, tarballFile)
   );
-  await downloadFile(
-    `${INTERNALS_URL}/${checksumFile}`,
-    join(internalsDir, checksumFile)
-  );
-  await verifyFileHash(join(internalsDir, tarballFile));
+  
+  // Verify against repository-pinned checksum (not a downloaded checksum file)
+  console.log(`Verifying archive against pinned checksum: ${INTERNALS_SHA256}`);
+  await verifyFileHash(join(internalsDir, tarballFile), INTERNALS_SHA256);
+  console.log("Checksum verification passed");
+  
   await extractTar(join(internalsDir, tarballFile), internalsDir);
 
   await rm(join(internalsDir, tarballFile));
-  await rm(join(internalsDir, checksumFile));
   await rm(join(internalsDir, "zen_internals.d.ts"));
 
   await writeFile(versionCacheFile, INTERNALS_VERSION);

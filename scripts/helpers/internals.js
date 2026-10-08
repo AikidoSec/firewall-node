@@ -59,18 +59,26 @@ async function extractTar(path, dest) {
   await extract({ file: path, sync: false, cwd: dest });
 }
 
-async function verifyFileHash(filepath) {
-  const expectedHash = (await readFile(`${filepath}.sha256sum`, "utf8")).split(
-    " "
-  )[0];
+async function verifyFileHash(filepath, expectedHash) {
+  // If expectedHash is provided, use it directly (repository-pinned checksum)
+  // Otherwise, fall back to reading from a .sha256sum file (legacy behavior)
+  let hashToVerify;
+  if (expectedHash) {
+    hashToVerify = expectedHash;
+  } else {
+    hashToVerify = (await readFile(`${filepath}.sha256sum`, "utf8")).split(
+      " "
+    )[0];
+  }
+  
   const input = createReadStream(filepath);
   const hashBuilder = createHash("sha256");
   await pipeline(input, hashBuilder);
 
   const hash = hashBuilder.digest("hex");
 
-  if (hash !== expectedHash) {
-    console.log(`Expected: ${expectedHash}`);
+  if (hash !== hashToVerify) {
+    console.log(`Expected: ${hashToVerify}`);
     console.log(`Actual: ${hash}`);
     throw new Error(`File hash mismatch for ${filepath}`);
   }
