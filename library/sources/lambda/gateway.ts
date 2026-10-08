@@ -19,6 +19,7 @@ export type APIGatewayProxyEventV1 = {
     };
   };
   body?: string;
+  isBase64Encoded?: boolean;
 };
 
 // Based on https://docs.aws.amazon.com/powertools/typescript/2.34.0/api/variables/_aws-lambda-powertools_parser.schemas.APIGatewayProxyEventV2Schema.html
@@ -38,6 +39,7 @@ export type APIGatewayProxyEventV2 = {
     };
   };
   body?: string;
+  isBase64Encoded?: boolean;
   cookies?: string[];
 };
 
@@ -113,13 +115,34 @@ function normalizeHeaders(headers: Record<string, string | undefined>) {
 }
 
 function parseBody(event: APIGatewayProxyEvent) {
-  const headers = event.headers ? normalizeHeaders(event.headers) : {};
-
-  if (!event.body || !isJsonContentType(headers["content-type"] || "")) {
+  if (!event.body) {
     return undefined;
   }
 
-  return tryParseJSON(event.body);
+  // Decode base64-encoded bodies
+  let bodyString = event.body;
+  if (event.isBase64Encoded) {
+    try {
+      bodyString = Buffer.from(event.body, "base64").toString("utf-8");
+    } catch {
+      // If decoding fails, use the original body string
+      bodyString = event.body;
+    }
+  }
+
+  const headers = event.headers ? normalizeHeaders(event.headers) : {};
+
+  // If the content type is JSON, try to parse it
+  if (isJsonContentType(headers["content-type"] || "")) {
+    const parsed = tryParseJSON(bodyString);
+    // If parsing succeeds, return the parsed object
+    // If parsing fails, return the raw string so it's still in context
+    return parsed !== undefined ? parsed : bodyString;
+  }
+
+  // For non-JSON content types, always return the body string
+  // This ensures all body data is available for contextual checks
+  return bodyString;
 }
 
 export function getContextForGatewayEvent(
