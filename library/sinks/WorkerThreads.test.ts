@@ -188,4 +188,238 @@ t.test("it works", async (t) => {
     customWorker.on("error", reject);
     customWorker.on("exit", () => resolve());
   });
+
+  // Test ESM syntax detection in data URLs
+  await runWithContext(dangerousCodeContext, async () => {
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript,${encodeURIComponent(
+              "export default '1 + 1; console.log(\\'hello\\')'"
+            )}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+    );
+  });
+});
+
+t.test("ESM Worker data URL bypass mitigation", async (t) => {
+  const agent = createTestAgent();
+  agent.start([new WorkerThreads()]);
+
+  const { Worker } =
+    require("worker_threads") as typeof import("worker_threads");
+
+  // Test context with user-controlled input that could be injected
+  const injectionContext: Context = {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://localhost:4000",
+    query: {},
+    headers: {},
+    body: {
+      code: "1 + 1; console.log('hello')",
+    },
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/posts/:id",
+  };
+
+  // Test 1: ESM export statement with injection attempt
+  await runWithContext(injectionContext, async () => {
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript,${encodeURIComponent(
+              "export const result = '1 + 1; console.log(\\'hello\\')'; console.log(result);"
+            )}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+    );
+  });
+
+  // Test 2: ESM import statement with injection attempt
+  await runWithContext(injectionContext, async () => {
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript,${encodeURIComponent(
+              "import { x } from 'module'; const code = '1 + 1; console.log(\\'hello\\')'; eval(code);"
+            )}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+    );
+  });
+
+  // Test 3: ESM export default with injection
+  await runWithContext(injectionContext, async () => {
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript,${encodeURIComponent(
+              "export default function() { return '1 + 1; console.log(\\'hello\\')'; }"
+            )}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+    );
+  });
+
+  // Test 4: ESM with dynamic import and injection
+  await runWithContext(injectionContext, async () => {
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript,${encodeURIComponent(
+              "const payload = '1 + 1; console.log(\\'hello\\')'; export { payload };"
+            )}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+    );
+  });
+
+  // Test 5: ESM with top-level await and injection
+  await runWithContext(injectionContext, async () => {
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript,${encodeURIComponent(
+              "const x = '1 + 1; console.log(\\'hello\\')'; await Promise.resolve(); export default x;"
+            )}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+    );
+  });
+
+  // Test 6: ESM with named exports and injection
+  await runWithContext(injectionContext, async () => {
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript,${encodeURIComponent(
+              "export const dangerous = '1 + 1; console.log(\\'hello\\')'; export function run() { eval(dangerous); }"
+            )}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+    );
+  });
+
+  // Test 7: ESM with re-export and injection
+  await runWithContext(injectionContext, async () => {
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript,${encodeURIComponent(
+              "const code = '1 + 1; console.log(\\'hello\\')'; export { code as payload };"
+            )}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+    );
+  });
+
+  // Test 8: Base64-encoded ESM data URL with injection
+  await runWithContext(injectionContext, async () => {
+    const esmCode = "export const x = '1 + 1; console.log(\\'hello\\')';";
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript;base64,${Buffer.from(esmCode).toString("base64")}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.code"
+    );
+  });
+
+  // Test 9: Safe ESM code without injection should work
+  await runWithContext(injectionContext, async () => {
+    const safeWorker = new Promise<void>((resolve, reject) => {
+      const worker = new Worker(
+        new URL(
+          `data:text/javascript,${encodeURIComponent(
+            "export const safe = 'safe value'; console.log('safe');"
+          )}`
+        )
+      );
+      worker.on("error", reject);
+      worker.on("exit", () => resolve());
+    });
+    await safeWorker;
+  });
+
+  // Test 10: ESM with string breakout attempt
+  const breakoutContext: Context = {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://localhost:4000",
+    query: {},
+    headers: {},
+    body: {
+      userInput: "'; console.log('injected'); //",
+    },
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/posts/:id",
+  };
+
+  await runWithContext(breakoutContext, async () => {
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript,${encodeURIComponent(
+              "export const data = '\\'; console.log(\\'injected\\'); //';"
+            )}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.userInput"
+    );
+  });
+
+  // Test 11: ESM with template literal injection
+  const templateContext: Context = {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://localhost:4000",
+    query: {},
+    headers: {},
+    body: {
+      template: "${console.log('pwned')}",
+    },
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/posts/:id",
+  };
+
+  await runWithContext(templateContext, async () => {
+    throws(
+      () =>
+        new Worker(
+          new URL(
+            `data:text/javascript,${encodeURIComponent(
+              "export const msg = `Hello ${console.log('pwned')}`;"
+            )}`
+          )
+        ),
+      "Zen has blocked a JavaScript injection: new Worker(...)(...) originating from body.template"
+    );
+  });
 });

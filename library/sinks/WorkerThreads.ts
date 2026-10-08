@@ -64,10 +64,12 @@ export class WorkerThreads implements Wrapper {
       return undefined;
     }
 
+    // JavaScript data URLs in Workers are parsed as ESM
     return checkContextForJsInjection({
       js: code,
       operation: "new Worker(...)",
       context,
+      sourceType: 3, // ESM
     });
   }
 
