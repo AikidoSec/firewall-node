@@ -465,6 +465,89 @@ t.test("form feed as separator between commands", async () => {
   isShellInjection("rm\fls", "rm");
 });
 
+// Tests for pentest finding: Shell-injection detector accepts newline command separators
+t.test("PENTEST FIX: single newline character is detected as command separator", async () => {
+  // The original vulnerability: single newline was ignored by the length check
+  // Now it should be detected when it separates commands
+  isShellInjection("echo\nwhoami", "\n");
+  isShellInjection("ls\nrm -rf /", "\n");
+  isShellInjection("cat file\nid", "\n");
+});
+
+t.test("PENTEST FIX: single carriage return character is detected as command separator", async () => {
+  // Similar to newline, carriage return should be detected
+  isShellInjection("echo\rwhoami", "\r");
+  isShellInjection("ls\rrm -rf /", "\r");
+  isShellInjection("cat file\rid", "\r");
+});
+
+t.test("PENTEST FIX: single form feed character is detected as command separator", async () => {
+  // Form feed should also be detected as command separator
+  isShellInjection("echo\fwhoami", "\f");
+  isShellInjection("ls\frm -rf /", "\f");
+  isShellInjection("cat file\fid", "\f");
+});
+
+t.test("PENTEST FIX: whitespace-only values with newlines are detected", async () => {
+  // The original vulnerability: "\n " passed the allWhitespace check before dangerous char check
+  // Now command separators should be detected even in whitespace-only strings
+  isShellInjection("echo\n whoami", "\n ");
+  isShellInjection("ls\n\trm", "\n\t");
+  isShellInjection("cat\n  \nid", "\n  \n");
+});
+
+t.test("PENTEST FIX: whitespace-only values with carriage returns are detected", async () => {
+  isShellInjection("echo\r whoami", "\r ");
+  isShellInjection("ls\r\trm", "\r\t");
+  isShellInjection("cat\r  \rid", "\r  \r");
+});
+
+t.test("PENTEST FIX: whitespace-only values with form feeds are detected", async () => {
+  isShellInjection("echo\f whoami", "\f ");
+  isShellInjection("ls\f\trm", "\f\t");
+  isShellInjection("cat\f  \fid", "\f  \f");
+});
+
+t.test("PENTEST FIX: exact exploit scenario from pentest is blocked", async () => {
+  // The exact scenario: echo <userValue> whoami becomes echo\n whoami
+  // where userValue is "\n" (single newline)
+  const trustedPrefix = "echo";
+  const trustedSuffix = "whoami";
+  const userValue = "\n";
+  const assembledCommand = `${trustedPrefix}${userValue}${trustedSuffix}`;
+  
+  // This should be detected as shell injection
+  isShellInjection(assembledCommand, userValue);
+  
+  // Also test with space after newline (the "\n " case)
+  const userValueWithSpace = "\n ";
+  const assembledCommand2 = `${trustedPrefix}${userValueWithSpace}${trustedSuffix}`;
+  isShellInjection(assembledCommand2, userValueWithSpace);
+});
+
+t.test("PENTEST FIX: command separators are safe when properly quoted", async () => {
+  // When command separators are safely encapsulated in quotes, they should be allowed
+  isNotShellInjection("echo '\n'", "\n");
+  isNotShellInjection("echo '\r'", "\r");
+  isNotShellInjection("echo '\f'", "\f");
+  isNotShellInjection("echo 'line1\nline2'", "line1\nline2");
+});
+
+t.test("PENTEST FIX: command separators at start or end only are safe", async () => {
+  // If there's no content on one side, it's not separating commands
+  isNotShellInjection("\necho", "\n");
+  isNotShellInjection("echo\n", "\n");
+  isNotShellInjection("\n\n", "\n");
+  isNotShellInjection("   \n   ", "\n");
+});
+
+t.test("PENTEST FIX: mixed command separators between commands are detected", async () => {
+  // Test combinations of different separators
+  isShellInjection("echo\n\rwhoami", "\n\r");
+  isShellInjection("ls\r\nrm", "\r\n");
+  isShellInjection("cat\f\nid", "\f\n");
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),

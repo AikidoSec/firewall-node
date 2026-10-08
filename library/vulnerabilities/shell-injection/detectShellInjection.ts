@@ -12,9 +12,37 @@ export function detectShellInjection(
     }
   }
 
+  // Command separators (newline, carriage return, form feed) are dangerous
+  // even as single characters when they separate actual content
+  const commandSeparators = ["\n", "\r", "\f"];
+  if (
+    userInput.length === 1 &&
+    commandSeparators.includes(userInput) &&
+    command.includes(userInput)
+  ) {
+    // Check if it's safely encapsulated before flagging
+    if (isSafelyEncapsulated(command, userInput)) {
+      return false;
+    }
+    
+    // Check if the separator is between non-whitespace content
+    const parts = command.split(userInput);
+    for (let i = 0; i < parts.length - 1; i++) {
+      const before = parts[i];
+      const after = parts[i + 1];
+      
+      // If there's non-whitespace content both before and after,
+      // then the separator is being used to split commands
+      if (before.trim().length > 0 && after.trim().length > 0) {
+        return true;
+      }
+    }
+  }
+
   if (userInput.length <= 1) {
     // We ignore single characters since they don't pose a big threat.
     // They are only able to crash the shell, not execute arbitrary commands.
+    // Exception: command separators are handled above
     return false;
   }
 

@@ -151,6 +151,25 @@ export function containsShellSyntax(
   command: string,
   userInput: string
 ): boolean {
+  // Command separators (newline, carriage return, form feed) are dangerous
+  // when they separate actual content (not just trailing/leading whitespace)
+  const commandSeparators = ["\n", "\r", "\f"];
+  if (commandSeparators.some((sep) => userInput.includes(sep))) {
+    // Check if the user input is between non-whitespace content in the command
+    // This indicates it's being used to separate commands
+    const parts = command.split(userInput);
+    for (let i = 0; i < parts.length - 1; i++) {
+      const before = parts[i];
+      const after = parts[i + 1];
+      
+      // If there's non-whitespace content both before and after the user input,
+      // then the separator is being used to split commands
+      if (before.trim().length > 0 && after.trim().length > 0) {
+        return true;
+      }
+    }
+  }
+
   const allWhitespace = /^\s*$/.test(userInput);
 
   if (allWhitespace) {

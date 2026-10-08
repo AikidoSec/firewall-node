@@ -99,3 +99,54 @@ t.test("it flags input as shell injection", async () => {
     true
   );
 });
+
+// Tests for pentest finding: Shell-injection detector accepts newline command separators
+t.test("PENTEST FIX: single newline between commands is detected", async () => {
+  // Single newline should be detected when it separates actual commands
+  t.same(containsShellSyntax("echo\nwhoami", "\n"), true);
+  t.same(containsShellSyntax("ls\nrm", "\n"), true);
+  t.same(containsShellSyntax("cat file\nid", "\n"), true);
+});
+
+t.test("PENTEST FIX: single carriage return between commands is detected", async () => {
+  t.same(containsShellSyntax("echo\rwhoami", "\r"), true);
+  t.same(containsShellSyntax("ls\rrm", "\r"), true);
+  t.same(containsShellSyntax("cat file\rid", "\r"), true);
+});
+
+t.test("PENTEST FIX: single form feed between commands is detected", async () => {
+  t.same(containsShellSyntax("echo\fwhoami", "\f"), true);
+  t.same(containsShellSyntax("ls\frm", "\f"), true);
+  t.same(containsShellSyntax("cat file\fid", "\f"), true);
+});
+
+t.test("PENTEST FIX: whitespace-only with newline between commands is detected", async () => {
+  // The original vulnerability: "\n " passed allWhitespace check before dangerous char check
+  t.same(containsShellSyntax("echo\n whoami", "\n "), true);
+  t.same(containsShellSyntax("ls\n\trm", "\n\t"), true);
+  t.same(containsShellSyntax("cat\n  \nid", "\n  \n"), true);
+});
+
+t.test("PENTEST FIX: whitespace-only with carriage return between commands is detected", async () => {
+  t.same(containsShellSyntax("echo\r whoami", "\r "), true);
+  t.same(containsShellSyntax("ls\r\trm", "\r\t"), true);
+});
+
+t.test("PENTEST FIX: whitespace-only with form feed between commands is detected", async () => {
+  t.same(containsShellSyntax("echo\f whoami", "\f "), true);
+  t.same(containsShellSyntax("ls\f\trm", "\f\t"), true);
+});
+
+t.test("PENTEST FIX: command separators at boundaries are safe", async () => {
+  // If separator is only at start or end (no content on one side), it's safe
+  t.same(containsShellSyntax("\necho", "\n"), false);
+  t.same(containsShellSyntax("echo\n", "\n"), false);
+  t.same(containsShellSyntax("\n\n", "\n"), false);
+  t.same(containsShellSyntax("   \n   ", "\n"), false);
+});
+
+t.test("PENTEST FIX: mixed separators between commands are detected", async () => {
+  t.same(containsShellSyntax("echo\n\rwhoami", "\n\r"), true);
+  t.same(containsShellSyntax("ls\r\nrm", "\r\n"), true);
+  t.same(containsShellSyntax("cat\f\nid", "\f\n"), true);
+});
