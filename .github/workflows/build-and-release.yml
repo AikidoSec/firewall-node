@@ -54,7 +54,10 @@ jobs:
         run: |
           rustup toolchain install stable
           rustup default stable
-          cargo install wasm-pack
+          
+      - name: Install wasm-pack
+        run: bash ./.github/workflows/utils/install-wasm-pack.sh
+
       - name: Setup Aikido safe-chain
         run: curl -fsSL https://github.com/AikidoSec/safe-chain/releases/latest/download/install-safe-chain.sh | sh -s -- --ci
       - name: Downgrade npm
