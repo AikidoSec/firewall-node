@@ -1,3 +1,4 @@
+import type { AIStats } from "../AIStatistics";
 import { APISpec } from "../api-discovery/getApiInfo";
 import { Kind } from "../Attack";
 import { Source } from "../Source";
@@ -118,16 +119,7 @@ type Heartbeat = {
       breakdown: Record<string, number>;
     };
   };
-  ai: {
-    provider: string;
-    model: string;
-    calls: number;
-    tokens: {
-      input: number;
-      output: number;
-      total: number;
-    };
-  }[];
+  ai: AIStats[];
   packages: {
     name: string;
     version: string;

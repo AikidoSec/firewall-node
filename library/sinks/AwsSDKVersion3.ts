@@ -144,6 +144,7 @@ export class AwsSDKVersion3 implements Wrapper {
 
   onRequire(exports: any, pkgInfo: PartialWrapPackageInfo) {
     if (exports.BedrockRuntimeClient) {
+      // No Zen proxy check: the AWS SDK sends requests with its own https.Agent, which Zen does not route through the Zen proxy
       wrapExport(exports.BedrockRuntimeClient.prototype, "send", pkgInfo, {
         kind: "ai_op",
         modifyReturnValue: (args, returnValue, agent) => {

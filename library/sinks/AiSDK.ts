@@ -29,6 +29,11 @@ export class AiSDK implements Wrapper {
       return;
     }
 
+    // The Zen proxy already records AI calls, so recording them here would count them twice
+    if (agent.getZenProxy().isEnabled()) {
+      return;
+    }
+
     const modelName = this.getModelName(response);
 
     const usage = this.getUsage(response.usage);

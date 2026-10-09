@@ -155,6 +155,16 @@ export function createOpenAITests(openAiPkgName: string) {
         { provider: "openai", model: "gpt-5-mini", calls: 1 },
         { provider: "azure", model: "gpt-5-mini", calls: 1 },
       ]);
+
+      // The Zen proxy reports these calls, the sink should not count them twice
+      agent.getAIStatistics().reset();
+      agent.getZenProxy().isEnabled = () => true;
+      await openaiClient.chat.completions.create({
+        model: "gpt-5-mini",
+        messages: [{ role: "user", content: "Hi" }],
+      });
+      await setTimeout(100);
+      t.same(agent.getAIStatistics().getStats(), []);
     }
   );
 }

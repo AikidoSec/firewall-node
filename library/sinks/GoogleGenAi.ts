@@ -162,6 +162,11 @@ export class GoogleGenAi implements Wrapper {
   }
 
   private inspectResponse(agent: Agent, response: any) {
+    // The Zen proxy already records AI calls, so recording them here would count them twice
+    if (agent.getZenProxy().isEnabled()) {
+      return;
+    }
+
     if (!this.isResponse(response)) {
       return;
     }

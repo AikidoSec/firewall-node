@@ -205,4 +205,59 @@ export function createAiSdkTests(
       });
     }
   );
+
+  t.test(
+    "It does not record calls while the Zen proxy is enabled",
+    {
+      skip: getMajorNodeVersion() < 22 ? "Node version < 22" : undefined,
+    },
+    async (t) => {
+      const agent = startTestAgent({
+        wrappers: [new AiSDK()],
+        rewrite: {
+          ai: pkgName,
+        },
+      });
+
+      const { createGoogleGenerativeAI } = require(
+        googlePkgName
+      ) as typeof import("@ai-sdk/google-v3");
+      const { generateText } = require(pkgName) as typeof import("ai-v7");
+
+      const gemini = createGoogleGenerativeAI({
+        apiKey: "test",
+        fetch: async () =>
+          new Response(
+            JSON.stringify({
+              candidates: [
+                {
+                  content: { parts: [{ text: "Hi" }], role: "model" },
+                  finishReason: "STOP",
+                  index: 0,
+                },
+              ],
+              usageMetadata: {
+                promptTokenCount: 5,
+                candidatesTokenCount: 1,
+                totalTokenCount: 6,
+              },
+              modelVersion: "gemini-2.5-flash",
+            }),
+            { headers: { "Content-Type": "application/json" } }
+          ),
+      });
+
+      await generateText({ model: gemini("gemini-2.5-flash"), prompt: "Hi" });
+      await setTimeout(100);
+      t.match(agent.getAIStatistics().getStats(), [
+        { provider: "gemini", model: "gemini-2.5-flash", calls: 1 },
+      ]);
+
+      agent.getAIStatistics().reset();
+      agent.getZenProxy().isEnabled = () => true;
+      await generateText({ model: gemini("gemini-2.5-flash"), prompt: "Hi" });
+      await setTimeout(100);
+      t.same(agent.getAIStatistics().getStats(), []);
+    }
+  );
 }

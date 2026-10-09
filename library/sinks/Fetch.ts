@@ -1,4 +1,5 @@
 import { lookup } from "dns";
+import type { Dispatcher } from "undici-v8";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -14,6 +15,21 @@ import { getInternalDispatcherOptions } from "./undici/getInternalDispatcherOpti
 
 // Marks a dispatcher instance we've already patched to prevent double-patching
 const patchedDispatcherSymbol = Symbol.for("zen.dispatcher.patched");
+
+type Dispatch = Dispatcher["dispatch"];
+
+function routeToZenProxy(orig: Dispatch, agent: Agent): Dispatch {
+  return function dispatch(this: unknown, opts, handler) {
+    const zenProxy = agent.getZenProxy();
+    const proxy = zenProxy.getFetchDispatcher();
+
+    if (proxy && opts && !opts.upgrade && zenProxy.shouldProxy(opts.origin)) {
+      return proxy.dispatch(opts, handler);
+    }
+
+    return orig.call(this, opts, handler);
+  };
+}
 
 export class Fetch implements Wrapper {
   private patchedGlobalDispatcher = false;
@@ -155,7 +171,10 @@ export class Fetch implements Wrapper {
       const newAgent = new realDispatcher.constructor({
         connect: { lookup: lookupFn },
       });
-      newAgent.dispatch = wrapDispatch(newAgent.dispatch, agent);
+      newAgent.dispatch = wrapDispatch(
+        routeToZenProxy(newAgent.dispatch, agent),
+        agent
+      );
 
       if (dispatcher2) {
         // @ts-expect-error Type is not defined

@@ -43,6 +43,11 @@ type Provider = "openai" | "azure";
 
 export class OpenAI implements Wrapper {
   private inspectResponse(agent: Agent, response: unknown, provider: Provider) {
+    // The Zen proxy already records AI calls, so recording them here would count them twice
+    if (agent.getZenProxy().isEnabled()) {
+      return;
+    }
+
     if (!isResponse(response)) {
       return;
     }
@@ -72,6 +77,11 @@ export class OpenAI implements Wrapper {
     response: unknown,
     provider: Provider
   ) {
+    // The Zen proxy already records AI calls, so recording them here would count them twice
+    if (agent.getZenProxy().isEnabled()) {
+      return;
+    }
+
     if (!isCompletionResponse(response)) {
       return;
     }

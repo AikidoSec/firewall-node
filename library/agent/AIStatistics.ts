@@ -6,7 +6,24 @@ type AIProviderStats = {
     input: number;
     output: number;
     total: number;
+    cacheRead: number;
+    cacheWrite: number;
   };
+  toolCalls: Map<string, number>;
+};
+
+export type AIStats = {
+  provider: string;
+  model: string;
+  calls: number;
+  tokens: {
+    input: number;
+    output: number;
+    total: number;
+    cacheRead: number;
+    cacheWrite: number;
+  };
+  toolCalls?: { name: string; calls: number }[];
 };
 
 export class AIStatistics {
@@ -35,7 +52,10 @@ export class AIStatistics {
           input: 0,
           output: 0,
           total: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
         },
+        toolCalls: new Map(),
       });
     }
 
@@ -47,11 +67,17 @@ export class AIStatistics {
     model,
     inputTokens,
     outputTokens,
+    cacheReadTokens = 0,
+    cacheWriteTokens = 0,
+    toolsCalled = [],
   }: {
     provider: string;
     model: string;
     inputTokens: number;
     outputTokens: number;
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
+    toolsCalled?: string[];
   }) {
     if (!provider || !model) {
       return;
@@ -62,11 +88,20 @@ export class AIStatistics {
     providerStats.tokens.input += inputTokens;
     providerStats.tokens.output += outputTokens;
     providerStats.tokens.total += inputTokens + outputTokens;
+    providerStats.tokens.cacheRead += cacheReadTokens;
+    providerStats.tokens.cacheWrite += cacheWriteTokens;
+
+    for (const name of toolsCalled) {
+      providerStats.toolCalls.set(
+        name,
+        (providerStats.toolCalls.get(name) ?? 0) + 1
+      );
+    }
   }
 
-  getStats() {
+  getStats(): AIStats[] {
     return Array.from(this.calls.values()).map((stats) => {
-      return {
+      const result: AIStats = {
         provider: stats.provider,
         model: stats.model,
         calls: stats.calls,
@@ -74,8 +109,19 @@ export class AIStatistics {
           input: stats.tokens.input,
           output: stats.tokens.output,
           total: stats.tokens.total,
+          cacheRead: stats.tokens.cacheRead,
+          cacheWrite: stats.tokens.cacheWrite,
         },
       };
+
+      if (stats.toolCalls.size > 0) {
+        result.toolCalls = Array.from(stats.toolCalls, ([name, calls]) => ({
+          name,
+          calls,
+        }));
+      }
+
+      return result;
     });
   }
 

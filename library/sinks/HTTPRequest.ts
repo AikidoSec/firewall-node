@@ -1,5 +1,9 @@
 import { lookup } from "dns";
-import { type RequestOptions } from "http";
+import { type OutgoingHttpHeaders, type RequestOptions } from "http";
+import {
+  Agent as HTTPSAgent,
+  type RequestOptions as HTTPSRequestOptions,
+} from "https";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -18,6 +22,16 @@ import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isOptionsObject } from "./http-request/isOptionsObject";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
+
+function hasUpgradeHeader(
+  headers: OutgoingHttpHeaders | readonly string[] | undefined
+): boolean {
+  return (
+    !!headers &&
+    !Array.isArray(headers) &&
+    Object.keys(headers).some((name) => name.toLowerCase() === "upgrade")
+  );
+}
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -191,6 +205,54 @@ export class HTTPRequest implements Wrapper {
     return args;
   }
 
+  private routeToZenProxy(
+    args: unknown[],
+    agent: Agent,
+    globalAgent: HTTPSAgent | undefined
+  ): unknown[] {
+    const zenProxy = agent.getZenProxy();
+    const proxyAgent = zenProxy.getHttpsAgent();
+    if (!proxyAgent) {
+      return args;
+    }
+
+    // A replaced global agent is often an egress proxy agent, the Zen proxy would bypass it
+    if (
+      !globalAgent ||
+      Object.getPrototypeOf(globalAgent) !== HTTPSAgent.prototype
+    ) {
+      return args;
+    }
+
+    const url = getUrlFromHTTPRequestArgs(args, "https");
+    if (!url || !zenProxy.shouldProxy(url)) {
+      return args;
+    }
+
+    const options = getRequestOptions(args);
+    if (!options) {
+      return [args[0], { agent: proxyAgent }, ...args.slice(1)];
+    }
+
+    const tlsOptions = options as HTTPSRequestOptions;
+
+    // Request TLS options override the agent's, a custom ca would not trust the Zen proxy CA
+    if (
+      (options.agent !== undefined && options.agent !== globalAgent) ||
+      typeof options.createConnection === "function" ||
+      hasUpgradeHeader(options.headers) ||
+      tlsOptions.ca !== undefined ||
+      tlsOptions.cert !== undefined ||
+      tlsOptions.pfx !== undefined
+    ) {
+      return args;
+    }
+
+    const optionsWithProxyAgent = { ...options, agent: proxyAgent };
+
+    return args.map((arg) => (arg === options ? optionsWithProxyAgent : arg));
+  }
+
   wrapResponseHandler(args: unknown[], module: "http" | "https") {
     if (args.find((arg) => typeof arg === "function")) {
       return args.map((arg) => {
@@ -220,7 +282,13 @@ export class HTTPRequest implements Wrapper {
             // Whenever a request is made, we'll modify the options to pass a custom lookup function
             // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
             modifyArgs: (args, agent) =>
-              this.monitorDNSLookups(args, agent, module),
+              this.monitorDNSLookups(
+                module === "https"
+                  ? this.routeToZenProxy(args, agent, exports.globalAgent)
+                  : args,
+                agent,
+                module
+              ),
           });
         }
       });

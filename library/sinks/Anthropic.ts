@@ -42,6 +42,11 @@ function isAnthropicMessageResponse(
 
 export class Anthropic implements Wrapper {
   private inspectResponse(agent: Agent, response: unknown) {
+    // The Zen proxy already records AI calls, so recording them here would count them twice
+    if (agent.getZenProxy().isEnabled()) {
+      return;
+    }
+
     if (!isAnthropicMessageResponse(response)) {
       return;
     }

@@ -1,4 +1,13 @@
-const { rm, copyFile, cp, mkdir, readFile, writeFile } = require("fs/promises");
+const {
+  rm,
+  copyFile,
+  cp,
+  mkdir,
+  readFile,
+  writeFile,
+  readdir,
+  chmod,
+} = require("fs/promises");
 const { join } = require("path");
 const { exec } = require("child_process");
 const { fileExists, findFilesWithExtension } = require("./helpers/fs");
@@ -87,6 +96,15 @@ async function main() {
     join(internalsDir, "zen_internals_bg.wasm"),
     join(buildDir, "internals", "zen_internals_bg.wasm")
   );
+  for (const file of await readdir(internalsDir)) {
+    if (file.startsWith("zen-proxy-")) {
+      await copyFile(
+        join(internalsDir, file),
+        join(buildDir, "internals", file)
+      );
+      await chmod(join(buildDir, "internals", file), 0o755);
+    }
+  }
   await cp(nodeInternalsDir, join(buildDir, "node_internals"), {
     recursive: true,
   });

@@ -42,6 +42,9 @@ import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 import { warnIfReactRouterServeIsUsed } from "../helpers/warnIfReactRouterServeIsUsed";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { isFeatureEnabled } from "../helpers/featureFlags";
+import { ZenProxy } from "./zen-proxy/ZenProxy";
+import { envToBool } from "../helpers/envToBool";
+import { isMainThread } from "worker_threads";
 
 type WrappedPackage = { version: string; supported: boolean };
 
@@ -67,6 +70,7 @@ export class Agent {
     maxCompressedStatsInMemory: 20, // per operation
   });
   private aiStatistics = new AIStatistics();
+  private zenProxy = new ZenProxy(this.logger, this.aiStatistics);
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
   private attackWaveDetector = new AttackWaveDetector();
@@ -111,6 +115,10 @@ export class Agent {
 
   getAIStatistics() {
     return this.aiStatistics;
+  }
+
+  getZenProxy() {
+    return this.zenProxy;
   }
 
   setIdorProtectionConfig(config: IdorProtectionConfig) {
@@ -560,6 +568,11 @@ export class Agent {
 
     warnIfTsxIsUsed();
     warnIfReactRouterServeIsUsed();
+
+    // isFeatureEnabled turns on every flag in unit tests, which would start the Zen proxy in every test agent
+    if (envToBool(process.env.AIKIDO_FEATURE_ZEN_PROXY) && isMainThread) {
+      this.zenProxy.start(this.isServerless());
+    }
 
     // When our library is required, we are not intercepting `require` calls yet
     // We need to add our library to the list of packages manually
