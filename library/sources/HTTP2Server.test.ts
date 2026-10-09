@@ -1054,3 +1054,148 @@ t.test(
     });
   }
 );
+
+const listenerMethods = [
+  "on",
+  "addListener",
+  "once",
+  "prependListener",
+  "prependOnceListener",
+] as const;
+
+async function getContextFromHttp2Server(
+  server: import("http2").Http2Server | import("http2").Http2SecureServer,
+  protocol: "http" | "https"
+) {
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const port = (server.address() as import("net").AddressInfo).port;
+  try {
+    const { body } = await http2Request(
+      new URL(`${protocol}://localhost:${port}`),
+      "GET",
+      {}
+    );
+    return JSON.parse(body);
+  } finally {
+    server.close();
+  }
+}
+
+for (const method of listenerMethods) {
+  t.test(`it wraps ${method} request event of http2`, async (t) => {
+    const server = http2.createServer();
+    server[method]("request", (req, res) => {
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify(getContext()));
+    });
+
+    const context = await getContextFromHttp2Server(server, "http");
+    t.match(context, {
+      url: "/",
+      method: "GET",
+      route: "/",
+      source: "http2.createServer",
+    });
+  });
+
+  t.test(`it wraps ${method} stream event of http2`, async (t) => {
+    const server = http2.createServer();
+    server[method]("stream", (stream) => {
+      stream.respond({ ":status": 200 });
+      stream.end(JSON.stringify(getContext()));
+    });
+
+    const context = await getContextFromHttp2Server(server, "http");
+    t.match(context, {
+      url: "/",
+      method: "GET",
+      route: "/",
+      source: "http2.createServer",
+    });
+  });
+
+  t.test(`it wraps ${method} session event of http2`, async (t) => {
+    const server = http2.createServer();
+    server[method]("session", (session) => {
+      session.on("stream", (stream) => {
+        stream.respond({ ":status": 200 });
+        stream.end(JSON.stringify(getContext()));
+      });
+    });
+
+    const context = await getContextFromHttp2Server(server, "http");
+    t.match(context, {
+      url: "/",
+      method: "GET",
+      route: "/",
+      source: "http2.createServer",
+    });
+  });
+
+  t.test(
+    `it wraps ${method} request event of createSecureServer`,
+    async (t) => {
+      const server = http2.createSecureServer({
+        key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+        cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+      });
+      server[method]("request", (req, res) => {
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify(getContext()));
+      });
+
+      const context = await getContextFromHttp2Server(server, "https");
+      t.match(context, {
+        url: "/",
+        method: "GET",
+        route: "/",
+        source: "http2.createServer",
+      });
+    }
+  );
+
+  t.test(`it wraps ${method} stream event of createSecureServer`, async (t) => {
+    const server = http2.createSecureServer({
+      key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+      cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+    });
+    server[method]("stream", (stream) => {
+      stream.respond({ ":status": 200 });
+      stream.end(JSON.stringify(getContext()));
+    });
+
+    const context = await getContextFromHttp2Server(server, "https");
+    t.match(context, {
+      url: "/",
+      method: "GET",
+      route: "/",
+      source: "http2.createServer",
+    });
+  });
+
+  t.test(`${method} does not interfere with other http2 events`, async (t) => {
+    const server = http2.createServer((req, res) => {
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify(getContext()));
+    });
+    let listeningCalled = false;
+    server[method]("listening", () => {
+      listeningCalled = true;
+    });
+
+    const context = await getContextFromHttp2Server(server, "http");
+    t.ok(listeningCalled);
+    t.match(context, { url: "/", source: "http2.createServer" });
+  });
+}
+
+t.test("http2 server methods return the server instance", async (t) => {
+  const server = http2.createServer();
+  const noop = () => {};
+  t.equal(server.on("request", noop), server);
+  t.equal(server.addListener("request", noop), server);
+  t.equal(server.once("stream", noop), server);
+  t.equal(server.prependListener("session", noop), server);
+  t.equal(server.prependOnceListener("session", noop), server);
+  server.close();
+});
