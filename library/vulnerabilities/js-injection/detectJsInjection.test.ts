@@ -149,3 +149,16 @@ t.test("test injection of else branch", async (t) => {
     true
   );
 });
+
+t.test("it parses HTML-like comments in auto-detect mode", async (t) => {
+  const input = "'; process.exit(1); //";
+
+  for (const code of [
+    `<!-- comment\nconst x = '${input}';`,
+    `const y = 1;\n<!-- comment\nconst x = '${input}';`,
+    `const x = '${input}';\n--> trailing`,
+  ]) {
+    t.same(detectJsInjection(code, input, 0), true);
+    t.same(detectJsInjection(code, input, 2), true);
+  }
+});

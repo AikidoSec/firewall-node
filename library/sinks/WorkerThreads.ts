@@ -24,6 +24,7 @@ export class WorkerThreads implements Wrapper {
       js: code,
       operation: "new Worker(...)",
       context,
+      sourceType: 0, // Auto-detect CJS or ESM
     });
   }
 
@@ -68,6 +69,7 @@ export class WorkerThreads implements Wrapper {
       js: code,
       operation: "new Worker(...)",
       context,
+      sourceType: 0, // Auto-detect CJS or ESM
     });
   }
 
