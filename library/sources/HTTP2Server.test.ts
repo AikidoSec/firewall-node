@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { setTimeout } from "node:timers/promises";
 import { Token } from "../agent/api/Token";
 import type { IncomingHttpHeaders } from "http2";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
@@ -613,12 +614,8 @@ t.test("it does not interfere with non-stream session listeners", async (t) => {
     });
   });
 
-  await new Promise<void>((resolve) => {
-    setTimeout(() => {
-      t.ok(sessionClosed);
-      resolve();
-    }, 100);
-  });
+  await setTimeout(100);
+  t.ok(sessionClosed);
 });
 
 t.test("real injection test", async (t) => {
@@ -800,6 +797,45 @@ t.test("it reports attack waves", async (t) => {
           },
         },
       ]);
+
+      server.close();
+      resolve();
+    });
+  });
+});
+
+t.test("it does not count blocked bot requests as attack waves", async (t) => {
+  const server = http2.createServer();
+  server.on("stream", (stream) => {
+    stream.respond({ ":status": 200 });
+    stream.end("OK");
+  });
+
+  api.clear();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3442, async () => {
+      for (let i = 0; i < 16; i++) {
+        const result = await http2Request(
+          new URL("http://localhost:3442/.env"),
+          "GET",
+          { "User-Agent": "hackerbot 1.0", "x-forwarded-for": "5.6.7.8" }
+        );
+        t.same(result.headers[":status"], 403);
+      }
+
+      // Give the close handlers time to run
+      await setTimeout(100);
+      await agent.flushStats(1000);
+
+      t.same(
+        api.getEvents().filter((e) => e.type === "detected_attack_wave"),
+        []
+      );
+      t.same(agent.getInspectionStatistics().getStats().requests.attackWaves, {
+        total: 0,
+        blocked: 0,
+      });
 
       server.close();
       resolve();
