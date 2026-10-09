@@ -1351,3 +1351,135 @@ t.test(
     });
   }
 );
+
+type ListenerMethod =
+  | "on"
+  | "addListener"
+  | "once"
+  | "prependListener"
+  | "prependOnceListener";
+
+const listenerMethods: ListenerMethod[] = [
+  "on",
+  "addListener",
+  "once",
+  "prependListener",
+  "prependOnceListener",
+];
+
+async function getContextFromServer(
+  server: import("http").Server | import("https").Server,
+  protocol: "http" | "https"
+) {
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const port = (server.address() as import("net").AddressInfo).port;
+  try {
+    const { body } = await fetch({
+      url: new URL(`${protocol}://localhost:${port}`),
+      method: "GET",
+      headers: {},
+      timeoutInMS: 500,
+      agent:
+        protocol === "http"
+          ? new http.Agent({ keepAlive: false })
+          : new https.Agent({ keepAlive: false }),
+    });
+    return JSON.parse(body);
+  } finally {
+    server.close();
+  }
+}
+
+function respondWithContext(
+  req: import("http").IncomingMessage,
+  res: import("http").ServerResponse
+) {
+  res.setHeader("Content-Type", "application/json");
+  res.end(JSON.stringify(getContext()));
+}
+
+for (const method of listenerMethods) {
+  t.test(`it wraps ${method} request event of http`, async (t) => {
+    const server = http.createServer();
+    server[method]("request", respondWithContext);
+
+    const context = await getContextFromServer(server, "http");
+    t.match(context, {
+      url: "/",
+      method: "GET",
+      route: "/",
+      source: "http.createServer",
+    });
+  });
+
+  t.test(`it wraps ${method} request event of https`, async (t) => {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+    const server = https.createServer({
+      key: readFileSync(path.resolve(__dirname, "fixtures/key.pem")),
+      cert: readFileSync(path.resolve(__dirname, "fixtures/cert.pem")),
+    });
+    server[method]("request", respondWithContext);
+
+    const context = await getContextFromServer(server, "https");
+    t.match(context, {
+      url: "/",
+      method: "GET",
+      route: "/",
+      source: "https.createServer",
+    });
+  });
+
+  t.test(`${method} does not interfere with non-request events`, async (t) => {
+    const server = http.createServer(respondWithContext);
+    let listeningCalled = false;
+    server[method]("listening", () => {
+      listeningCalled = true;
+    });
+
+    const context = await getContextFromServer(server, "http");
+    t.ok(listeningCalled);
+    t.match(context, { url: "/", source: "http.createServer" });
+  });
+}
+
+t.test("it keeps the server instance returned by createServer", async (t) => {
+  const server = http.createServer();
+  t.ok(server instanceof http.Server);
+  t.equal(server.addListener("request", respondWithContext), server);
+  t.equal(server.once("request", respondWithContext), server);
+  t.equal(server.prependListener("request", respondWithContext), server);
+  t.equal(server.prependOnceListener("request", respondWithContext), server);
+  t.equal(server.listenerCount("request"), 4);
+});
+
+for (const protocol of ["http", "https"] as const) {
+  for (const method of listenerMethods) {
+    t.test(
+      `${method} wraps the ${protocol} request listener once`,
+      async (t) => {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+        const server =
+          protocol === "http"
+            ? http.createServer()
+            : https.createServer({
+                key: readFileSync(path.resolve(__dirname, "fixtures/key.pem")),
+                cert: readFileSync(
+                  path.resolve(__dirname, "fixtures/cert.pem")
+                ),
+              });
+
+        let finishListeners = 0;
+        server[method]("request", (req, res) => {
+          finishListeners = res.listenerCount("finish");
+          res.end("{}");
+        });
+
+        await getContextFromServer(server, protocol);
+        // Zen's own finish listener + Node's internal one
+        t.equal(finishListeners, 2);
+      }
+    );
+  }
+}
