@@ -38,7 +38,9 @@ export class Postgres implements Wrapper {
     // Object format: query({ text: "...", values: [...] })
     if (
       args.length > 0 &&
-      isPlainObject(args[0]) &&
+      args[0] &&
+      typeof args[0] === "object" &&
+      "values" in args[0] &&
       Array.isArray(args[0].values)
     ) {
       return args[0].values;
@@ -77,7 +79,9 @@ export class Postgres implements Wrapper {
 
     if (
       args.length > 0 &&
-      isPlainObject(args[0]) &&
+      args[0] &&
+      typeof args[0] === "object" &&
+      "text" in args[0] &&
       args[0].text &&
       typeof args[0].text === "string"
     ) {

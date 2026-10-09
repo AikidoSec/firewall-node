@@ -35,7 +35,7 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
   const agent = createTestAgent();
   agent.start([new Postgres()]);
 
-  const { Client } = require("pg") as typeof import("pg");
+  const { Client, Query } = require("pg") as typeof import("pg");
   const client = new Client({
     user: "root",
     host: "127.0.0.1",
@@ -180,6 +180,37 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
         ).rows,
         []
       );
+    });
+
+    await t.test("allows Query instance with tenant filter", async () => {
+      await runWithContext(context, () => {
+        return client.query(
+          new Query({
+            text: "SELECT petname FROM cats_pg_idor WHERE tenant_id = $1",
+            values: ["org_123"],
+          })
+        );
+      });
+    });
+
+    await t.test("blocks Query instance with wrong tenant ID", async () => {
+      const error = await t.rejects(async () => {
+        await runWithContext(context, () => {
+          return client.query(
+            new Query({
+              text: "SELECT petname FROM cats_pg_idor WHERE tenant_id = $1",
+              values: ["org_456"],
+            })
+          );
+        });
+      });
+
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+        );
+      }
     });
 
     await t.test(
