@@ -6,7 +6,6 @@ import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/ch
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 
@@ -38,7 +37,9 @@ export class Postgres implements Wrapper {
     // Object format: query({ text: "...", values: [...] })
     if (
       args.length > 0 &&
-      isPlainObject(args[0]) &&
+      args[0] &&
+      typeof args[0] === "object" &&
+      "values" in args[0] &&
       Array.isArray(args[0].values)
     ) {
       return args[0].values;
@@ -77,7 +78,9 @@ export class Postgres implements Wrapper {
 
     if (
       args.length > 0 &&
-      isPlainObject(args[0]) &&
+      args[0] &&
+      typeof args[0] === "object" &&
+      "text" in args[0] &&
       args[0].text &&
       typeof args[0].text === "string"
     ) {
