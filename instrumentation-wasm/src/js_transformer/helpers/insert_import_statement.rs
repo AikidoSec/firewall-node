@@ -1,10 +1,11 @@
 use oxc_allocator::{Allocator, Vec as OxcVec};
 use oxc_ast::{
-    AstBuilder, NONE,
     ast::{
-        Argument, BindingProperty, ImportDeclarationSpecifier, ImportOrExportKind, Statement,
-        VariableDeclarationKind,
+        Argument, BindingIdentifier, BindingPattern, BindingProperty, Expression,
+        IdentifierReference, ImportDeclarationSpecifier, ImportOrExportKind, ModuleExportName,
+        PropertyKey, Statement, StringLiteral, VariableDeclarationKind, VariableDeclarator,
     },
+    builder::AstBuilder,
 };
 use oxc_span::{SPAN, SourceType};
 
@@ -53,44 +54,48 @@ pub fn insert_import_statement<'a>(
 ) {
     // Common JS require() statement
     if is_common_js(source_type, has_module_syntax) {
-        let mut require_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(1);
-        require_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+        let mut require_args: OxcVec<'a, Argument<'a>> = OxcVec::with_capacity_in(1, &allocator);
+        require_args.push(Argument::StringLiteral(StringLiteral::boxed(
             SPAN,
             allocator.alloc_str(INSTRUMENT_IMPORT_SOURCE),
             None,
+            builder,
         )));
 
-        let mut binding_properties: OxcVec<'a, BindingProperty<'a>> = builder.vec_with_capacity(3);
+        let mut binding_properties: OxcVec<'a, BindingProperty<'a>> =
+            OxcVec::with_capacity_in(3, &allocator);
 
         for (method_name, predicate) in IMPORT_METHODS.iter() {
             // Only import the function if it is used in the file
             if file_instructions.functions.iter().any(predicate) {
-                binding_properties.push(builder.binding_property(
+                binding_properties.push(BindingProperty::new(
                     SPAN,
-                    builder.property_key_static_identifier(SPAN, *method_name),
-                    builder.binding_pattern_binding_identifier(SPAN, *method_name),
+                    PropertyKey::new_static_identifier(SPAN, *method_name, builder),
+                    BindingPattern::new_binding_identifier(SPAN, *method_name, builder),
                     true,
                     false,
+                    builder,
                 ));
             }
         }
 
         if !file_instructions.access_local_variables.is_empty() {
-            binding_properties.push(
-                builder.binding_property(
+            binding_properties.push(BindingProperty::new(
+                SPAN,
+                PropertyKey::new_static_identifier(
                     SPAN,
-                    builder.property_key_static_identifier(
-                        SPAN,
-                        INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME,
-                    ),
-                    builder.binding_pattern_binding_identifier(
-                        SPAN,
-                        INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME,
-                    ),
-                    true,
-                    false,
+                    INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME,
+                    builder,
                 ),
-            );
+                BindingPattern::new_binding_identifier(
+                    SPAN,
+                    INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME,
+                    builder,
+                ),
+                true,
+                false,
+                builder,
+            ));
         }
 
         if binding_properties.is_empty() {
@@ -98,28 +103,30 @@ pub fn insert_import_statement<'a>(
             return;
         }
 
-        let mut declarations = builder.vec_with_capacity(1);
-        declarations.push(builder.variable_declarator(
+        let mut declarations = OxcVec::with_capacity_in(1, &allocator);
+        declarations.push(VariableDeclarator::new(
             SPAN,
-            VariableDeclarationKind::Const,
-            builder.binding_pattern_object_pattern(SPAN, binding_properties, NONE),
-            NONE,
-            Some(builder.expression_call(
+            BindingPattern::new_object_pattern(SPAN, binding_properties, None, builder),
+            None,
+            Some(Expression::new_call_expression(
                 SPAN,
-                builder.expression_identifier(SPAN, "require"),
-                NONE,
+                Expression::Identifier(IdentifierReference::boxed(SPAN, "require", builder)),
+                None,
                 require_args,
                 false,
+                builder,
             )),
             false,
+            builder,
         ));
 
-        let var_declaration = Statement::VariableDeclaration(builder.alloc_variable_declaration(
+        let var_declaration = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Const,
             declarations,
             false,
-        ));
+            builder,
+        );
 
         body.insert(0, var_declaration);
 
@@ -127,30 +134,32 @@ pub fn insert_import_statement<'a>(
     }
     // else: ESM import statement
 
-    let mut specifiers: OxcVec<'a, ImportDeclarationSpecifier<'a>> = builder.vec_with_capacity(3);
+    let mut specifiers: OxcVec<'a, ImportDeclarationSpecifier<'a>> =
+        OxcVec::with_capacity_in(3, &allocator);
     for (method_name, predicate) in IMPORT_METHODS.iter() {
         if file_instructions.functions.iter().any(predicate) {
-            specifiers.push(builder.import_declaration_specifier_import_specifier(
+            specifiers.push(ImportDeclarationSpecifier::new_import_specifier(
                 SPAN,
-                builder.module_export_name_identifier_name(SPAN, *method_name),
-                builder.binding_identifier(SPAN, *method_name),
+                ModuleExportName::new_identifier_name(SPAN, *method_name, builder),
+                BindingIdentifier::new(SPAN, *method_name, builder),
                 ImportOrExportKind::Value,
+                builder,
             ));
         }
     }
 
     if !file_instructions.access_local_variables.is_empty() {
-        specifiers.push(
-            builder.import_declaration_specifier_import_specifier(
+        specifiers.push(ImportDeclarationSpecifier::new_import_specifier(
+            SPAN,
+            ModuleExportName::new_identifier_name(
                 SPAN,
-                builder.module_export_name_identifier_name(
-                    SPAN,
-                    INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME,
-                ),
-                builder.binding_identifier(SPAN, INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME),
-                ImportOrExportKind::Value,
+                INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME,
+                builder,
             ),
-        );
+            BindingIdentifier::new(SPAN, INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME, builder),
+            ImportOrExportKind::Value,
+            builder,
+        ));
     }
 
     if specifiers.is_empty() {
@@ -158,14 +167,20 @@ pub fn insert_import_statement<'a>(
         return;
     }
 
-    let import_stmt = Statement::ImportDeclaration(builder.alloc_import_declaration(
+    let import_stmt = Statement::new_import_declaration(
         SPAN,
         Some(specifiers),
-        builder.string_literal(SPAN, allocator.alloc_str(INSTRUMENT_IMPORT_SOURCE), None),
+        StringLiteral::new(
+            SPAN,
+            allocator.alloc_str(INSTRUMENT_IMPORT_SOURCE),
+            None,
+            builder,
+        ),
         None,
-        NONE,
+        None,
         ImportOrExportKind::Value,
-    ));
+        builder,
+    );
 
     body.insert(0, import_stmt);
 }
