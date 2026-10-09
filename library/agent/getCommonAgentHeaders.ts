@@ -6,6 +6,7 @@ import { ip } from "../helpers/ipAddress";
 export function getCommonAgentHeaders(): Record<string, string> {
   return {
     "X-Agent-Platform": "node",
+    "X-Agent-Library": "firewall-node",
     "X-Agent-Version": getAgentVersion(),
     "X-Agent-Hostname": getInstanceHostname() || "unknown",
     "X-Agent-IP-Address": ip() || "unknown",

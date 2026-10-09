@@ -77,6 +77,7 @@ function createTestEndpoint({
         body: req.body,
         headers: {
           platform: req.header("X-Agent-Platform"),
+          library: req.header("X-Agent-Library"),
           version: req.header("X-Agent-Version"),
           hostname: req.header("X-Agent-Hostname"),
           ipAddress: req.header("X-Agent-IP-Address"),
@@ -125,6 +126,7 @@ t.test("it reports event to API endpoint", async () => {
   t.same(seen[0].body.type, "started");
   t.same(seen[0].headers, {
     platform: "node",
+    library: "firewall-node",
     version: getAgentVersion(),
     hostname: getInstanceHostname() || "unknown",
     ipAddress: ip() || "unknown",

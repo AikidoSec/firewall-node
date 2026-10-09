@@ -87,6 +87,7 @@ t.test("it fetches the lists", async (t) => {
     userAgentDetails: [],
   });
   t.equal(receivedHeaders["x-agent-platform"], "node");
+  t.equal(receivedHeaders["x-agent-library"], "firewall-node");
   t.equal(receivedHeaders["x-agent-version"], getAgentVersion());
   t.equal(
     receivedHeaders["x-agent-hostname"],
