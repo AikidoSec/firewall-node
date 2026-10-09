@@ -35,13 +35,9 @@ export class HTTPServer implements Wrapper {
     module: string,
     pkgInfo: any
   ) {
-    const methods = [
-      "on",
-      "addListener",
-      "once",
-      "prependListener",
-      "prependOnceListener",
-    ];
+    // `once` and `prependOnceListener` call `on` and `prependListener` internally
+    // Wrapping them as well would wrap the listener twice
+    const methods = ["on", "addListener", "prependListener"];
 
     methods.forEach((method) => {
       wrapExport(instance, method, pkgInfo, {

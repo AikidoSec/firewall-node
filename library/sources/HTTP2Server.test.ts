@@ -1199,3 +1199,49 @@ t.test("http2 server methods return the server instance", async (t) => {
   t.equal(server.prependOnceListener("session", noop), server);
   server.close();
 });
+
+for (const protocol of ["http", "https"] as const) {
+  for (const method of listenerMethods) {
+    for (const event of ["request", "stream", "session"] as const) {
+      t.test(
+        `${method} wraps the ${protocol} ${event} listener once`,
+        async (t) => {
+          const server =
+            protocol === "http"
+              ? http2.createServer()
+              : http2.createSecureServer({
+                  key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+                  cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+                });
+
+          let listeners = 0;
+          const onStream = (stream: import("http2").ServerHttp2Stream) => {
+            listeners = stream.listenerCount("close");
+            stream.respond({ ":status": 200 });
+            stream.end("{}");
+          };
+
+          switch (event) {
+            case "request":
+              server[method]("request", (req, res) => {
+                listeners = res.listenerCount("finish");
+                res.end("{}");
+              });
+              break;
+            case "stream":
+              server[method]("stream", onStream);
+              break;
+            case "session":
+              server[method]("session", (session) => {
+                session.on("stream", onStream);
+              });
+              break;
+          }
+
+          await getContextFromHttp2Server(server, protocol);
+          t.equal(listeners, 1);
+        }
+      );
+    }
+  }
+}

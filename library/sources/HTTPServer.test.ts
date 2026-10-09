@@ -1452,3 +1452,34 @@ t.test("it keeps the server instance returned by createServer", async (t) => {
   t.equal(server.prependOnceListener("request", respondWithContext), server);
   t.equal(server.listenerCount("request"), 4);
 });
+
+for (const protocol of ["http", "https"] as const) {
+  for (const method of listenerMethods) {
+    t.test(
+      `${method} wraps the ${protocol} request listener once`,
+      async (t) => {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+        const server =
+          protocol === "http"
+            ? http.createServer()
+            : https.createServer({
+                key: readFileSync(path.resolve(__dirname, "fixtures/key.pem")),
+                cert: readFileSync(
+                  path.resolve(__dirname, "fixtures/cert.pem")
+                ),
+              });
+
+        let finishListeners = 0;
+        server[method]("request", (req, res) => {
+          finishListeners = res.listenerCount("finish");
+          res.end("{}");
+        });
+
+        await getContextFromServer(server, protocol);
+        // Zen's own finish listener + Node's internal one
+        t.equal(finishListeners, 2);
+      }
+    );
+  }
+}
