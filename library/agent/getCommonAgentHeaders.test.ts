@@ -8,6 +8,7 @@ import { getCommonAgentHeaders } from "./getCommonAgentHeaders";
 t.test("it returns the common agent headers", async (t) => {
   t.same(getCommonAgentHeaders(), {
     "X-Agent-Platform": "node",
+    "X-Agent-Library": "firewall-node",
     "X-Agent-Version": getAgentVersion(),
     "X-Agent-Hostname": getInstanceHostname() || "unknown",
     "X-Agent-IP-Address": ip() || "unknown",
