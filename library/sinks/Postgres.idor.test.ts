@@ -183,7 +183,7 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
     });
 
     await t.test("allows Query instance with tenant filter", async () => {
-      await runWithContext(context, () => {
+      runWithContext(context, () => {
         return client.query(
           new Query({
             text: "SELECT petname FROM cats_pg_idor WHERE tenant_id = $1",
@@ -195,7 +195,7 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
 
     await t.test("blocks Query instance with wrong tenant ID", async () => {
       const error = await t.rejects(async () => {
-        await runWithContext(context, () => {
+        runWithContext(context, () => {
           return client.query(
             new Query({
               text: "SELECT petname FROM cats_pg_idor WHERE tenant_id = $1",

@@ -6,7 +6,6 @@ import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/ch
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 

@@ -87,7 +87,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
     }
 
     const error3 = await t.rejects(async () => {
-      await runWithContext(context, () => {
+      runWithContext(context, () => {
         return client.query(new Query("-- should be blocked"));
       });
     });
@@ -99,7 +99,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
     }
 
     const error4 = await t.rejects(async () => {
-      await runWithContext(context, () => {
+      runWithContext(context, () => {
         return client.query(new Query({ text: "-- should be blocked" }));
       });
     });
