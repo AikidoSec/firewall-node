@@ -1055,6 +1055,30 @@ t.test("it goes into monitoring mode after sending startup event", async () => {
   t.same(agent.shouldBlock(), false);
 });
 
+t.test("it only applies heartbeat config if it is newer", async () => {
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({ token: new Token("123"), api });
+
+  for (const [configUpdatedAt, block, expected] of [
+    [100, false, false],
+    [50, true, false],
+    [200, true, true],
+  ] as const) {
+    api.setResult({
+      success: true,
+      endpoints: [],
+      configUpdatedAt,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      excludedUserIdsFromRateLimiting: [],
+      block,
+    });
+    await agent.flushStats(1000);
+    t.same(agent.shouldBlock(), expected);
+  }
+});
+
 t.test(
   "it stores realtimeUpdatesEnabled from the startup event response",
   async () => {

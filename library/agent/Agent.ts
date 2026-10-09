@@ -59,7 +59,7 @@ export class Agent {
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig([], Date.now(), [], []);
+  private serviceConfig = new ServiceConfig([], 0, [], []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -405,7 +405,15 @@ export class Agent {
         timeoutInMS
       );
 
-      this.updateServiceConfig(response);
+      if (
+        response.success &&
+        response.configUpdatedAt > this.serviceConfig.getLastUpdatedAt()
+      ) {
+        this.updateServiceConfig(response);
+        this.queueBlockedListsUpdate().catch((error) => {
+          this.logger.log(`Failed to update blocked lists: ${error.message}`);
+        });
+      }
     }
   }
 
@@ -464,6 +472,10 @@ export class Agent {
     }
 
     const onConfigUpdate = (config: Config) => {
+      if (config.configUpdatedAt <= this.serviceConfig.getLastUpdatedAt()) {
+        return;
+      }
+
       this.updateServiceConfig({ success: true, ...config });
       this.queueBlockedListsUpdate().catch((error) => {
         this.logger.log(`Failed to update blocked lists: ${error.message}`);
