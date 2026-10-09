@@ -18,24 +18,13 @@ export type APIAuthType = {
 };
 
 // Incoming request headers are lowercase in Node.js
-const commonApiKeyHeaderNames = [
-  "x-api-key",
-  "api-key",
-  "apikey",
-  "x-token",
-  "token",
-];
+const commonApiKeyHeaderNames = ["api-key", "apikey", "token"];
 
 const commonAuthCookieNames = [
   "auth",
   "session",
   "jwt",
-  "token",
   "sid",
-  "connect.sid",
-  "auth_token",
-  "access_token",
-  "refresh_token",
   ...commonApiKeyHeaderNames,
 ];
 
@@ -82,12 +71,13 @@ function getAuthorizationHeaderType(
   if (authHeader.includes(" ")) {
     const [type, value] = authHeader.split(" ");
 
-    if (typeof type === "string" && typeof value === "string") {
+    if (type && value) {
       if (isHTTPAuthScheme(type)) {
         return { type: "http", scheme: type.toLowerCase() as HTTPAuthScheme };
       }
     }
   }
+
   // Default to apiKey if the auth type is not recognized
   return { type: "apiKey", in: "header", name: "Authorization" };
 }
@@ -98,10 +88,20 @@ function getAuthorizationHeaderType(
 function findApiKeys(context: Context): APIAuthType[] {
   const result: APIAuthType[] = [];
 
+  const headerNames = Object.keys(context.headers);
   for (const header of commonApiKeyHeaderNames) {
-    if (context.headers[header]) {
-      result.push({ type: "apiKey", in: "header", name: header });
-    }
+    const matches = headerNames.filter((name) =>
+      name.toLowerCase().includes(header)
+    );
+
+    matches.forEach((match) => {
+      const alreadyAdded = result.some(
+        (authType) => authType.name === match && authType.in === "header"
+      );
+      if (!alreadyAdded) {
+        result.push({ type: "apiKey", in: "header", name: match });
+      }
+    });
   }
 
   if (
@@ -110,11 +110,19 @@ function findApiKeys(context: Context): APIAuthType[] {
     !Array.isArray(context.cookies) &&
     Object.keys(context.cookies).length > 0
   ) {
-    const relevantCookies = Object.keys(context.cookies).filter((cookieName) =>
-      commonAuthCookieNames.includes(cookieName.toLowerCase())
-    );
-    for (const cookie of relevantCookies) {
-      result.push({ type: "apiKey", in: "cookie", name: cookie });
+    for (const cookie of commonAuthCookieNames) {
+      const matches = Object.keys(context.cookies).filter((name) =>
+        name.toLowerCase().includes(cookie.toLowerCase())
+      );
+
+      matches.forEach((match) => {
+        const alreadyAdded = result.some(
+          (authType) => authType.name === match && authType.in === "cookie"
+        );
+        if (!alreadyAdded) {
+          result.push({ type: "apiKey", in: "cookie", name: match });
+        }
+      });
     }
   }
 
