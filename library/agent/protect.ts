@@ -30,6 +30,7 @@ import { ReportingAPIRateLimitedServerSide } from "./api/ReportingAPIRateLimited
 import { ReportingAPIThatValidatesToken } from "./api/ReportingAPIThatValidatesToken";
 import { Token } from "./api/Token";
 import { getAPIURL } from "./getAPIURL";
+import { getServerlessFromEnv } from "../helpers/getServerlessFromEnv";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
@@ -193,7 +194,7 @@ export function getWrappers() {
 
 export function protect() {
   startAgent({
-    serverless: undefined,
+    serverless: getServerlessFromEnv(),
     newInstrumentation: false,
   });
 }
@@ -226,7 +227,7 @@ export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
 
 export function protectWithNewInstrumentation() {
   startAgent({
-    serverless: undefined,
+    serverless: getServerlessFromEnv(),
     newInstrumentation: true,
   });
 }
