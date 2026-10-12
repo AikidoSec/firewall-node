@@ -30,6 +30,25 @@ export class HTTPServer implements Wrapper {
     }
   }
 
+  private instrumentServerInstance(
+    instance: unknown,
+    module: string,
+    pkgInfo: any
+  ) {
+    // `once` and `prependOnceListener` call `on` and `prependListener` internally
+    // Wrapping them as well would wrap the listener twice
+    const methods = ["on", "addListener", "prependListener"];
+
+    methods.forEach((method) => {
+      wrapExport(instance, method, pkgInfo, {
+        kind: undefined,
+        modifyArgs: (args, agent) => {
+          return this.wrapOn(args, module, agent);
+        },
+      });
+    });
+  }
+
   private wrapRequestListener(args: unknown[], module: string, agent: Agent) {
     // Without options
     // http(s).createServer(listener)
@@ -81,6 +100,10 @@ export class HTTPServer implements Wrapper {
               this.warnIfNoSourceWrapped(agent);
               return this.wrapRequestListener(args, module, agent);
             },
+            modifyReturnValue: (_args, instance) => {
+              this.instrumentServerInstance(instance, module, pkgInfo);
+              return instance;
+            },
           });
         }
 
@@ -90,13 +113,8 @@ export class HTTPServer implements Wrapper {
             this.warnIfNoSourceWrapped(agent);
             return this.wrapRequestListener(args, module, agent);
           },
-          modifyReturnValue: (args, instance) => {
-            wrapExport(instance, "on", pkgInfo, {
-              kind: undefined,
-              modifyArgs: (args, agent) => {
-                return this.wrapOn(args, module, agent);
-              },
-            });
+          modifyReturnValue: (_args, instance) => {
+            this.instrumentServerInstance(instance, module, pkgInfo);
             return instance;
           },
         });
@@ -108,13 +126,8 @@ export class HTTPServer implements Wrapper {
               this.warnIfNoSourceWrapped(agent);
               return this.wrapRequestListener(args, module, agent);
             },
-            modifyReturnValue: (args, instance) => {
-              wrapExport(instance, "on", pkgInfo, {
-                kind: undefined,
-                modifyArgs: (args, agent) => {
-                  return this.wrapOn(args, module, agent);
-                },
-              });
+            modifyReturnValue: (_args, instance) => {
+              this.instrumentServerInstance(instance, module, pkgInfo);
               return instance;
             },
           });

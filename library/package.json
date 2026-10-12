@@ -178,6 +178,7 @@
     "build": "tsc -p tsconfig.build.json",
     "build:watch": "tsc --watch -p tsconfig.build.json",
     "lint": "oxlint --deny-warnings --type-aware . && npm run lint-tsc",
-    "lint-tsc": "tsc"
+    "lint-tsc": "tsc",
+    "format": "cd .. && npm run format"
   }
 }
