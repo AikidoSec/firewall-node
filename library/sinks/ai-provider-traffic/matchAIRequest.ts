@@ -11,7 +11,8 @@ export type AIRequest = {
   provider: string;
 };
 
-const geminiGenerateContentPath = /\/models\/([^/:]+):generateContent$/;
+const geminiGenerateContentPath =
+  /\/models\/([^/:]+):(?:generateContent|streamGenerateContent)$/;
 
 export function getAIWireFormat(
   method: string,

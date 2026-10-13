@@ -1,23 +1,6 @@
 import * as t from "tap";
-import { brotliCompressSync, gzipSync } from "zlib";
 import type { AIWireFormat } from "./matchAIRequest";
-import { maxAIResponseSize, parseAIResponse } from "./parseAIResponse";
-
-function parse(
-  format: AIWireFormat,
-  body: unknown,
-  contentEncoding?: string
-): ReturnType<typeof parseAIResponse> {
-  const json = Buffer.from(JSON.stringify(body));
-  switch (contentEncoding) {
-    case "gzip":
-      return parseAIResponse(format, contentEncoding, gzipSync(json));
-    case "br":
-      return parseAIResponse(format, contentEncoding, brotliCompressSync(json));
-    default:
-      return parseAIResponse(format, contentEncoding, json);
-  }
-}
+import { parseAIResponseBody } from "./parseAIResponse";
 
 const chatCompletion = {
   id: "chatcmpl-1",
@@ -62,7 +45,7 @@ const chatCompletion = {
 };
 
 t.test("OpenAI Chat Completions", async (t) => {
-  t.same(await parse({ type: "chat_completions" }, chatCompletion), {
+  t.same(parseAIResponseBody({ type: "chat_completions" }, chatCompletion), {
     model: "gpt-5-2025-08-07",
     inputTokens: 2000,
     outputTokens: 10,
@@ -108,7 +91,7 @@ t.test("OpenAI Responses", async (t) => {
     },
   };
 
-  t.same(await parse({ type: "responses" }, response), {
+  t.same(parseAIResponseBody({ type: "responses" }, response), {
     model: "gpt-4.1-2025-04-14",
     inputTokens: 300,
     outputTokens: 40,
@@ -156,14 +139,17 @@ const anthropicMessage = {
 };
 
 t.test("Anthropic Messages", async (t) => {
-  t.same(await parse({ type: "anthropic_messages" }, anthropicMessage), {
-    model: "claude-sonnet-4-5-20250929",
-    inputTokens: 12,
-    outputTokens: 34,
-    cacheReadTokens: 1000,
-    cacheWriteTokens: 200,
-    toolNames: ["get_weather", "web_search", "lookup"],
-  });
+  t.same(
+    parseAIResponseBody({ type: "anthropic_messages" }, anthropicMessage),
+    {
+      model: "claude-sonnet-4-5-20250929",
+      inputTokens: 12,
+      outputTokens: 34,
+      cacheReadTokens: 1000,
+      cacheWriteTokens: 200,
+      toolNames: ["get_weather", "web_search", "lookup"],
+    }
+  );
 });
 
 t.test("Gemini generateContent", async (t) => {
@@ -195,7 +181,7 @@ t.test("Gemini generateContent", async (t) => {
     modelVersion: "gemini-2.5-pro-001",
   };
 
-  t.same(await parse(format, response), {
+  t.same(parseAIResponseBody(format, response), {
     model: "gemini-2.5-pro-001",
     inputTokens: 100,
     outputTokens: 508,
@@ -204,59 +190,61 @@ t.test("Gemini generateContent", async (t) => {
     toolNames: ["get_weather"],
   });
 
-  t.match(await parse(format, { ...response, modelVersion: undefined }), {
-    model: "gemini-2.5-pro",
-  });
+  t.match(
+    parseAIResponseBody(format, { ...response, modelVersion: undefined }),
+    {
+      model: "gemini-2.5-pro",
+    }
+  );
+});
+
+t.test("Gemini streamGenerateContent without ?alt=sse", async (t) => {
+  const chunks = [
+    {
+      candidates: [{ content: { parts: [{ functionCall: { name: "a" } }] } }],
+      usageMetadata: { promptTokenCount: 3 },
+      modelVersion: "gemini-2.0-flash",
+    },
+    {
+      candidates: [{ content: { parts: [{ functionCall: { name: "b" } }] } }],
+      usageMetadata: { promptTokenCount: 3, candidatesTokenCount: 2 },
+      modelVersion: "gemini-2.0-flash",
+    },
+  ];
+
+  t.same(
+    parseAIResponseBody(
+      { type: "gemini_generate_content", pathModel: "gemini-2.0-flash" },
+      chunks
+    ),
+    {
+      model: "gemini-2.0-flash",
+      inputTokens: 3,
+      outputTokens: 2,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+      toolNames: ["a", "b"],
+    }
+  );
 });
 
 t.test("it ignores bodies without the expected shape or a model", async (t) => {
   t.equal(
-    await parse(
+    parseAIResponseBody(
       { type: "chat_completions" },
       { error: { message: "Rate limit" } }
     ),
     undefined
   );
   t.equal(
-    await parse(
+    parseAIResponseBody(
       { type: "chat_completions" },
       { ...chatCompletion, model: undefined }
     ),
     undefined
   );
   t.equal(
-    await parseAIResponse(
-      { type: "anthropic_messages" },
-      undefined,
-      Buffer.from("not json")
-    ),
-    undefined
-  );
-});
-
-t.test("it decompresses gzip and br", async (t) => {
-  t.match(
-    await parse({ type: "anthropic_messages" }, anthropicMessage, "gzip"),
-    {
-      model: "claude-sonnet-4-5-20250929",
-      inputTokens: 12,
-    }
-  );
-  t.match(await parse({ type: "chat_completions" }, chatCompletion, "br"), {
-    model: "gpt-5-2025-08-07",
-    inputTokens: 2000,
-  });
-  t.equal(
-    await parse({ type: "chat_completions" }, chatCompletion, "zstd"),
-    undefined
-  );
-});
-
-t.test("it stops decompressing above the size limit", async (t) => {
-  const bomb = gzipSync(Buffer.alloc(maxAIResponseSize + 1, " "));
-
-  t.equal(
-    await parseAIResponse({ type: "chat_completions" }, "gzip", bomb),
+    parseAIResponseBody({ type: "anthropic_messages" }, "text"),
     undefined
   );
 });

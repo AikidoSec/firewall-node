@@ -29,12 +29,7 @@ const providersNotCapturedFromNetwork = [
 ];
 
 export class AiSDK implements Wrapper {
-  private inspectAiCall(
-    agent: Agent,
-    args: unknown[],
-    response: unknown,
-    streamed: boolean
-  ) {
+  private inspectAiCall(agent: Agent, args: unknown[], response: unknown) {
     if (!this.isResult(response)) {
       return;
     }
@@ -44,9 +39,7 @@ export class AiSDK implements Wrapper {
       return;
     }
 
-    // The network capture skips streamed responses
     if (
-      !streamed &&
       isAINetworkCaptureActive() &&
       !providersNotCapturedFromNetwork.includes(provider)
     ) {
@@ -172,7 +165,7 @@ export class AiSDK implements Wrapper {
           // Inspect the response after the promise resolves, it won't change the original promise
           returnValue
             .then((response) => {
-              this.inspectAiCall(agent, args, response, false);
+              this.inspectAiCall(agent, args, response);
             })
             .catch((error) => {
               agent.onErrorThrownByInterceptor({
@@ -183,7 +176,7 @@ export class AiSDK implements Wrapper {
             });
         } else {
           try {
-            this.inspectAiCall(agent, args, returnValue, false);
+            this.inspectAiCall(agent, args, returnValue);
           } catch (error) {
             agent.onErrorThrownByInterceptor({
               error: error instanceof Error ? error : new Error(String(error)),
@@ -231,15 +224,10 @@ export class AiSDK implements Wrapper {
               return;
             }
 
-            this.inspectAiCall(
-              agent,
-              args,
-              {
-                response,
-                usage,
-              },
-              true
-            );
+            this.inspectAiCall(agent, args, {
+              response,
+              usage,
+            });
           })
           .catch((error) => {
             agent.onErrorThrownByInterceptor({

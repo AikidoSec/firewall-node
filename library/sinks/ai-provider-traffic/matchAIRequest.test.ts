@@ -23,15 +23,19 @@ t.test("it matches POST requests by path suffix", async (t) => {
     ),
     { type: "gemini_generate_content", pathModel: "gemini-2.5-flash" }
   );
+  t.same(
+    getAIWireFormat(
+      "POST",
+      "/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse"
+    ),
+    { type: "gemini_generate_content", pathModel: "gemini-2.5-flash" }
+  );
 
   t.equal(getAIWireFormat("GET", "/v1/responses"), undefined);
   t.equal(getAIWireFormat("POST", "/v1/messages/count_tokens"), undefined);
   t.equal(getAIWireFormat("POST", "/v1/embeddings"), undefined);
   t.equal(
-    getAIWireFormat(
-      "POST",
-      "/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse"
-    ),
+    getAIWireFormat("POST", "/v1beta/models/gemini-2.5-flash:countTokens"),
     undefined
   );
 });

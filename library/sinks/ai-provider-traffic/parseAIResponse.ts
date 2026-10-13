@@ -1,4 +1,3 @@
-import { brotliDecompress, gunzip, inflate } from "zlib";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import type { AIWireFormat } from "./matchAIRequest";
 
@@ -11,26 +10,11 @@ export type AICall = {
   toolNames: string[];
 };
 
-export const maxAIResponseSize = 8 * 1024 * 1024;
-
-export async function parseAIResponse(
+export function parseAIResponseBody(
   format: AIWireFormat,
-  contentEncoding: string | undefined,
-  body: Buffer
-): Promise<AICall | undefined> {
-  const decoded = await decodeBody(contentEncoding, body);
-  if (!decoded) {
-    return undefined;
-  }
-
-  let json: unknown;
-  try {
-    json = JSON.parse(decoded.toString("utf8"));
-  } catch {
-    return undefined;
-  }
-
-  const call = parseBody(format, json);
+  body: unknown
+): AICall | undefined {
+  const call = parseBody(format, body);
   if (!call || !call.model) {
     return undefined;
   }
@@ -38,88 +22,191 @@ export async function parseAIResponse(
   return call;
 }
 
-function decodeBody(
-  contentEncoding: string | undefined,
-  body: Buffer
-): Promise<Buffer | undefined> {
-  return new Promise((resolve) => {
-    const options = { maxOutputLength: maxAIResponseSize };
-    const callback = (error: Error | null, result: Buffer) => {
-      resolve(error ? undefined : result);
-    };
-
-    switch (contentEncoding) {
-      case undefined:
-      case "":
-      case "identity":
-        return resolve(body);
-      case "gzip":
-      case "x-gzip":
-        return gunzip(body, options, callback);
-      case "deflate":
-        return inflate(body, options, callback);
-      case "br":
-        return brotliDecompress(body, options, callback);
-      default:
-        return resolve(undefined);
-    }
-  });
-}
-
 function parseBody(format: AIWireFormat, body: unknown): AICall | undefined {
   switch (format.type) {
     case "chat_completions":
-      return parseChatCompletions(body);
+      return parseChatCompletion(body);
     case "responses":
-      return parseResponses(body);
+      return parseResponse(body);
     case "anthropic_messages":
-      return parseAnthropicMessages(body);
-    case "gemini_generate_content":
-      return parseGeminiGenerateContent(body, format.pathModel);
+      return parseAnthropicMessage(body);
+    case "gemini_generate_content": {
+      // streamGenerateContent without ?alt=sse returns a JSON array of chunks
+      const parser = new AIEventStreamParser(format);
+      for (const chunk of Array.isArray(body) ? body : [body]) {
+        parser.onEvent(chunk);
+      }
+      return parser.getCall();
+    }
   }
 }
 
-function parseChatCompletions(body: unknown): AICall | undefined {
+export class AIEventStreamParser {
+  private call: AICall;
+  private started = false;
+  private chatToolCalls = new Set<string>();
+
+  constructor(private readonly format: AIWireFormat) {
+    this.call = createCall(
+      format.type === "gemini_generate_content" ? format.pathModel : ""
+    );
+  }
+
+  onEvent(event: unknown): void {
+    switch (this.format.type) {
+      case "chat_completions":
+        return this.onChatCompletionChunk(event);
+      case "responses":
+        return this.onResponseEvent(event);
+      case "anthropic_messages":
+        return this.onAnthropicEvent(event);
+      case "gemini_generate_content":
+        return this.onGeminiChunk(event);
+    }
+  }
+
+  getCall(): AICall | undefined {
+    if (!this.started || !this.call.model) {
+      return undefined;
+    }
+
+    return this.call;
+  }
+
+  private onChatCompletionChunk(chunk: unknown): void {
+    this.started = true;
+    setModel(this.call, get(chunk, "model"));
+
+    // Groq reports streaming usage under x_groq.usage
+    const usage = get(chunk, "usage") ?? get(chunk, "x_groq", "usage");
+    if (isPlainObject(usage)) {
+      setChatCompletionUsage(this.call, usage);
+    }
+
+    for (const choice of getArray(get(chunk, "choices"))) {
+      for (const toolCall of getArray(get(choice, "delta", "tool_calls"))) {
+        const name = getString(get(toolCall, "function", "name"));
+        const key = JSON.stringify([
+          get(choice, "index"),
+          get(toolCall, "index"),
+        ]);
+        if (name && !this.chatToolCalls.has(key)) {
+          this.chatToolCalls.add(key);
+          this.call.toolNames.push(name);
+        }
+      }
+      addToolName(
+        this.call.toolNames,
+        get(choice, "delta", "function_call", "name")
+      );
+    }
+  }
+
+  private onResponseEvent(event: unknown): void {
+    const type = get(event, "type");
+    if (
+      type === "response.completed" ||
+      type === "response.incomplete" ||
+      type === "response.failed"
+    ) {
+      const call = parseResponse(get(event, "response"));
+      if (call) {
+        this.call = call;
+        this.started = true;
+      }
+    }
+  }
+
+  private onAnthropicEvent(event: unknown): void {
+    switch (get(event, "type")) {
+      case "message_start":
+        this.started = true;
+        setModel(this.call, get(event, "message", "model"));
+        setAnthropicUsage(this.call, get(event, "message", "usage"));
+        return;
+      case "message_delta":
+        setAnthropicUsage(this.call, get(event, "usage"));
+        return;
+      case "content_block_start":
+        addAnthropicToolName(this.call, get(event, "content_block"));
+        return;
+    }
+  }
+
+  private onGeminiChunk(chunk: unknown): void {
+    const candidates = get(chunk, "candidates");
+    const usage = get(chunk, "usageMetadata");
+    if (candidates === undefined && usage === undefined) {
+      return;
+    }
+
+    this.started = true;
+    setModel(this.call, get(chunk, "modelVersion"));
+
+    if (usage !== undefined) {
+      // promptTokenCount already includes the cached tokens
+      this.call.inputTokens =
+        getTokens(get(usage, "promptTokenCount")) +
+        getTokens(get(usage, "toolUsePromptTokenCount"));
+      this.call.outputTokens =
+        getTokens(get(usage, "candidatesTokenCount")) +
+        getTokens(get(usage, "thoughtsTokenCount"));
+      this.call.cacheReadTokens = getTokens(
+        get(usage, "cachedContentTokenCount")
+      );
+    }
+
+    for (const candidate of getArray(candidates)) {
+      for (const part of getArray(get(candidate, "content", "parts"))) {
+        addToolName(this.call.toolNames, get(part, "functionCall", "name"));
+      }
+    }
+  }
+}
+
+function parseChatCompletion(body: unknown): AICall | undefined {
   const choices = get(body, "choices");
   if (!Array.isArray(choices)) {
     return undefined;
   }
 
-  const toolNames: string[] = [];
+  const call = createCall(getString(get(body, "model")) ?? "");
+  setChatCompletionUsage(call, get(body, "usage"));
+
   for (const choice of choices) {
     for (const toolCall of getArray(get(choice, "message", "tool_calls"))) {
       addToolName(
-        toolNames,
+        call.toolNames,
         getString(get(toolCall, "function", "name")) ??
           get(toolCall, "custom", "name")
       );
     }
-    addToolName(toolNames, get(choice, "message", "function_call", "name"));
+    addToolName(
+      call.toolNames,
+      get(choice, "message", "function_call", "name")
+    );
   }
 
-  const usage = get(body, "usage");
-
-  return {
-    model: getString(get(body, "model")) ?? "",
-    inputTokens: getTokens(get(usage, "prompt_tokens")),
-    outputTokens: getTokens(get(usage, "completion_tokens")),
-    cacheReadTokens: getTokens(
-      get(usage, "prompt_tokens_details", "cached_tokens")
-    ),
-    cacheWriteTokens: getTokens(
-      get(usage, "prompt_tokens_details", "cache_write_tokens")
-    ),
-    toolNames,
-  };
+  return call;
 }
 
-function parseResponses(body: unknown): AICall | undefined {
+function parseResponse(body: unknown): AICall | undefined {
   const output = get(body, "output");
   if (!Array.isArray(output)) {
     return undefined;
   }
 
-  const toolNames: string[] = [];
+  const call = createCall(getString(get(body, "model")) ?? "");
+  const usage = get(body, "usage");
+  call.inputTokens = getTokens(get(usage, "input_tokens"));
+  call.outputTokens = getTokens(get(usage, "output_tokens"));
+  call.cacheReadTokens = getTokens(
+    get(usage, "input_tokens_details", "cached_tokens")
+  );
+  call.cacheWriteTokens = getTokens(
+    get(usage, "input_tokens_details", "cache_write_tokens")
+  );
+
   for (const item of output) {
     const type = get(item, "type");
     if (
@@ -127,86 +214,81 @@ function parseResponses(body: unknown): AICall | undefined {
       type === "custom_tool_call" ||
       type === "mcp_call"
     ) {
-      addToolName(toolNames, get(item, "name"));
+      addToolName(call.toolNames, get(item, "name"));
     }
   }
 
-  const usage = get(body, "usage");
-
-  return {
-    model: getString(get(body, "model")) ?? "",
-    inputTokens: getTokens(get(usage, "input_tokens")),
-    outputTokens: getTokens(get(usage, "output_tokens")),
-    cacheReadTokens: getTokens(
-      get(usage, "input_tokens_details", "cached_tokens")
-    ),
-    cacheWriteTokens: getTokens(
-      get(usage, "input_tokens_details", "cache_write_tokens")
-    ),
-    toolNames,
-  };
+  return call;
 }
 
-function parseAnthropicMessages(body: unknown): AICall | undefined {
+function parseAnthropicMessage(body: unknown): AICall | undefined {
   const content = get(body, "content");
   if (!Array.isArray(content)) {
     return undefined;
   }
 
-  const toolNames: string[] = [];
+  const call = createCall(getString(get(body, "model")) ?? "");
+  setAnthropicUsage(call, get(body, "usage"));
+
   for (const block of content) {
-    const type = get(block, "type");
-    if (
-      type === "tool_use" ||
-      type === "server_tool_use" ||
-      type === "mcp_tool_use"
-    ) {
-      addToolName(toolNames, get(block, "name"));
-    }
+    addAnthropicToolName(call, block);
   }
 
-  const usage = get(body, "usage");
+  return call;
+}
 
+function setChatCompletionUsage(call: AICall, usage: unknown): void {
+  call.inputTokens = getTokens(get(usage, "prompt_tokens"));
+  call.outputTokens = getTokens(get(usage, "completion_tokens"));
+  call.cacheReadTokens = getTokens(
+    get(usage, "prompt_tokens_details", "cached_tokens")
+  );
+  call.cacheWriteTokens = getTokens(
+    get(usage, "prompt_tokens_details", "cache_write_tokens")
+  );
+}
+
+// Keeps the current counts for missing fields, a stream sends them in parts
+function setAnthropicUsage(call: AICall, usage: unknown): void {
+  call.inputTokens = getTokens(get(usage, "input_tokens"), call.inputTokens);
+  call.outputTokens = getTokens(get(usage, "output_tokens"), call.outputTokens);
+  call.cacheReadTokens = getTokens(
+    get(usage, "cache_read_input_tokens"),
+    call.cacheReadTokens
+  );
+  call.cacheWriteTokens = getTokens(
+    get(usage, "cache_creation_input_tokens"),
+    call.cacheWriteTokens
+  );
+}
+
+function addAnthropicToolName(call: AICall, block: unknown): void {
+  const type = get(block, "type");
+  if (
+    type === "tool_use" ||
+    type === "server_tool_use" ||
+    type === "mcp_tool_use"
+  ) {
+    addToolName(call.toolNames, get(block, "name"));
+  }
+}
+
+function createCall(model: string): AICall {
   return {
-    model: getString(get(body, "model")) ?? "",
-    inputTokens: getTokens(get(usage, "input_tokens")),
-    outputTokens: getTokens(get(usage, "output_tokens")),
-    cacheReadTokens: getTokens(get(usage, "cache_read_input_tokens")),
-    cacheWriteTokens: getTokens(get(usage, "cache_creation_input_tokens")),
-    toolNames,
+    model,
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheReadTokens: 0,
+    cacheWriteTokens: 0,
+    toolNames: [],
   };
 }
 
-function parseGeminiGenerateContent(
-  body: unknown,
-  pathModel: string
-): AICall | undefined {
-  const candidates = get(body, "candidates");
-  const usage = get(body, "usageMetadata");
-  if (candidates === undefined && usage === undefined) {
-    return undefined;
+function setModel(call: AICall, model: unknown): void {
+  const value = getString(model);
+  if (value) {
+    call.model = value;
   }
-
-  const toolNames: string[] = [];
-  for (const candidate of getArray(candidates)) {
-    for (const part of getArray(get(candidate, "content", "parts"))) {
-      addToolName(toolNames, get(part, "functionCall", "name"));
-    }
-  }
-
-  return {
-    model: getString(get(body, "modelVersion")) ?? pathModel,
-    // promptTokenCount already includes the cached tokens
-    inputTokens:
-      getTokens(get(usage, "promptTokenCount")) +
-      getTokens(get(usage, "toolUsePromptTokenCount")),
-    outputTokens:
-      getTokens(get(usage, "candidatesTokenCount")) +
-      getTokens(get(usage, "thoughtsTokenCount")),
-    cacheReadTokens: getTokens(get(usage, "cachedContentTokenCount")),
-    cacheWriteTokens: 0,
-    toolNames,
-  };
 }
 
 function get(value: unknown, ...keys: string[]): unknown {
@@ -229,10 +311,10 @@ function getString(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
-function getTokens(value: unknown): number {
-  return typeof value === "number" && Number.isSafeInteger(value) && value > 0
+function getTokens(value: unknown, fallback = 0): number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
     ? value
-    : 0;
+    : fallback;
 }
 
 function addToolName(toolNames: string[], name: unknown): void {

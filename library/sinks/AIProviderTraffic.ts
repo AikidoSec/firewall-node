@@ -4,24 +4,22 @@ import { getInstance } from "../agent/AgentSingleton";
 import type { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { tryParseURL } from "../helpers/tryParseURL";
+import {
+  type AIResponseReader,
+  createAIResponseReader,
+} from "./ai-provider-traffic/AIResponseReader";
 import { isAINetworkCaptureActive } from "./ai-provider-traffic/isAINetworkCaptureActive";
 import {
   type AIRequest,
   getAIProvider,
   getAIWireFormat,
 } from "./ai-provider-traffic/matchAIRequest";
-import {
-  type AICall,
-  maxAIResponseSize,
-  parseAIResponse,
-} from "./ai-provider-traffic/parseAIResponse";
+import type { AICall } from "./ai-provider-traffic/parseAIResponse";
 import { parseHeaders } from "./undici/parseHeaders";
 
 type ResponseCapture = {
-  aiRequest: AIRequest;
-  contentEncoding: string | undefined;
-  chunks: Buffer[];
-  size: number;
+  provider: string;
+  reader: AIResponseReader;
 };
 
 type UndiciRequest = { method: string; origin: string | URL; path: string };
@@ -40,6 +38,7 @@ type HTTPClientResponseMessage = {
   response: IncomingMessage;
 };
 
+const undiciAIRequests = new WeakMap<UndiciRequest, AIRequest>();
 const undiciCaptures = new WeakMap<UndiciRequest, ResponseCapture>();
 
 export class AIProviderTraffic implements Wrapper {
@@ -84,11 +83,9 @@ function onUndiciRequestCreate({ request }: UndiciRequestMessage): void {
     return;
   }
 
-  undiciCaptures.set(request, {
-    aiRequest: { format, provider: getAIProvider(hostname, format) },
-    contentEncoding: undefined,
-    chunks: [],
-    size: 0,
+  undiciAIRequests.set(request, {
+    format,
+    provider: getAIProvider(hostname, format),
   });
 }
 
@@ -96,32 +93,33 @@ function onUndiciRequestHeaders({
   request,
   response,
 }: UndiciHeadersMessage): void {
-  const capture = undiciCaptures.get(request);
-  if (!capture) {
+  const aiRequest = undiciAIRequests.get(request);
+  if (!aiRequest) {
     return;
   }
+  undiciAIRequests.delete(request);
 
   const headers = Array.isArray(response.headers)
     ? parseHeaders(response.headers)
     : response.headers;
-
-  if (
-    !isPlainObject(headers) ||
-    !isCapturableResponse(
-      response.statusCode,
-      getHeaderValue(headers["content-type"])
-    )
-  ) {
-    undiciCaptures.delete(request);
+  if (!isPlainObject(headers)) {
     return;
   }
 
-  capture.contentEncoding = getHeaderValue(headers["content-encoding"]);
+  const capture = createCapture(
+    aiRequest,
+    response.statusCode,
+    headers["content-type"],
+    headers["content-encoding"]
+  );
+  if (capture) {
+    undiciCaptures.set(request, capture);
+  }
 }
 
 function onUndiciBodyChunk({ request, chunk }: UndiciBodyChunkMessage): void {
   const capture = undiciCaptures.get(request);
-  if (capture && !addChunk(capture, chunk)) {
+  if (capture && !writeChunk(capture, chunk)) {
     undiciCaptures.delete(request);
   }
 }
@@ -135,6 +133,7 @@ function onUndiciRequestEnd({ request }: UndiciRequestMessage): void {
 }
 
 function onUndiciRequestError({ request }: UndiciRequestMessage): void {
+  undiciAIRequests.delete(request);
   undiciCaptures.delete(request);
 }
 
@@ -144,22 +143,19 @@ function onHTTPClientResponse({
   response,
 }: HTTPClientResponseMessage): void {
   const format = getAIWireFormat(request.method, request.path);
-  if (
-    !format ||
-    !isCapturableResponse(
-      response.statusCode ?? 0,
-      getHeaderValue(response.headers["content-type"])
-    )
-  ) {
+  if (!format) {
     return;
   }
 
-  let capture: ResponseCapture | undefined = {
-    aiRequest: { format, provider: getAIProvider(request.host, format) },
-    contentEncoding: getHeaderValue(response.headers["content-encoding"]),
-    chunks: [],
-    size: 0,
-  };
+  let capture = createCapture(
+    { format, provider: getAIProvider(request.host, format) },
+    response.statusCode ?? 0,
+    response.headers["content-type"],
+    response.headers["content-encoding"]
+  );
+  if (!capture) {
+    return;
+  }
 
   // A 'data' listener would switch the stream to flowing mode,
   // apps that start reading later would lose the body
@@ -173,7 +169,7 @@ function onHTTPClientResponse({
         if (args[0] === null) {
           finishCapture(capture);
           capture = undefined;
-        } else if (!addChunk(capture, args[0])) {
+        } else if (!writeChunk(capture, args[0])) {
           capture = undefined;
         }
       } catch {
@@ -185,15 +181,26 @@ function onHTTPClientResponse({
   };
 }
 
-function isCapturableResponse(
+function createCapture(
+  aiRequest: AIRequest,
   statusCode: number,
-  contentType: string | undefined
-): boolean {
-  return (
-    statusCode >= 200 &&
-    statusCode < 300 &&
-    !contentType?.includes("text/event-stream")
+  contentType: unknown,
+  contentEncoding: unknown
+): ResponseCapture | undefined {
+  if (statusCode < 200 || statusCode >= 300) {
+    return undefined;
+  }
+
+  const reader = createAIResponseReader(
+    aiRequest.format,
+    getHeaderValue(contentType),
+    getHeaderValue(contentEncoding)
   );
+  if (!reader) {
+    return undefined;
+  }
+
+  return { provider: aiRequest.provider, reader };
 }
 
 function getHeaderValue(value: unknown): string | undefined {
@@ -201,33 +208,16 @@ function getHeaderValue(value: unknown): string | undefined {
 }
 
 // Returns false when the response can't be captured
-function addChunk(capture: ResponseCapture, chunk: unknown): boolean {
-  if (!(chunk instanceof Uint8Array)) {
-    return false;
-  }
-
-  capture.size += chunk.length;
-  if (capture.size > maxAIResponseSize) {
-    return false;
-  }
-
-  // Copy, the app owns the original buffer
-  capture.chunks.push(Buffer.from(chunk));
-
-  return true;
+function writeChunk(capture: ResponseCapture, chunk: unknown): boolean {
+  return chunk instanceof Uint8Array && capture.reader.write(chunk);
 }
 
 function finishCapture(capture: ResponseCapture): void {
-  const { aiRequest } = capture;
-
-  parseAIResponse(
-    aiRequest.format,
-    capture.contentEncoding,
-    Buffer.concat(capture.chunks)
-  )
+  capture.reader
+    .end()
     .then((call) => {
       if (call) {
-        recordAICall(aiRequest.provider, call);
+        recordAICall(capture.provider, call);
       }
     })
     .catch(() => {});
