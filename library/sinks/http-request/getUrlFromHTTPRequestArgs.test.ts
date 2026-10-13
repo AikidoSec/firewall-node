@@ -156,3 +156,21 @@ t.test("it works with node:url object as first argument", async (t) => {
     new URL("http://localhost:4000")
   );
 });
+
+t.test("a path cannot inject a URL authority", async (t) => {
+  t.same(
+    getURL([{ hostname: "127.0.0.1", path: "@public.example/" }], "http")
+      ?.hostname,
+    "127.0.0.1"
+  );
+  t.same(
+    getURL(
+      [
+        "http://example.com/",
+        { hostname: "127.0.0.1", path: "@public.example/" },
+      ],
+      "http"
+    )?.hostname,
+    "127.0.0.1"
+  );
+});
