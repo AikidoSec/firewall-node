@@ -15,7 +15,6 @@ import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { cleanError } from "../../helpers/cleanError";
 import {
   captureStack,
-  isCapturingStack,
   isStackFromSourceMapLookup,
 } from "../../helpers/captureStack";
 
@@ -31,11 +30,6 @@ export function onInspectionInterceptorResult(
   operation: string,
   kind: OperationKind | undefined
 ) {
-  if (isCapturingStack()) {
-    // Triggered by Node while we build a stack trace
-    return;
-  }
-
   // Only read when an attack was detected, so the normal path is not affected
   const stack = isAttackResult(result) && context ? captureStack() : undefined;
   if (stack && isStackFromSourceMapLookup(stack)) {

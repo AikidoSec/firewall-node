@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { checkContextForPathTraversal } from "./checkContextForPathTraversal";
+import { captureStack } from "../../helpers/captureStack";
 
 const unsafeContext = {
   filename: "../file/test.txt",
@@ -532,3 +533,21 @@ t.test(
     );
   }
 );
+
+t.test("it skips the check while a stack trace is captured", async () => {
+  const original = Error.prepareStackTrace;
+  const results: unknown[] = [];
+  Error.prepareStackTrace = (err, callSites) => {
+    results.push(checkContextForPathTraversal(unsafeContext));
+    return original ? original(err, callSites) : String(err);
+  };
+
+  try {
+    captureStack();
+  } finally {
+    Error.prepareStackTrace = original;
+  }
+
+  t.same(results, [undefined]);
+  t.same(checkContextForPathTraversal(unsafeContext)?.kind, "path_traversal");
+});
