@@ -13,6 +13,11 @@ import {
 } from "./InterceptorResult";
 import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { cleanError } from "../../helpers/cleanError";
+import {
+  captureStack,
+  isCapturingStack,
+  isStackFromSourceMapLookup,
+} from "../../helpers/captureStack";
 
 // Used for cleaning up the stack trace
 const libraryRoot = resolve(__dirname, "../..");
@@ -26,6 +31,18 @@ export function onInspectionInterceptorResult(
   operation: string,
   kind: OperationKind | undefined
 ) {
+  if (isCapturingStack()) {
+    // Triggered by Node while we build a stack trace
+    return;
+  }
+
+  // Only read when an attack was detected, so the normal path is not affected
+  const stack = isAttackResult(result) && context ? captureStack() : undefined;
+  if (stack && isStackFromSourceMapLookup(stack)) {
+    // Node internals building a stack trace, not an attack by the app
+    return;
+  }
+
   const end = performance.now();
 
   const isBypassedRequest = agent.getConfig().isBypassedRequest(context);
@@ -67,7 +84,7 @@ export function onInspectionInterceptorResult(
       kind: result.kind,
       source: result.source,
       blocked: agent.shouldBlock(),
-      stack: cleanupStackTrace(new Error().stack!, libraryRoot),
+      stack: cleanupStackTrace(stack!, libraryRoot),
       paths: result.pathsToPayload,
       metadata: result.metadata,
       request: context,
