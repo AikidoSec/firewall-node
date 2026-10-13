@@ -40,3 +40,24 @@ t.test("does not flag input that is not a prefix of the path", async () => {
   t.same(startsWithUnsafePath("/etc/passwd", "/etc/shadow"), false);
   t.same(startsWithUnsafePath("/srv/data/file.txt", "/other/file.txt"), false);
 });
+
+t.test(
+  "drive letter paths are not absolute on POSIX",
+  { skip: process.platform === "win32" ? "POSIX only" : false },
+  async () => {
+    t.same(startsWithUnsafePath("c:/foo/bar.txt", "c:/foo"), false);
+    t.same(startsWithUnsafePath("c:\\foo\\bar.txt", "c:\\foo"), false);
+  }
+);
+
+t.test(
+  "flags Windows drive paths",
+  { skip: process.platform !== "win32" ? "Windows only" : false },
+  async () => {
+    t.same(startsWithUnsafePath("c:\\foo\\bar.txt", "c:\\foo"), true);
+    t.same(startsWithUnsafePath("C:\\Windows\\win.ini", "C:\\Windows"), true);
+    t.same(startsWithUnsafePath("c:\\foo\\bar.txt", "c:\\foo\\bar"), true);
+    t.same(startsWithUnsafePath("c:\\foo\\bar.txt", "c:\\other"), false);
+    t.same(startsWithUnsafePath("d:\\foo\\bar.txt", "d:\\foo"), false);
+  }
+);
