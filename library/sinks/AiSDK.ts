@@ -3,6 +3,7 @@ import type { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorObject, wrapExport } from "../agent/hooks/wrapExport";
 import type { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { isAINetworkCaptureActive } from "./ai-provider-traffic/isAINetworkCaptureActive";
 
 type PartialAiResponse = {
   usage: {
@@ -18,14 +19,37 @@ type PartialAiResponse = {
   };
 };
 
+// Their wire formats are not parsed by the network capture (vertex is Vertex Anthropic's :rawPredict)
+const providersNotCapturedFromNetwork = [
+  "gateway",
+  "bedrock",
+  "cohere",
+  "ollama",
+  "vertex",
+];
+
 export class AiSDK implements Wrapper {
-  private inspectAiCall(agent: Agent, args: unknown[], response: unknown) {
+  private inspectAiCall(
+    agent: Agent,
+    args: unknown[],
+    response: unknown,
+    streamed: boolean
+  ) {
     if (!this.isResult(response)) {
       return;
     }
 
     const provider = this.getProviderFromArgs(args);
     if (!provider) {
+      return;
+    }
+
+    // The network capture skips streamed responses
+    if (
+      !streamed &&
+      isAINetworkCaptureActive() &&
+      !providersNotCapturedFromNetwork.includes(provider)
+    ) {
       return;
     }
 
@@ -148,7 +172,7 @@ export class AiSDK implements Wrapper {
           // Inspect the response after the promise resolves, it won't change the original promise
           returnValue
             .then((response) => {
-              this.inspectAiCall(agent, args, response);
+              this.inspectAiCall(agent, args, response, false);
             })
             .catch((error) => {
               agent.onErrorThrownByInterceptor({
@@ -159,7 +183,7 @@ export class AiSDK implements Wrapper {
             });
         } else {
           try {
-            this.inspectAiCall(agent, args, returnValue);
+            this.inspectAiCall(agent, args, returnValue, false);
           } catch (error) {
             agent.onErrorThrownByInterceptor({
               error: error instanceof Error ? error : new Error(String(error)),
@@ -207,10 +231,15 @@ export class AiSDK implements Wrapper {
               return;
             }
 
-            this.inspectAiCall(agent, args, {
-              response,
-              usage,
-            });
+            this.inspectAiCall(
+              agent,
+              args,
+              {
+                response,
+                usage,
+              },
+              true
+            );
           })
           .catch((error) => {
             agent.onErrorThrownByInterceptor({

@@ -3,6 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { isAINetworkCaptureActive } from "./ai-provider-traffic/isAINetworkCaptureActive";
 
 // See https://docs.anthropic.com/claude/reference/messages_post
 type AnthropicMessageResponse = {
@@ -42,7 +43,7 @@ function isAnthropicMessageResponse(
 
 export class Anthropic implements Wrapper {
   private inspectResponse(agent: Agent, response: unknown) {
-    if (!isAnthropicMessageResponse(response)) {
+    if (isAINetworkCaptureActive() || !isAnthropicMessageResponse(response)) {
       return;
     }
 

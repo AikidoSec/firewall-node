@@ -3,6 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { isAINetworkCaptureActive } from "./ai-provider-traffic/isAINetworkCaptureActive";
 
 type Response = {
   model: string;
@@ -43,7 +44,7 @@ type Provider = "openai" | "azure";
 
 export class OpenAI implements Wrapper {
   private inspectResponse(agent: Agent, response: unknown, provider: Provider) {
-    if (!isResponse(response)) {
+    if (isAINetworkCaptureActive() || !isResponse(response)) {
       return;
     }
 
@@ -72,7 +73,7 @@ export class OpenAI implements Wrapper {
     response: unknown,
     provider: Provider
   ) {
-    if (!isCompletionResponse(response)) {
+    if (isAINetworkCaptureActive() || !isCompletionResponse(response)) {
       return;
     }
 

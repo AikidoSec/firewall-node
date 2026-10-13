@@ -6,11 +6,20 @@ type AIProviderStats = {
     input: number;
     output: number;
     total: number;
+    cacheRead: number;
+    cacheWrite: number;
   };
+};
+
+type AIToolCallStats = {
+  name: string;
+  calls: number;
+  blocked: number;
 };
 
 export class AIStatistics {
   private calls: Map<string, AIProviderStats> = new Map();
+  private toolCalls: Map<string, AIToolCallStats> = new Map();
 
   private getProviderKey(provider: string, model: string): string {
     return `${provider}:${model}`;
@@ -35,6 +44,8 @@ export class AIStatistics {
           input: 0,
           output: 0,
           total: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
         },
       });
     }
@@ -47,11 +58,15 @@ export class AIStatistics {
     model,
     inputTokens,
     outputTokens,
+    cacheReadTokens = 0,
+    cacheWriteTokens = 0,
   }: {
     provider: string;
     model: string;
     inputTokens: number;
     outputTokens: number;
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
   }) {
     if (!provider || !model) {
       return;
@@ -62,6 +77,8 @@ export class AIStatistics {
     providerStats.tokens.input += inputTokens;
     providerStats.tokens.output += outputTokens;
     providerStats.tokens.total += inputTokens + outputTokens;
+    providerStats.tokens.cacheRead += cacheReadTokens;
+    providerStats.tokens.cacheWrite += cacheWriteTokens;
   }
 
   getStats() {
@@ -74,16 +91,39 @@ export class AIStatistics {
           input: stats.tokens.input,
           output: stats.tokens.output,
           total: stats.tokens.total,
+          cacheRead: stats.tokens.cacheRead,
+          cacheWrite: stats.tokens.cacheWrite,
         },
       };
     });
   }
 
+  onAIToolCall({ name, blocked }: { name: string; blocked: boolean }) {
+    if (!name) {
+      return;
+    }
+
+    if (!this.toolCalls.has(name)) {
+      this.toolCalls.set(name, { name, calls: 0, blocked: 0 });
+    }
+
+    const toolStats = this.toolCalls.get(name)!;
+    toolStats.calls += 1;
+    if (blocked) {
+      toolStats.blocked += 1;
+    }
+  }
+
+  getToolCallStats() {
+    return Array.from(this.toolCalls.values());
+  }
+
   reset() {
     this.calls.clear();
+    this.toolCalls.clear();
   }
 
   isEmpty(): boolean {
-    return this.calls.size === 0;
+    return this.calls.size === 0 && this.toolCalls.size === 0;
   }
 }

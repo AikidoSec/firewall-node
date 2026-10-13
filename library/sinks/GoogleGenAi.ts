@@ -3,6 +3,7 @@ import type { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import type { Wrapper } from "../agent/Wrapper";
+import { isAINetworkCaptureActive } from "./ai-provider-traffic/isAINetworkCaptureActive";
 
 type Response = {
   modelVersion: string;
@@ -162,7 +163,7 @@ export class GoogleGenAi implements Wrapper {
   }
 
   private inspectResponse(agent: Agent, response: any) {
-    if (!this.isResponse(response)) {
+    if (isAINetworkCaptureActive() || !this.isResponse(response)) {
       return;
     }
 

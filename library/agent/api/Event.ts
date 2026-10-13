@@ -126,7 +126,14 @@ type Heartbeat = {
       input: number;
       output: number;
       total: number;
+      cacheRead: number;
+      cacheWrite: number;
     };
+  }[];
+  aiToolCalls?: {
+    name: string;
+    calls: number;
+    blocked: number;
   }[];
   packages: {
     name: string;

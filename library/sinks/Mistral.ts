@@ -3,6 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { isAINetworkCaptureActive } from "./ai-provider-traffic/isAINetworkCaptureActive";
 
 // See https://github.com/mistralai/client-ts/blob/main/src/models/components/chatcompletionresponse.ts
 type MistralChatCompletionResponse = {
@@ -26,7 +27,10 @@ function isMistralChatCompletionResponse(
 
 export class Mistral implements Wrapper {
   private inspectResponse(agent: Agent, response: unknown) {
-    if (!isMistralChatCompletionResponse(response)) {
+    if (
+      isAINetworkCaptureActive() ||
+      !isMistralChatCompletionResponse(response)
+    ) {
       return;
     }
 

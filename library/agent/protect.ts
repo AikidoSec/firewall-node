@@ -60,6 +60,7 @@ import { AiSDK } from "../sinks/AiSDK";
 import { Mistral } from "../sinks/Mistral";
 import { Anthropic } from "../sinks/Anthropic";
 import { GoogleGenAi } from "../sinks/GoogleGenAi";
+import { AIProviderTraffic } from "../sinks/AIProviderTraffic";
 import { FunctionSink } from "../sinks/FunctionSink";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
@@ -185,6 +186,7 @@ export function getWrappers() {
     new AwsSDKVersion2(),
     new AiSDK(),
     new GoogleGenAi(),
+    new AIProviderTraffic(),
     new Mongoose(),
     new NodeVm(),
     new Zlib(),
