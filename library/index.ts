@@ -1,6 +1,7 @@
 import isFirewallSupported from "./helpers/isFirewallSupported";
 import shouldEnableFirewall from "./helpers/shouldEnableFirewall";
 import { setUser } from "./agent/context/user";
+import { track } from "./agent/context/track";
 import { markUnsafe } from "./agent/context/markUnsafe";
 import { shouldBlockRequest } from "./middleware/shouldBlockRequest";
 import { addExpressMiddleware } from "./middleware/express";
@@ -27,6 +28,7 @@ import { warnBox } from "./helpers/warnBox";
 import { isPreloaded } from "./helpers/isPreloaded";
 import { warnIfEntrypointIsModule } from "./helpers/warnIfEntrypointIsModule";
 import { elysiaHandler } from "./middleware/elysia";
+import { bypassRequest } from "./agent/context/bypassRequest";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -69,6 +71,7 @@ if (!isNewHookSystemUsed()) {
 
 export {
   setUser,
+  track,
   markUnsafe,
   shouldBlockRequest,
   addExpressMiddleware,
@@ -86,12 +89,14 @@ export {
   getTenantId,
   enableIdorProtection,
   withoutIdorProtection,
+  bypassRequest,
 };
 
 // Required for ESM / TypeScript default export support
 // e.g. import Zen from '@aikidosec/firewall'; would not work without this, as Zen.setUser would be undefined
 export default {
   setUser,
+  track,
   markUnsafe,
   shouldBlockRequest,
   addExpressMiddleware,
@@ -109,4 +114,5 @@ export default {
   getTenantId,
   enableIdorProtection,
   withoutIdorProtection,
+  bypassRequest,
 };

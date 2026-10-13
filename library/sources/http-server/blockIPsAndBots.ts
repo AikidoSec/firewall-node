@@ -40,11 +40,9 @@ export function blockIPsAndBots(
   // Also ensures that the statistics are only counted once
   res[checkedBlocks] = true;
 
-  const isBypassedIP =
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress);
+  const isBypassedRequest = agent.getConfig().isBypassedRequest(context);
 
-  if (isBypassedIP) {
+  if (isBypassedRequest) {
     return false;
   }
 

@@ -51,13 +51,23 @@ That's everything you need for code that runs inside requests. The sections belo
 ## Supported databases
 
 - MySQL (via `mysql` and `mysql2`)
-- PostgreSQL (via `pg`)
+- PostgreSQL (via `pg`, with partial support for [`postgres`](#postgresjs))
 - SQLite (via `better-sqlite3` and `node:sqlite`)
 
 Any ORM or query builder built on these drivers works too (Drizzle, Knex, Sequelize, TypeORM). ORMs with their own engine (like Prisma) aren't supported unless you point them at a supported driver.
 
 > [!NOTE]
 > On ESM, see the [ESM caveats](esm.md) — Zen can't check queries inside ESM sub-dependencies it didn't instrument.
+
+### Postgres.js
+
+For Postgres.js, IDOR protection only checks queries that use `sql.unsafe(...)`:
+
+```js
+await sql.unsafe("SELECT * FROM orders WHERE tenant_id = $1", [tenantId]);
+```
+
+Tagged-template queries and queries loaded with `sql.file(...)` are not checked.
 
 ## Advanced options
 
@@ -230,10 +240,12 @@ The INSERT has the tenant column, but the value doesn't match the tenant set wit
 <summary>Missing tenant ID</summary>
 
 ```
-Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query.
+Zen IDOR protection: query on table 'orders' requires a tenant ID, but setTenantId() was not called (use runWithTenant(...) for background work)
 ```
 
 Inside a request, call `setTenantId` before running queries. For background work, wrap it in `runWithTenant`. This one only fires for queries outside a request when `requireTenantId` is on.
+
+> Queries that only touch excluded tables never trigger this check, even without a tenant set.
 
 </details>
 

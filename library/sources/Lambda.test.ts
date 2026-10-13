@@ -533,6 +533,49 @@ t.test("no cookie header", async () => {
   });
 });
 
+t.test(
+  "it does not count requests for routes with forceProtectionOff",
+  async () => {
+    const api = new ReportingAPIForTesting({
+      success: true,
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      excludedUserIdsFromRateLimiting: [],
+      endpoints: [
+        {
+          method: "GET",
+          route: "/dev/{proxy+}",
+          forceProtectionOff: true,
+          rateLimiting: {
+            enabled: false,
+            windowSizeInMS: 0,
+            maxRequests: 0,
+          },
+        },
+      ],
+    });
+    const agent = createTestAgent({
+      block: false,
+      token: new Token("token"),
+      serverless: "lambda",
+      api,
+    });
+    agent.start([]);
+
+    const handler = createLambdaWrapper(async () => {});
+
+    await handler(gatewayEvent, lambdaContext, () => {});
+
+    t.match(agent.getInspectionStatistics().getStats(), {
+      requests: {
+        total: 0,
+      },
+    });
+  }
+);
+
 t.test("it counts attacks", async () => {
   const agent = createTestAgent({
     block: false,
@@ -889,4 +932,68 @@ t.test("it detects attack waves using Gateway Event v2", async (t) => {
     event.attack.metadata.samples.includes("/.git/config"),
     "should include one of the attack paths"
   );
+});
+
+t.test("it works with v2 event with removed cookie header", async (t) => {
+  const handler = createLambdaWrapper((event, context, callback) => {
+    callback(null, {
+      body: JSON.stringify(getContext()),
+      statusCode: 200,
+    });
+  });
+
+  const result = (await handler(
+    {
+      rawPath: "/some/path",
+      body: "body",
+      rawQueryString: "query=value",
+      queryStringParameters: {
+        query: "value",
+      },
+      pathParameters: {
+        parameter: "value",
+      },
+      headers: {
+        "content-type": "application/json",
+      },
+      cookies: [
+        "test_cookie_1=apple",
+        "test_cookie_2=banana",
+        "test_cookie_3=cherry",
+      ],
+      requestContext: {
+        http: {
+          path: "/some/path",
+          protocol: "HTTP/1.1",
+          userAgent: "agent",
+          sourceIp: "1.2.3.4",
+          method: "GET",
+        },
+      },
+    },
+    lambdaContext,
+    () => {}
+  )) as unknown as { body: string };
+
+  t.same(JSON.parse(result.body), {
+    method: "GET",
+    url: "/some/path?query=value",
+    remoteAddress: "1.2.3.4",
+    headers: {
+      "content-type": "application/json",
+    },
+    query: {
+      query: "value",
+    },
+    cookies: {
+      test_cookie_1: "apple",
+      test_cookie_2: "banana",
+      test_cookie_3: "cherry",
+    },
+    routeParams: {
+      parameter: "value",
+    },
+    source: "lambda/gateway",
+    route: "/some/path",
+  });
 });

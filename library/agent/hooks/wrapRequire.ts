@@ -12,6 +12,7 @@ import { WrapPackageInfo } from "./WrapPackageInfo";
 import { getInstance } from "../AgentSingleton";
 
 const originalRequire = mod.prototype?.require;
+const originalGetBuiltinModule = process.getBuiltinModule;
 let isRequireWrapped = false;
 
 let packages: Package[] = [];
@@ -43,9 +44,9 @@ export function wrapRequire() {
   };
 
   // Wrap process.getBuiltinModule, which allows requiring builtin modules (since Node.js v22.3.0)
-  if (typeof process.getBuiltinModule === "function") {
+  if (typeof originalGetBuiltinModule === "function") {
     process.getBuiltinModule = function wrappedGetBuiltinModule() {
-      return patchedRequire.call(this, arguments);
+      return patchedGetBuiltinModule.call(this, arguments);
     };
   }
 }
@@ -101,6 +102,38 @@ function patchedRequire(this: mod | NodeJS.Process, args: IArguments) {
 
     // Call function for patching external packages
     return patchPackage.call(this as mod, id, originalExports);
+  } catch (error) {
+    if (error instanceof Error) {
+      getInstance()?.onFailedToWrapModule(id, error);
+    }
+
+    return originalExports;
+  }
+}
+
+function patchedGetBuiltinModule(
+  this: NodeJS.Process,
+  args: IArguments
+): object | undefined {
+  if (!args.length || typeof args[0] !== "string") {
+    return originalGetBuiltinModule.apply(this, args as unknown as [string]);
+  }
+
+  const id = args[0] as string;
+
+  if (!isBuiltinModule(id)) {
+    return originalGetBuiltinModule.apply(this, args as unknown as [string]);
+  }
+
+  const originalExports = originalGetBuiltinModule.apply(
+    this,
+    args as unknown as [string]
+  );
+
+  try {
+    return patchBuiltinModule.call(this, id, originalExports) as
+      | object
+      | undefined;
   } catch (error) {
     if (error instanceof Error) {
       getInstance()?.onFailedToWrapModule(id, error);

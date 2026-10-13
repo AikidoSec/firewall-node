@@ -5,6 +5,7 @@ import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { addXmlToContext } from "./xml/addXmlToContext";
 import { isXmlInContext } from "./xml/isXmlInContext";
+import { toXmlString } from "./xml/toXmlString";
 
 /**
  * Wrapper for xml2js package.
@@ -13,11 +14,12 @@ import { isXmlInContext } from "./xml/isXmlInContext";
  */
 export class Xml2js implements Wrapper {
   private modifyArgs(args: unknown[]) {
-    if (
-      args.length < 2 ||
-      typeof args[0] !== "string" ||
-      typeof args[1] !== "function"
-    ) {
+    if (args.length < 2 || typeof args[1] !== "function") {
+      return args;
+    }
+
+    const xmlString = toXmlString(args[0]);
+    if (xmlString === undefined) {
       return args;
     }
 
@@ -26,8 +28,6 @@ export class Xml2js implements Wrapper {
       // We expect the context to be set by the wrapped http server
       return args;
     }
-
-    const xmlString = args[0] as string;
 
     // Check if the XML string is in the request context
     if (!isXmlInContext(xmlString, context)) {

@@ -21,7 +21,7 @@ export type APIGatewayProxyEventV1 = {
   body?: string;
 };
 
-// Based on https://docs.aws.amazon.com/powertools/typescript/2.30.1/api/variables/_aws-lambda-powertools_parser.schemas.APIGatewayProxyEventV2Schema.html
+// Based on https://docs.aws.amazon.com/powertools/typescript/2.34.0/api/variables/_aws-lambda-powertools_parser.schemas.APIGatewayProxyEventV2Schema.html
 export type APIGatewayProxyEventV2 = {
   headers: Record<string, string | undefined>;
   queryStringParameters?: Record<string, string>;
@@ -38,6 +38,7 @@ export type APIGatewayProxyEventV2 = {
     };
   };
   body?: string;
+  cookies?: string[];
 };
 
 export type APIGatewayProxyEvent =
@@ -141,6 +142,7 @@ export function getContextForGatewayEvent(
 
   if (isGatewayEventV2(event)) {
     const url = getUrlFromGatewayEvent(event);
+
     return {
       url: url,
       method: event.requestContext?.http?.method,
@@ -149,9 +151,31 @@ export function getContextForGatewayEvent(
       headers: event.headers,
       routeParams: event.pathParameters ? event.pathParameters : {},
       query: event.queryStringParameters ? event.queryStringParameters : {},
-      cookies: event.headers?.cookie ? parseCookies(event.headers.cookie) : {},
+      cookies: parseCookiesFromV2Event(event),
       source: "lambda/gateway",
       route: url ? buildRouteFromURL(url) : undefined,
     };
   }
+}
+
+function parseCookiesFromV2Event(
+  event: APIGatewayProxyEventV2
+): Record<string, string> {
+  if (event.headers?.cookie) {
+    // For direct function invocations without a Gateway this header is set
+    return parseCookies(event.headers.cookie);
+  }
+
+  const cookies: Record<string, string> = Object.create(null);
+  if (event.cookies) {
+    // This is required because the cookie header is removed in v2 Events behind a API Gateway
+    // For direct function invocations this is also set, but has a different format
+    // That's why the header is still preferred over this property
+    for (const cookie of event.cookies) {
+      const parsedCookies = parseCookies(cookie);
+      Object.assign(cookies, parsedCookies);
+    }
+  }
+
+  return cookies;
 }

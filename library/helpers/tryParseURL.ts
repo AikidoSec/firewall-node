@@ -16,7 +16,8 @@ function parseAndCatchError(url: string): URL | undefined {
 
 function canParse(url: string): URL | undefined {
   if (URL.canParse(url)) {
-    return new URL(url);
+    // URL.canParse(...) can return true for invalid URLs, so we still need to catch constructor errors.
+    return parseAndCatchError(url);
   }
 
   return undefined;

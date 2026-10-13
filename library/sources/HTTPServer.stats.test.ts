@@ -12,7 +12,18 @@ const api = new ReportingAPIForTesting({
   configUpdatedAt: 0,
   allowedIPAddresses: [],
   blockedUserIds: [],
-  endpoints: [],
+  endpoints: [
+    {
+      method: "GET",
+      route: "/protection-off",
+      forceProtectionOff: true,
+      rateLimiting: {
+        windowSizeInMS: 0,
+        maxRequests: 0,
+        enabled: false,
+      },
+    },
+  ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
   excludedUserIdsFromRateLimiting: [],
 });
@@ -209,3 +220,37 @@ t.test("it only counts once if multiple listeners", async () => {
     });
   });
 });
+
+t.test(
+  "it does not count requests for routes with forceProtectionOff",
+  async () => {
+    const server = http.createServer((req, res) => {
+      res.setHeader("Content-Type", "text/plain");
+      res.end("OK");
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3330, () => {
+        Promise.all([
+          fetch({
+            url: new URL("http://localhost:3330/protection-off"),
+            method: "GET",
+            timeoutInMS: 500,
+          }),
+          fetch({
+            url: new URL("http://localhost:3330/test"),
+            method: "GET",
+            timeoutInMS: 500,
+          }),
+        ]).then(([response1, response2]) => {
+          t.equal(response1.statusCode, 200);
+          t.equal(response2.statusCode, 200);
+          const { requests } = agent.getInspectionStatistics().getStats();
+          t.same(requests.total, 1);
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);

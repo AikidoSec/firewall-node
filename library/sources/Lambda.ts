@@ -186,12 +186,13 @@ function incrementStatsAndDiscoverAPISpec(
   event: unknown,
   result: unknown
 ) {
-  if (
-    agentContext.remoteAddress &&
-    agent.getConfig().isBypassedIP(agentContext.remoteAddress)
-  ) {
+  if (agent.getConfig().isBypassedRequest(agentContext)) {
     return;
   }
+
+  const forceProtectionOff = agent
+    .getConfig()
+    .isForceProtectionOffRoute(agentContext);
 
   if (isGatewayEvent(event) && agentContext.route && agentContext.method) {
     if (isGatewayResponse(result)) {
@@ -199,6 +200,7 @@ function incrementStatsAndDiscoverAPISpec(
         statusCode: result.statusCode,
         method: agentContext.method,
         route: agentContext.route,
+        forceProtectionOff,
       });
 
       if (shouldDiscover) {
@@ -216,6 +218,10 @@ function incrementStatsAndDiscoverAPISpec(
         agent.getInspectionStatistics().onAttackWaveDetected();
       }
     }
+  }
+
+  if (forceProtectionOff) {
+    return;
   }
 
   const stats = agent.getInspectionStatistics();

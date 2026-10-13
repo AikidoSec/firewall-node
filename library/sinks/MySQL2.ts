@@ -5,7 +5,6 @@ import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
-import { isWrapped } from "../helpers/wrap";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
@@ -230,60 +229,48 @@ export class MySQL2 implements Wrapper {
         isPromise ? exports.PromiseConnection : exports.Connection
       );
 
-      if (!isWrapped(connectionPrototype.query)) {
-        // Wrap connection.query
-        wrapExport(connectionPrototype, "query", pkgInfo, {
-          kind: "sql_op",
-          inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
-        });
-      }
+      // Wrap connection.query
+      wrapExport(connectionPrototype, "query", pkgInfo, {
+        kind: "sql_op",
+        inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
+      });
 
-      if (!isWrapped(connectionPrototype.execute)) {
-        // Wrap connection.execute
-        wrapExport(connectionPrototype, "execute", pkgInfo, {
-          kind: "sql_op",
-          inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
-        });
-      }
+      // Wrap connection.execute
+      wrapExport(connectionPrototype, "execute", pkgInfo, {
+        kind: "sql_op",
+        inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
+      });
 
-      if (!isWrapped(connectionPrototype.prepare)) {
-        // Wrap connection.prepare
-        wrapExport(connectionPrototype, "prepare", pkgInfo, {
-          kind: "sql_op",
-          inspectArgs: (args) => this.inspectQuery("mysql2.prepare", args),
-        });
-      }
+      // Wrap connection.prepare
+      wrapExport(connectionPrototype, "prepare", pkgInfo, {
+        kind: "sql_op",
+        inspectArgs: (args) => this.inspectQuery("mysql2.prepare", args),
+      });
 
       const poolPrototype = this.getPrototypeToInstrument(
         isPromise ? exports.PromisePool : exports.Pool
       );
 
-      if (!isWrapped(poolPrototype.getConnection)) {
-        // Wrap pool.getConnection
-        wrapExport(poolPrototype, "getConnection", pkgInfo, {
-          kind: "sql_op",
-          // This is required to bind the context, so that we do not loose context
-          // on pool operations like pool.query or pool.execute which internally call getConnection
-          // with a callback function
-          inspectArgs: () => {},
-        });
-      }
+      // Wrap pool.getConnection
+      wrapExport(poolPrototype, "getConnection", pkgInfo, {
+        kind: "sql_op",
+        // This is required to bind the context, so that we do not loose context
+        // on pool operations like pool.query or pool.execute which internally call getConnection
+        // with a callback function
+        inspectArgs: () => {},
+      });
 
-      if (!isWrapped(poolPrototype.query)) {
-        // Wrap pool.query
-        wrapExport(poolPrototype, "query", pkgInfo, {
-          kind: "sql_op",
-          inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
-        });
-      }
+      // Wrap pool.query
+      wrapExport(poolPrototype, "query", pkgInfo, {
+        kind: "sql_op",
+        inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
+      });
 
-      if (!isWrapped(poolPrototype.execute)) {
-        // Wrap pool.execute
-        wrapExport(poolPrototype, "execute", pkgInfo, {
-          kind: "sql_op",
-          inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
-        });
-      }
+      // Wrap pool.execute
+      wrapExport(poolPrototype, "execute", pkgInfo, {
+        kind: "sql_op",
+        inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
+      });
     };
 
     const pkg = hooks.addPackage("mysql2");

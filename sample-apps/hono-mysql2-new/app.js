@@ -10,8 +10,14 @@ async function main() {
   const cats = new Cats(db);
 
   app.use(async (c, next) => {
+    if (c.req.header("x-bypass-request") === "true") {
+      Zen.bypassRequest();
+    }
+
     await next();
   });
+
+  Zen.addHonoMiddleware(app);
 
   app.get("/", async (c) => {
     const catNames = await cats.getAll();
@@ -75,7 +81,7 @@ async function main() {
     try {
       await db.execute("DELETE FROM cats_2;");
       return c.redirect("/", 302);
-    } catch (err) {
+    } catch {
       return c.json({ error: "Failed to clear cats" }, 500);
     }
   });

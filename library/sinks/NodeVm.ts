@@ -25,12 +25,12 @@ export class NodeVm implements Wrapper {
     });
   }
 
-  private onConstruct(target: any, args: unknown[]) {
+  private onConstruct(target: any, args: unknown[], newTarget: Function) {
     const agent = getInstance();
     const context = getContext();
 
     if (!agent || !context) {
-      return new target(...args);
+      return Reflect.construct(target, args, newTarget);
     }
 
     inspectArgs(
@@ -46,14 +46,15 @@ export class NodeVm implements Wrapper {
       "eval_op"
     );
 
-    return new target(...args);
+    return Reflect.construct(target, args, newTarget);
   }
 
   wrap(hooks: Hooks): void {
     hooks.addBuiltinModule("vm").onRequire((exports, pkgInfo) => {
       // We can't use our helper wrapNewInstance because it can not inspect constructor args
       exports.Script = new Proxy(exports.Script, {
-        construct: (target, args) => this.onConstruct(target, args),
+        construct: (target, args, newTarget) =>
+          this.onConstruct(target, args, newTarget),
       });
 
       const functionsToWrap = [

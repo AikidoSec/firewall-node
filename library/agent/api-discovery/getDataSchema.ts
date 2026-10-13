@@ -1,3 +1,4 @@
+import { createSafeObject } from "../../helpers/createSafeObject";
 import { getStringFormat, type StringFormat } from "./getStringFormat";
 
 export type DataSchema = {
@@ -55,13 +56,16 @@ export function getDataSchema(data: unknown, depth = 0): DataSchema {
     return {
       type: "array",
       // Assume that the array is homogenous (for performance reasons)
-      items: data.length > 0 ? getDataSchema(data[0], depth + 1) : null,
+      items:
+        data.length > 0 && depth < maxDepth
+          ? getDataSchema(data[0], depth + 1)
+          : null,
     };
   }
 
   const schema: DataSchema = {
     type: "object",
-    properties: {},
+    properties: createSafeObject({}),
   };
 
   // If the depth is less than the maximum depth, get the schema for each property

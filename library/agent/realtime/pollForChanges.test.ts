@@ -35,7 +35,7 @@ t.test("it checks for config updates", async () => {
         method: params.method,
       });
 
-      if (params.url.hostname.startsWith("runtime")) {
+      if (params.url.pathname === "/config") {
         return {
           body: JSON.stringify({
             configUpdatedAt: configUpdatedAt,
@@ -44,7 +44,7 @@ t.test("it checks for config updates", async () => {
         };
       }
 
-      if (params.url.hostname.startsWith("guard")) {
+      if (params.url.pathname === "/api/runtime/config") {
         return {
           body: JSON.stringify({
             endpoints: [],
@@ -55,7 +55,7 @@ t.test("it checks for config updates", async () => {
         };
       }
 
-      throw new Error(`Unknown hostname: ${params.url.hostname}`);
+      throw new Error(`Unknown path: ${params.url.pathname}`);
     };
   });
 
@@ -78,7 +78,7 @@ t.test("it checks for config updates", async () => {
   t.same(configUpdates, []);
   t.same(calls, [
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://guard.aikido.dev/config",
       method: "GET",
     },
   ]);
@@ -95,11 +95,11 @@ t.test("it checks for config updates", async () => {
   ]);
   t.same(calls, [
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://guard.aikido.dev/config",
       method: "GET",
     },
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://guard.aikido.dev/config",
       method: "GET",
     },
     {
@@ -119,11 +119,11 @@ t.test("it checks for config updates", async () => {
   ]);
   t.same(calls, [
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://guard.aikido.dev/config",
       method: "GET",
     },
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://guard.aikido.dev/config",
       method: "GET",
     },
     {
@@ -131,7 +131,7 @@ t.test("it checks for config updates", async () => {
       method: "GET",
     },
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://guard.aikido.dev/config",
       method: "GET",
     },
   ]);
@@ -153,11 +153,11 @@ t.test("it checks for config updates", async () => {
   ]);
   t.same(calls, [
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://guard.aikido.dev/config",
       method: "GET",
     },
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://guard.aikido.dev/config",
       method: "GET",
     },
     {
@@ -165,11 +165,11 @@ t.test("it checks for config updates", async () => {
       method: "GET",
     },
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://guard.aikido.dev/config",
       method: "GET",
     },
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://guard.aikido.dev/config",
       method: "GET",
     },
     {

@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -6,13 +5,11 @@ import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { inspectArgs } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { envToBool } from "../helpers/envToBool";
-import { getLibraryRoot } from "../helpers/getLibraryRoot";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { checkContextForJsInjection } from "../vulnerabilities/js-injection/checkContextForJsInjection";
-import { existsSync } from "node:fs";
 import { colorText } from "../helpers/colorText";
 import { warnBox } from "../helpers/warnBox";
-import { isMusl } from "../helpers/isMusl";
+import { loadNodeInternals } from "../helpers/loadNodeInternals";
 import { isCodeGenerationFromStringsDisallowed } from "../helpers/isCodeGenerationFromStringsDisallowed";
 
 export class FunctionSink implements Wrapper {
@@ -38,56 +35,35 @@ export class FunctionSink implements Wrapper {
     });
   }
 
-  private loadNativeAddon() {
+  private loadNativeAddon():
+    | {
+        setCodeGenerationCallback: (
+          callback: (code: string) => string | undefined
+        ) => void;
+      }
+    | undefined {
     const majorVersion = getMajorNodeVersion();
     const arch = process.arch;
     const platform = process.platform;
+    const { bindings, error } = loadNodeInternals();
 
-    const nodeInternalsDir = join(getLibraryRoot(), "node_internals");
-    let binaryPath = join(
-      nodeInternalsDir,
-      `zen-internals-node-${platform}-${arch}-node${majorVersion}.node`
-    );
-    if (isMusl()) {
-      binaryPath = join(
-        nodeInternalsDir,
-        `zen-internals-node-${platform}-${arch}-musl-node${majorVersion}.node`
-      );
-    }
-
-    if (!existsSync(binaryPath)) {
+    if (!bindings) {
+      const message = error
+        ? `Failed to load native addon for Node.js ${majorVersion} on ${platform}-${arch}: ${error.message}`
+        : `Cannot find native addon for Node.js ${majorVersion} on ${platform}-${arch}. Request support: https://github.com/AikidoSec/firewall-node/issues`;
       // oxlint-disable-next-line no-console
       console.warn(
         colorText(
           "red",
           warnBox(
-            `Zen will NOT block code injection attacks (eval, new Function). Cannot find native addon for Node.js ${majorVersion} on ${platform}-${arch}. Request support: https://github.com/AikidoSec/firewall-node/issues`
+            `Zen will NOT block code injection attacks (eval, new Function). ${message}`
           )
         )
       );
       return;
     }
 
-    let bindings: {
-      setCodeGenerationCallback: (
-        callback: (code: string) => string | undefined
-      ) => void;
-    };
-    try {
-      bindings = require(binaryPath);
-    } catch (error) {
-      // oxlint-disable-next-line no-console
-      console.warn(
-        colorText(
-          "red",
-          warnBox(
-            `Zen will NOT block code injection attacks (eval, new Function). Failed to load native addon for Node.js ${majorVersion} on ${platform}-${arch}: ${(error as Error).message}`
-          )
-        )
-      );
-      return;
-    }
-    if (!bindings || typeof bindings.setCodeGenerationCallback !== "function") {
+    if (typeof bindings.setCodeGenerationCallback !== "function") {
       // oxlint-disable-next-line no-console
       console.warn(
         colorText(
@@ -100,7 +76,9 @@ export class FunctionSink implements Wrapper {
       return;
     }
 
-    return bindings;
+    return {
+      setCodeGenerationCallback: bindings.setCodeGenerationCallback,
+    };
   }
 
   wrap(_: Hooks) {

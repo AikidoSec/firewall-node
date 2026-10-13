@@ -142,10 +142,7 @@ function onFinishRequestHandler(
   // Mark the request as counted
   req[countedRequest] = true;
 
-  if (
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress)
-  ) {
+  if (agent.getConfig().isBypassedRequest(context)) {
     return;
   }
 
@@ -154,6 +151,7 @@ function onFinishRequestHandler(
       statusCode: res.statusCode,
       route: context.route,
       method: context.method,
+      forceProtectionOff: agent.getConfig().isForceProtectionOffRoute(context),
     });
 
     if (shouldDiscover) {

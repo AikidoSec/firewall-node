@@ -55,7 +55,7 @@ await execAsyncWithPipe("./node_modules/.bin/tsc -p tsconfig.test.esm.json", {
 await writeFile(join(outDir, "package.json"), "{}");
 
 const testFiles = glob(
-  "**/*.{test.ts,tests.ts,txt,pem,json,xml,js,prisma,toml,sql}",
+  "**/*.{test.ts,tests.ts,txt,pem,json,xml,js,prisma,toml,sql,zip}",
   {
     cwd: libDir,
     exclude: ["**/node_modules/**"],
@@ -70,9 +70,17 @@ for await (const entry of testFiles) {
   await mkdir(dirname(dest), { recursive: true });
 
   if (
-    ["txt", "pem", "json", "xml", "js", "prisma", "toml", "sql"].includes(
-      entry.split(".").pop()
-    )
+    [
+      "txt",
+      "pem",
+      "json",
+      "xml",
+      "js",
+      "prisma",
+      "toml",
+      "sql",
+      "zip",
+    ].includes(entry.split(".").pop())
   ) {
     await copyFile(src, dest);
     continue;
@@ -256,6 +264,7 @@ for await (const entry of testFiles) {
               break;
             case "end":
             case "equal":
+            case "not":
             case "ok":
             case "notOk":
             case "fail":
@@ -269,6 +278,9 @@ for await (const entry of testFiles) {
               switch (node.callee.property.name) {
                 case "equal":
                   node.callee.property.name = "strictEqual";
+                  break;
+                case "not":
+                  node.callee.property.name = "notStrictEqual";
                   break;
                 case "throws":
                   node.callee.property.name = "throws";

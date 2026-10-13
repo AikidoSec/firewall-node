@@ -69,10 +69,7 @@ function discoverRouteFromStream(
     return;
   }
 
-  if (
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress)
-  ) {
+  if (agent.getConfig().isBypassedRequest(context)) {
     return;
   }
 
@@ -84,6 +81,9 @@ function discoverRouteFromStream(
         statusCode: statusCode,
         route: context.route,
         method: context.method,
+        forceProtectionOff: agent
+          .getConfig()
+          .isForceProtectionOffRoute(context),
       });
 
       if (shouldDiscover) {
@@ -101,6 +101,7 @@ function discoverRouteFromStream(
 
       if (
         context.remoteAddress &&
+        !context.blockedDueToIPOrBot &&
         agent.getAttackWaveDetector().check(context, statusCode)
       ) {
         agent.onDetectedAttackWave({

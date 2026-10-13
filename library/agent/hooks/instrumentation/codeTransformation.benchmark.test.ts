@@ -26,7 +26,7 @@ t.test("Benchmark: Small code transformation", async (t) => {
         import { test } from "test";
         class Test {
 
-            private testValue = 42;
+            #testValue = 42;
 
             constructor() {
                 this.testFunction(testValue);

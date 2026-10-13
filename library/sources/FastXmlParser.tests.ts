@@ -101,5 +101,14 @@ export function createFastXmlParserTests(pkgName: string) {
 
     // Zen ignores non string values
     t.same(parser.parse(123), {});
+
+    runWithContext(contextWithBody, () => {
+      const result = parser.parse(Buffer.from(xmlString));
+      t.same(result, { root: "Hello xml2js!" });
+      t.same(getContext()?.xml, [
+        { root: "Hello xml2js!" },
+        { root: "Hello xml2js!" },
+      ]);
+    });
   });
 }

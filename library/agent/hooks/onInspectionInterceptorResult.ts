@@ -28,23 +28,20 @@ export function onInspectionInterceptorResult(
 ) {
   const end = performance.now();
 
-  const isBypassedIP =
-    context &&
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress);
+  const isBypassedRequest = agent.getConfig().isBypassedRequest(context);
 
   if (kind) {
     agent.getInspectionStatistics().onInspectedCall({
       operation: operation,
       kind: kind,
-      attackDetected: !isBypassedIP && !!result,
+      attackDetected: !isBypassedRequest && !!result,
       blocked: agent.shouldBlock(),
       durationInMs: end - start,
       withoutContext: !context,
     });
   }
 
-  if (isBypassedIP) {
+  if (isBypassedRequest) {
     return;
   }
 
