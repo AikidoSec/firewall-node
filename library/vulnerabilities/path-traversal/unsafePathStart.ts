@@ -54,6 +54,7 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
   for (const dangerousStart of dangerousPathStarts) {
     if (
       normalizedPath.startsWith(dangerousStart) &&
+      `${normalizedUserInput}/`.startsWith(dangerousStart) &&
       normalizedPath.startsWith(normalizedUserInput)
     ) {
       // If the user input is the same as the dangerous start, we don't want to flag it to prevent false positives
