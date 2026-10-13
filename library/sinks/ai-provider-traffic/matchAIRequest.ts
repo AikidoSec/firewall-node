@@ -1,3 +1,5 @@
+import { aiProviderHosts } from "./aiProviderHosts";
+
 export type AIWireFormat =
   | { type: "chat_completions" }
   | { type: "responses" }
@@ -42,31 +44,11 @@ export function getAIWireFormat(
   return undefined;
 }
 
-// The same provider names as the SDK sinks report, so the dashboard doesn't change
 export function getAIProvider(hostname: string, format: AIWireFormat): string {
   const host = hostname.toLowerCase();
-
-  switch (host) {
-    case "api.openai.com":
-      return "openai";
-    case "api.anthropic.com":
-      return "anthropic";
-    case "api.mistral.ai":
-      return "mistral";
-    case "generativelanguage.googleapis.com":
-    case "aiplatform.googleapis.com":
-      return "google";
-  }
-
-  if (
-    isOneLabelBefore(host, ".openai.azure.com") ||
-    isOneLabelBefore(host, ".cognitiveservices.azure.com")
-  ) {
-    return "azure";
-  }
-
-  if (isOneLabelBefore(host, "-aiplatform.googleapis.com")) {
-    return "google";
+  const known = aiProviderHosts.find(([pattern]) => hostMatches(pattern, host));
+  if (known) {
+    return known[1];
   }
 
   switch (format.type) {
@@ -80,7 +62,13 @@ export function getAIProvider(hostname: string, format: AIWireFormat): string {
   }
 }
 
-function isOneLabelBefore(host: string, suffix: string): boolean {
+// A leading `*` matches the start of the first DNS label, or all of it
+function hostMatches(pattern: string, host: string): boolean {
+  if (!pattern.startsWith("*")) {
+    return pattern === host;
+  }
+
+  const suffix = pattern.slice(1);
   if (!host.endsWith(suffix)) {
     return false;
   }

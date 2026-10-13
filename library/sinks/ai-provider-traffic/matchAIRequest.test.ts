@@ -49,11 +49,12 @@ t.test("it names the provider after the hostname", async (t) => {
     "azure"
   );
   t.equal(getAIProvider("api.mistral.ai", chat), "mistral");
+  t.equal(getAIProvider("api.groq.com", chat), "groq");
   t.equal(getAIProvider("api.anthropic.com", messages), "anthropic");
-  t.equal(getAIProvider("generativelanguage.googleapis.com", gemini), "google");
+  t.equal(getAIProvider("generativelanguage.googleapis.com", gemini), "gemini");
   t.equal(
     getAIProvider("us-central1-aiplatform.googleapis.com", gemini),
-    "google"
+    "vertex_ai"
   );
 
   t.equal(getAIProvider("api.openai.com.evil.com", chat), "openai_compatible");
