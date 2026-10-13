@@ -370,6 +370,7 @@ export class Agent {
       this.logger.log("Heartbeat...");
       const stats = this.statistics.getStats();
       const aiStats = this.aiStatistics.getStats();
+      const aiToolCallStats = this.aiStatistics.getToolCallStats();
       const routes = this.routes.asArray();
       const outgoingDomains = this.hostnames.asArray();
       const users = this.users.asArray();
@@ -396,6 +397,7 @@ export class Agent {
             ipAddresses: stats.ipAddresses,
           },
           ai: aiStats,
+          aiToolCalls: aiToolCallStats,
           packages,
           hostnames: outgoingDomains,
           routes: routes,

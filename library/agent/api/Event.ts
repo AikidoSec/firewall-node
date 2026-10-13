@@ -128,6 +128,11 @@ type Heartbeat = {
       total: number;
     };
   }[];
+  aiToolCalls?: {
+    name: string;
+    calls: number;
+    blocked: number;
+  }[];
   packages: {
     name: string;
     version: string;
