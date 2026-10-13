@@ -1,5 +1,6 @@
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
+import { isCapturingStack } from "../../helpers/captureStack";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractPathStringsFromUserInputCached } from "../../helpers/extractPathStringsFromUserInputCached";
 import { getSourceForUserString } from "../../helpers/getSourceForUserString";
@@ -20,6 +21,11 @@ export function checkContextForPathTraversal({
   context: Context;
   checkPathStart?: boolean;
 }): InterceptorResult {
+  if (isCapturingStack()) {
+    // Triggered by Node's source map support while we build a stack trace
+    return;
+  }
+
   const isUrl = filename instanceof URL;
   const pathString = pathToString(filename);
   if (!pathString) {

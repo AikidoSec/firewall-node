@@ -10,6 +10,8 @@ import { createTestAgent } from "../helpers/createTestAgent";
 import { mkdtemp, writeFile, unlink } from "fs/promises";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { setTimeout as sleep } from "timers/promises";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 import { FileSystem } from "../sinks/FileSystem";
 import { Path } from "../sinks/Path";
 import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
@@ -1415,6 +1417,61 @@ t.test(
         await unlink(tmpFile);
         resolve();
       });
+    });
+  }
+);
+
+t.test(
+  "it blocks path traversal once when source maps are enabled",
+  // ESM frames are file:// URLs, so Node does not call path.resolve for them
+  { skip: isEsmUnitTest() ? "requires CommonJS" : false },
+  async (t) => {
+    api.clear();
+
+    const server = http.createServer((req, res) => {
+      try {
+        const url = new URL(req.url!, `http://${req.headers.host}`);
+        res.end(readFileSync(url.searchParams.get("name")!));
+      } catch (error) {
+        res.statusCode = 500;
+        res.end(error instanceof Error ? error.message : "Internal error");
+      }
+    });
+
+    process.setSourceMapsEnabled(true);
+    try {
+      await new Promise<void>((resolve) => {
+        // The payload is a CommonJS file that is part of the stack trace
+        const name = encodeURIComponent(__filename);
+        server.listen(3398, () => {
+          fetch({
+            url: new URL(`http://localhost:3398/?name=${name}`),
+            method: "GET",
+            headers: { "x-forwarded-for": "1.2.3.4" },
+            timeoutInMS: 500,
+          }).then(({ statusCode, body }) => {
+            t.equal(statusCode, 500);
+            t.equal(
+              body,
+              "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from query.name"
+            );
+            server.close();
+            resolve();
+          });
+        });
+      });
+    } finally {
+      process.setSourceMapsEnabled(false);
+    }
+
+    await sleep(100);
+
+    const attacks = api
+      .getEvents()
+      .filter((event) => event.type === "detected_attack");
+    t.equal(attacks.length, 1);
+    t.match(attacks[0], {
+      attack: { kind: "path_traversal", operation: "fs.readFileSync" },
     });
   }
 );
