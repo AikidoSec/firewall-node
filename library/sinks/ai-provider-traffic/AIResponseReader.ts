@@ -14,6 +14,7 @@ export type AIResponseReader = {
   // Returns false when the response can't be parsed anymore
   write(chunk: Uint8Array): boolean;
   end(): Promise<AICall | undefined>;
+  destroy(): void;
 };
 
 type DecodedBody = {
@@ -73,6 +74,7 @@ export function createAIResponseReader(
       }
       return failed ? undefined : body.end();
     },
+    destroy: fail,
   };
 }
 

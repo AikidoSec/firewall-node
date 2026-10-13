@@ -172,6 +172,11 @@ const server = createServer((req, res) => {
     case "/stream/v1/messages":
       writeEventStream(res, anthropicStream);
       return;
+    case "/aborted/v1/messages":
+      res.writeHead(200, { "content-type": "text/event-stream" });
+      res.write(anthropicStream.slice(0, 2).join(""));
+      setTimeout(5).then(() => res.destroy());
+      return;
     case "/v1beta/models/gemini-2.5-flash:streamGenerateContent":
       writeEventStream(res, geminiStream);
       return;
@@ -348,6 +353,27 @@ t.test(
     ]);
   }
 );
+
+t.test("it records nothing when a stream is aborted", { skip }, async (t) => {
+  const response = await fetch(`${baseURL}/aborted/v1/messages`, {
+    method: "POST",
+    body: "{}",
+  });
+  await t.rejects(response.text());
+
+  const { request } = require("http") as typeof import("http");
+  const req = request(`${baseURL}/aborted/v1/messages`, { method: "POST" });
+  req.end("{}");
+  const [res] = (await once(req, "response")) as [IncomingMessage];
+  res.resume();
+  // once() would add an 'error' listener, which makes the response emit the abort error
+  await new Promise((resolve) => res.once("close", resolve));
+
+  await setTimeout(100);
+
+  t.same(agent.getAIStatistics().getStats(), []);
+  t.same(agent.getAIStatistics().getToolCallStats(), []);
+});
 
 t.test(
   "it doesn't count AI SDK streamText calls twice",

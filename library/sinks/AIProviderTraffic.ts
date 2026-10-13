@@ -134,6 +134,7 @@ function onUndiciRequestEnd({ request }: UndiciRequestMessage): void {
 
 function onUndiciRequestError({ request }: UndiciRequestMessage): void {
   undiciAIRequests.delete(request);
+  undiciCaptures.get(request)?.reader.destroy();
   undiciCaptures.delete(request);
 }
 
@@ -179,6 +180,13 @@ function onHTTPClientResponse({
 
     return push.apply(this, args);
   };
+
+  // An aborted response closes without push(null). Not 'error': an 'error'
+  // listener makes the response emit abort errors it otherwise swallows
+  response.once("close", () => {
+    capture?.reader.destroy();
+    capture = undefined;
+  });
 }
 
 function createCapture(
