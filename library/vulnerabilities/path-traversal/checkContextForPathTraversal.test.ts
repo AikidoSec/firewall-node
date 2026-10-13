@@ -549,5 +549,7 @@ t.test("it skips the check while a stack trace is captured", async () => {
   }
 
   t.same(results, [undefined]);
-  t.same(checkContextForPathTraversal(unsafeContext)?.kind, "path_traversal");
+  t.match(checkContextForPathTraversal(unsafeContext), {
+    kind: "path_traversal",
+  });
 });
