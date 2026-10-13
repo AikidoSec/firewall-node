@@ -90,3 +90,11 @@ export function isWrapped<T>(fn: T): fn is WrappedFunction<T> {
     (fn as any)[originalSymbol] instanceof Function
   );
 }
+
+export function getOriginal<T>(fn: T): T {
+  let current = fn;
+  while (isWrapped(current)) {
+    current = current[originalSymbol];
+  }
+  return current;
+}
