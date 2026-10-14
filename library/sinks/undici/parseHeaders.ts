@@ -14,7 +14,7 @@ export function parseHeaders(
     const key = headerNameToString(headers[i]);
     let val = obj[key];
 
-    if (val) {
+    if (val !== undefined && Object.hasOwn(obj, key)) {
       if (typeof val === "string") {
         val = [val];
         obj[key] = val;
@@ -22,12 +22,22 @@ export function parseHeaders(
       val.push(headers[i + 1].toString("utf8"));
     } else {
       const headersValue = headers[i + 1];
-      if (typeof headersValue === "string") {
-        obj[key] = headersValue;
+      const value =
+        typeof headersValue === "string"
+          ? headersValue
+          : Array.isArray(headersValue)
+            ? headersValue.map((header) => header.toString("utf8"))
+            : headersValue.toString("utf8");
+
+      if (key === "__proto__") {
+        Object.defineProperty(obj, key, {
+          value,
+          enumerable: true,
+          configurable: true,
+          writable: true,
+        });
       } else {
-        obj[key] = Array.isArray(headersValue)
-          ? headersValue.map((x) => x.toString("utf8"))
-          : headersValue.toString("utf8");
+        obj[key] = value;
       }
     }
   }

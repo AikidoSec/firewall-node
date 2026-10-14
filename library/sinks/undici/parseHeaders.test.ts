@@ -55,4 +55,19 @@ t.test("it works", async (t) => {
       "content-disposition": 'attachment; filename="test.txt"',
     }
   );
+
+  const headers = parseHeaders([
+    "__proto__",
+    Buffer.from("pwned"),
+    "constructor",
+    Buffer.from("built-in"),
+  ]);
+  t.equal(
+    Object.getOwnPropertyDescriptor(headers, "__proto__")?.value,
+    "pwned"
+  );
+  t.equal(
+    Object.getOwnPropertyDescriptor(headers, "constructor")?.value,
+    "built-in"
+  );
 });

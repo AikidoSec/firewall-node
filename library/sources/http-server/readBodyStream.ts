@@ -3,7 +3,11 @@ import { PassThrough } from "stream";
 import { Agent } from "../../agent/Agent";
 import { getMaxBodySize } from "../../helpers/getMaxBodySize";
 import { replaceRequestBody } from "./replaceRequestBody";
-import { type BusboyHeaders, Busboy } from "../../helpers/form-parsing";
+import {
+  type BusboyHeaders,
+  type BusboyInstance,
+  Busboy,
+} from "../../helpers/form-parsing";
 
 import { getBodyDataType } from "../../agent/api-discovery/getBodyDataType";
 import { tryParseJSON } from "../../helpers/tryParseJSON";
@@ -29,7 +33,7 @@ export async function readBodyStream(
   const maxBodySize = getMaxBodySize();
   const stream = new PassThrough();
 
-  let busboy: Busboy | undefined = undefined;
+  let busboy: BusboyInstance | undefined = undefined;
 
   if (req.headers["content-type"] !== undefined) {
     const bodyType = getBodyDataType(req.headers);
