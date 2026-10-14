@@ -465,6 +465,14 @@ t.test("form feed as separator between commands", async () => {
   isShellInjection("rm\fls", "rm");
 });
 
+t.test(
+  "Safely encapsulated user input is not flagged as shell injection",
+  async () => {
+    isNotShellInjection("ls '/var/a b/c'", "a b");
+    isNotShellInjection("grep 'hello world' file.txt", "hello world");
+  }
+);
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
