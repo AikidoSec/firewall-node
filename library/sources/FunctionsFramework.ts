@@ -9,6 +9,7 @@ import type { HttpFunction } from "@google-cloud/functions-framework";
 import { buildRouteFromURL } from "../helpers/buildRouteFromURL";
 import { shouldDiscoverRoute } from "./http-server/shouldDiscoverRoute";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { isTrustedProxyRequest } from "../helpers/trustProxy";
 
 export function getFlushEveryMS(): number {
   if (process.env.AIKIDO_CLOUD_FUNCTION_FLUSH_EVERY_MS) {
@@ -61,6 +62,7 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
       {
         method: req.method,
         remoteAddress: req.ip,
+        isBehindTrustedProxy: isTrustedProxyRequest(req.ip),
         body: req.body ? req.body : undefined,
         url: url,
         headers: req.headers,
