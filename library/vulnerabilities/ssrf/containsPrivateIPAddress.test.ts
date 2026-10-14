@@ -34,6 +34,14 @@ const publicIPs = [
   "::ffff:1.2.3.4",
   "::ffff:172.1.2.3",
   "::ffff:192.145.0.0",
+  "64:ff9b::8.8.8.8",
+  "64:ff9b:1::8.8.8.8",
+  "2002:808:808::",
+  "::8.8.8.8",
+
+  // NAT64-encoded addresses just outside the 10.0.0.0/8 private range
+  "64:ff9b::9ff:ffff", // 9.255.255.255
+  "64:ff9b::b00:0", // 11.0.0.0
 ];
 
 const privateIPs = [
@@ -163,6 +171,32 @@ const privateIPs = [
 
   // Alibaba Cloud metadata service
   "100.100.100.200",
+
+  // NAT64 (RFC 6052) encoding private IPv4 addresses
+  "64:ff9b::7f00:1", // 127.0.0.1
+  "64:ff9b::a00:0", // 10.0.0.0 (start of 10.0.0.0/8)
+  "64:ff9b::a00:1", // 10.0.0.1
+  "64:ff9b::a00:203", // 10.0.2.3 (inside 10.0.0.0/8, not the network address)
+  "64:ff9b::c0a8:1", // 192.168.0.1
+  "64:ff9b::a9fe:a9fe", // 169.254.169.254 (cloud metadata)
+
+  // NAT64 Local-Use prefix (RFC 8215) encoding private IPv4 addresses
+  "64:ff9b:1::7f00:1", // 127.0.0.1
+  "64:ff9b:1::a00:1", // 10.0.0.1
+  "64:ff9b:1::c0a8:1", // 192.168.0.1
+  "64:ff9b:1::a9fe:a9fe", // 169.254.169.254 (cloud metadata)
+
+  // 6to4 (RFC 3056) encoding private IPv4 addresses
+  "2002:7f00:1::", // 127.0.0.1
+  "2002:a00:1::", // 10.0.0.1
+  "2002:c0a8:1::", // 192.168.0.1
+  "2002:a9fe:a9fe::", // 169.254.169.254 (cloud metadata)
+
+  // IPv4-compatible IPv6 addresses (RFC 4291) encoding private IPv4 addresses
+  "::7f00:1", // 127.0.0.1
+  "::a00:1", // 10.0.0.1
+  "::c0a8:1", // 192.168.0.1
+  "::a9fe:a9fe", // 169.254.169.254 (cloud metadata)
 ];
 
 const invalidIPs = [
