@@ -304,6 +304,25 @@ t.test("it works", (t) => {
         t.same(e.code, "ECONNREFUSED");
       });
 
+    http
+      .request({ defaultPort: 4000, path: "/api/internal" })
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
+
+    http
+      .request({ defaultPort: 9876 })
+      .on("error", (e: NodeJS.ErrnoException) => {
+        t.same(e.code, "ECONNREFUSED");
+      });
+
     // With options object at index 1
     https
       .request({

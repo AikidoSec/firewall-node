@@ -283,3 +283,28 @@ t.test("it works with node:url object as first argument", async (t) => {
     new URL("http://localhost:4000")
   );
 });
+
+t.test("it uses defaultPort when port is not set", async (t) => {
+  t.same(
+    getURL([{ defaultPort: 2375 }], "http"),
+    new URL("http://localhost:2375")
+  );
+  t.same(
+    getURL([{ hostname: "localhost", defaultPort: "2375" }], "http"),
+    new URL("http://localhost:2375")
+  );
+  t.same(
+    getURL([{ defaultPort: 2375, path: "/containers/json" }], "http"),
+    new URL("http://localhost:2375/containers/json")
+  );
+  // port takes precedence over defaultPort
+  t.same(
+    getURL([{ port: 3000, defaultPort: 2375 }], "http"),
+    new URL("http://localhost:3000")
+  );
+  // Merged with a url argument
+  t.same(
+    getURL(["http://example.com", { defaultPort: 2375 }], "http"),
+    new URL("http://example.com:2375")
+  );
+});
