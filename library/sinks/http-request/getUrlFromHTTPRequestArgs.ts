@@ -148,12 +148,11 @@ function mergeURLWithRequestOptions(
     urlStr += wrapWithSquareBracketsIfNeeded(url.hostname);
   }
 
-  const optionsPort =
-    getValidPort(options.port) ?? getValidPort(options.defaultPort);
-  if (optionsPort !== undefined) {
-    urlStr += `:${optionsPort}`;
-  } else if (url.port) {
-    urlStr += `:${url.port}`;
+  const port =
+    getValidPort(options.port) ??
+    (url.port || getValidPort(options.defaultPort));
+  if (port !== undefined && port !== "") {
+    urlStr += `:${port}`;
   }
 
   if (options.path) {

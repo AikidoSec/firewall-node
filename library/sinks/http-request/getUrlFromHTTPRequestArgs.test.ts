@@ -307,4 +307,40 @@ t.test("it uses defaultPort when port is not set", async (t) => {
     getURL(["http://example.com", { defaultPort: 2375 }], "http"),
     new URL("http://example.com:2375")
   );
+  // Explicit port in the url takes precedence over defaultPort
+  t.same(
+    getURL(["http://example.com:3000", { defaultPort: 2375 }], "http"),
+    new URL("http://example.com:3000")
+  );
+  // options.port still takes precedence over the url port
+  t.same(
+    getURL(
+      ["http://example.com:3000", { port: 4000, defaultPort: 2375 }],
+      "http"
+    ),
+    new URL("http://example.com:4000")
+  );
+});
+
+t.test("node.js prefers the url port over defaultPort", async (t) => {
+  function getHost(args: [string, http.RequestOptions]) {
+    const req = http.request(...args);
+    req.on("error", () => {});
+    req.destroy();
+    return req.getHeader("host");
+  }
+
+  const cases: [string, http.RequestOptions, string][] = [
+    ["http://127.0.0.1:3000/", { defaultPort: 2375 }, "127.0.0.1:3000"],
+    [
+      "http://127.0.0.1:3000/",
+      { port: 4000, defaultPort: 2375 },
+      "127.0.0.1:4000",
+    ],
+  ];
+
+  for (const [url, options, host] of cases) {
+    t.same(getHost([url, options]), host);
+    t.same(getURL([url, options], "http")?.host, host);
+  }
 });
