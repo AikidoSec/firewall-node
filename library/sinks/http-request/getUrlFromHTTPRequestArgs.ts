@@ -64,17 +64,20 @@ function getUrlFromRequestOptions(
   module: "http" | "https"
 ): URL | undefined {
   let str = "";
-  if (typeof options.protocol === "string") {
+  if (typeof options.protocol === "string" && options.protocol.length > 0) {
     str += options.protocol;
   } else if (module) {
     str += `${module}:`;
   }
 
   str += "//";
-  if (typeof options.hostname === "string") {
+  if (typeof options.hostname === "string" && options.hostname.length > 0) {
     str += wrapWithSquareBracketsIfNeeded(options.hostname);
-  } else if (typeof options.host === "string") {
+  } else if (typeof options.host === "string" && options.host.length > 0) {
     str += wrapWithSquareBracketsIfNeeded(options.host);
+  } else {
+    // Node.js default value, see https://github.com/nodejs/node/blob/a3bb551ea70c7e0b1377c5b97d5d186cd66095cd/lib/_http_client.js#L406-L407
+    str += "localhost";
   }
 
   if (options.port) {

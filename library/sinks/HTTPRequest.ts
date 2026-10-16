@@ -83,11 +83,14 @@ export class HTTPRequest implements Wrapper {
       return undefined;
     }
 
+    const options = getRequestOptions(args);
+    if (typeof options?.socketPath === "string" && options.socketPath) {
+      return this.checkForPathTraversalInSocketPath(args, module);
+    }
+
     const url = getUrlFromHTTPRequestArgs(args, module);
     if (!url) {
-      // From the Node.js docs:
-      // Cannot be used if one of host or port is specified, as those specify a TCP Socket.
-      return this.checkForPathTraversalInSocketPath(args, module);
+      return undefined;
     }
 
     if (url.hostname.length > 0) {
