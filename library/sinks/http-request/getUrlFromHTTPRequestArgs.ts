@@ -80,13 +80,10 @@ function getUrlFromRequestOptions(
     str += "localhost";
   }
 
-  if (options.port) {
-    if (typeof options.port === "number" && options.port > 0) {
-      str += `:${options.port}`;
-    }
-    if (typeof options.port === "string" && options.port.length > 0) {
-      str += `:${options.port}`;
-    }
+  // Node.js uses `options.port || options.defaultPort || agent.defaultPort`
+  const port = getValidPort(options.port) ?? getValidPort(options.defaultPort);
+  if (port !== undefined) {
+    str += `:${port}`;
   }
 
   if (typeof options.path === "string") {
@@ -94,6 +91,16 @@ function getUrlFromRequestOptions(
   }
 
   return tryParseURL(str);
+}
+
+function getValidPort(port: unknown): string | number | undefined {
+  if (typeof port === "number" && port > 0) {
+    return port;
+  }
+  if (typeof port === "string" && port.length > 0) {
+    return port;
+  }
+  return undefined;
 }
 
 // Many HTTP clients pass the separate URL parts as properties of the options object, example:
@@ -141,8 +148,10 @@ function mergeURLWithRequestOptions(
     urlStr += wrapWithSquareBracketsIfNeeded(url.hostname);
   }
 
-  if (options.port) {
-    urlStr += `:${options.port}`;
+  const optionsPort =
+    getValidPort(options.port) ?? getValidPort(options.defaultPort);
+  if (optionsPort !== undefined) {
+    urlStr += `:${optionsPort}`;
   } else if (url.port) {
     urlStr += `:${url.port}`;
   }
