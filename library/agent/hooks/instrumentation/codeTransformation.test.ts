@@ -27,7 +27,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
         import { test } from "test";
         class Test {
 
-            private testValue = 42;
+            #testValue = 42;
 
             constructor() {
                 this.testFunction(testValue);
@@ -63,7 +63,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
     `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -85,7 +85,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
           const { test } = require("test");
           class Test {
   
-              private testValue = 42;
+              #testValue = 42;
   
               constructor() {
                   this.testFunction(testValue);
@@ -121,7 +121,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
     `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
       const { test } = require("test");
       class Test {
-          private testValue = 42;
+          #testValue = 42;
   
           constructor() {
               this.testFunction(testValue);
@@ -143,7 +143,7 @@ t.test("wrong function name", async (t) => {
             const { test } = require("test");
             class Test {
     
-                private testValue = 42;
+                #testValue = 42;
     
                 constructor() {
                     this.testFunction(testValue);
@@ -179,7 +179,7 @@ t.test("wrong function name", async (t) => {
     `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
         const { test } = require("test");
         class Test {
-            private testValue = 42;
+            #testValue = 42;
     
             constructor() {
                 this.testFunction(testValue);
@@ -200,7 +200,7 @@ t.test("typescript code", async (t) => {
               import { test } from "test";
               class Test {
       
-                  private testValue: number = 42;
+                  #testValue: number = 42;
       
                   constructor() {
                       this.testFunction(testValue);
@@ -236,7 +236,7 @@ t.test("typescript code", async (t) => {
     `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
           import { test } from "test";
           class Test {
-              private testValue: number = 42;
+              #testValue: number = 42;
       
               constructor() {
                   this.testFunction(testValue);
@@ -258,7 +258,7 @@ t.test("typescript code in a js file", async (t) => {
                 import { test } from "test";
                 class Test {
         
-                    private testValue: number = 42;
+                    #testValue: number = 42;
         
                     constructor() {
                         this.testFunction(testValue);
@@ -336,7 +336,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
           import { test } from "test";
           class Test {
   
-              private testValue = 42;
+              #testValue = 42;
   
               constructor() {
                   this.testFunction(testValue);
@@ -372,7 +372,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
       import { test } from "test";
       class Test {
-          private testValue = 42;
+          #testValue = 42;
   
           constructor() {
               this.testFunction(testValue);
@@ -396,7 +396,7 @@ t.test(
             import { test } from "test";
             class Test {
     
-                private testValue = 42;
+                #testValue = 42;
     
                 constructor() {
                     this.testFunction2(testValue);
@@ -432,7 +432,7 @@ t.test(
         `import { __instrumentInspectArgs, __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
         import { test } from "test";
         class Test {
-            private testValue = 42;
+            #testValue = 42;
     
             constructor() {
                 this.testFunction2(testValue);
@@ -554,7 +554,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
         import { test } from "test";
         class Test {
 
-            private testValue = 42;
+            #testValue = 42;
 
             constructor() {
                 this.testFunction(testValue);
@@ -590,7 +590,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
     `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -610,7 +610,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
         const { test } = require("test");
         class Test {
 
-            private testValue = 42;
+            #testValue = 42;
 
             constructor() {
                 this.testFunction(testValue);
@@ -646,7 +646,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
     `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
     const { test } = require("test");
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -964,7 +964,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         import { test } from "test";
         class Test {
 
-            private testValue = 42;
+            #testValue = 42;
 
             constructor() {
                 this.testFunction(testValue);
@@ -1002,7 +1002,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -1021,7 +1021,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -1040,7 +1040,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -1059,7 +1059,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -1078,7 +1078,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -1099,7 +1099,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -1118,7 +1118,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -1141,7 +1141,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -1167,7 +1167,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -1193,7 +1193,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -1217,7 +1217,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -1241,7 +1241,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
 
         constructor() {
             this.testFunction(testValue);
@@ -1265,7 +1265,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
         constructor() {
             this.testFunction(testValue);
         }
@@ -1289,7 +1289,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
         constructor() {
             this.testFunction(testValue);
         }
@@ -1318,7 +1318,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
         constructor() {
             this.testFunction(testValue);
         }
@@ -1349,7 +1349,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
         constructor() {
             this.testFunction(testValue);
         }
@@ -1375,7 +1375,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
-        private testValue = 42;
+        #testValue = 42;
         constructor() {
             this.testFunction(testValue);
         }
@@ -2330,7 +2330,7 @@ t.test("it works with mts extension (ESM)", async (t) => {
         import { test } from "test";
         class Test {
 
-            private testValue: number = 42;
+            #testValue: number = 42;
 
             constructor() {
                 this.testFunction(testValue);
@@ -2367,7 +2367,7 @@ t.test("it works with mts extension (ESM)", async (t) => {
     `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
      import { test } from "test";
      class Test {
-        private testValue: number = 42;
+        #testValue: number = 42;
         constructor() {
             this.testFunction(testValue);
         }
@@ -2388,7 +2388,7 @@ t.test("it works with cts extension (ESM)", async (t) => {
         require("test");
         class Test {
 
-            private testValue: number = 42;
+            #testValue: number = 42;
 
             constructor() {
                 this.testFunction(testValue);
@@ -2424,7 +2424,7 @@ t.test("it works with cts extension (ESM)", async (t) => {
     `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
      require("test");
      class Test {
-        private testValue: number = 42;
+        #testValue: number = 42;
         constructor() {
                 this.testFunction(testValue);
         }
@@ -2444,7 +2444,7 @@ t.test("Does not instrument if class name does not match", async (t) => {
     `
         class Test {
 
-            private testValue = 42;
+            #testValue = 42;
 
             constructor() {
                 this.testFunction(testValue);
@@ -2480,7 +2480,7 @@ t.test("Does not instrument if class name does not match", async (t) => {
     result,
     `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
       class Test {
-        private testValue = 42;
+        #testValue = 42;
         constructor() {
                 this.testFunction(testValue);
         }
@@ -2499,7 +2499,7 @@ t.test("It does instrument if class name matches", async (t) => {
     `
         class Test {
 
-            private testValue = 42;
+            #testValue = 42;
 
             constructor() {
                 this.testFunction(testValue);
@@ -2535,7 +2535,7 @@ t.test("It does instrument if class name matches", async (t) => {
     result,
     `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
       class Test {
-          private testValue = 42;
+          #testValue = 42;
           constructor() {
             this.testFunction(testValue);
           }
@@ -2558,7 +2558,7 @@ t.test(
       `
         const TestClass = class {
 
-            private testValue = 42;
+            #testValue = 42;
 
             constructor() {
                 this.testFunction(testValue);
@@ -2594,7 +2594,7 @@ t.test(
       result,
       `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
         const TestClass = class {
-          private testValue = 42;
+          #testValue = 42;
           constructor() {
             this.testFunction(testValue);
           }
@@ -2618,7 +2618,7 @@ t.test(
       `
         const Test = class {
 
-            private testValue = 42;
+            #testValue = 42;
 
             constructor() {
                 this.testFunction(testValue);
@@ -2654,7 +2654,7 @@ t.test(
       result,
       `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
         const Test = class {
-          private testValue = 42;
+          #testValue = 42;
           constructor() {
             this.testFunction(testValue);
           }
@@ -2677,7 +2677,7 @@ t.test(
       `
         const TestClass = class {
 
-            private testValue = 42;
+            #testValue = 42;
 
             constructor() {
                 this.testFunction(testValue);
@@ -2713,7 +2713,7 @@ t.test(
       result,
       `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
         const TestClass = class {
-          private testValue = 42;
+          #testValue = 42;
           constructor() {
             this.testFunction(testValue);
           }
@@ -2785,7 +2785,7 @@ t.test("It does instrument private methods in classes", async (t) => {
     `
         class Test {
 
-            private testValue = 42;
+            #testValue = 42;
 
             constructor() {
                 this.testFunction(testValue);
@@ -2821,7 +2821,7 @@ t.test("It does instrument private methods in classes", async (t) => {
     result,
     `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
         class Test {
-          private testValue = 42;
+          #testValue = 42;
           constructor() {
             this.testFunction(testValue);
           }

@@ -1,7 +1,8 @@
 /* oxlint-disable no-console */
 
-import { hostname, platform, release } from "os";
+import { platform, release } from "os";
 import { getAgentVersion } from "../helpers/getAgentVersion";
+import { getInstanceHostname } from "../helpers/getInstanceHostname";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
@@ -12,11 +13,12 @@ import type {
   AgentInfo,
   DetectedAttack,
   DetectedAttackWave,
+  CustomEvent,
 } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
-import { Endpoint } from "./Config";
-import { pollForChanges } from "./realtime/pollForChanges";
+import { type Config, Endpoint } from "./Config";
+import { listenForConfigUpdates } from "./realtime/listenForConfigUpdates";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
@@ -37,6 +39,9 @@ import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
+import { warnIfReactRouterServeIsUsed } from "../helpers/warnIfReactRouterServeIsUsed";
+import { pollForChanges } from "./realtime/pollForChanges";
+import { isFeatureEnabled } from "../helpers/featureFlags";
 
 type WrappedPackage = { version: string; supported: boolean };
 
@@ -54,7 +59,7 @@ export class Agent {
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig([], Date.now(), [], [], [], []);
+  private serviceConfig = new ServiceConfig([], Date.now(), [], []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -67,6 +72,7 @@ export class Agent {
   private attackWaveDetector = new AttackWaveDetector();
   private pendingEvents = new PendingEvents();
   private idorProtectionConfig: IdorProtectionConfig | undefined = undefined;
+  public firewallListsUpdate = Promise.resolve();
 
   constructor(
     private block: boolean,
@@ -159,7 +165,12 @@ export class Agent {
       this.checkForReportingAPIError(result);
       this.updateServiceConfig(result);
 
-      await this.updateBlockedLists();
+      this.queueBlockedListsUpdate().catch((error) => {
+        // oxlint-disable-next-line no-console
+        console.error(
+          `Aikido: Failed to update blocked lists: ${error.message}`
+        );
+      });
     }
   }
 
@@ -347,6 +358,10 @@ export class Agent {
           response.excludedUserIdsFromRateLimiting
         );
       }
+
+      if (Array.isArray(response.enabledFeatures)) {
+        this.serviceConfig.updateEnabledFeatures(response.enabledFeatures);
+      }
     }
   }
 
@@ -420,6 +435,15 @@ export class Agent {
     this.interval.unref();
   }
 
+  private queueBlockedListsUpdate(): Promise<void> {
+    const update = this.firewallListsUpdate.then(() =>
+      this.updateBlockedLists()
+    );
+    this.firewallListsUpdate = update.catch(() => {});
+
+    return update;
+  }
+
   private async updateBlockedLists() {
     if (!this.token) {
       return;
@@ -430,55 +454,49 @@ export class Agent {
       return;
     }
 
-    try {
-      const {
-        blockedIPAddresses,
-        blockedUserAgents,
-        allowedIPAddresses,
-        monitoredIPAddresses,
-        monitoredUserAgents,
-        userAgentDetails,
-      } = await this.fetchListsAPI.getLists(this.token);
-      this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
-      this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
-      this.serviceConfig.updateAllowedIPAddresses(allowedIPAddresses);
-      this.serviceConfig.updateMonitoredIPAddresses(monitoredIPAddresses);
-      this.serviceConfig.updateMonitoredUserAgents(monitoredUserAgents);
-      this.serviceConfig.updateUserAgentDetails(userAgentDetails);
-    } catch (error: any) {
-      // oxlint-disable-next-line no-console
-      console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
-    }
+    const lists = await this.fetchListsAPI.getLists(this.token);
+    await this.serviceConfig.updateFirewallLists(lists);
   }
 
   private startPollingForConfigChanges() {
+    if (!this.token) {
+      return;
+    }
+
+    const onConfigUpdate = (config: Config) => {
+      this.updateServiceConfig({ success: true, ...config });
+      this.queueBlockedListsUpdate().catch((error) => {
+        this.logger.log(`Failed to update blocked lists: ${error.message}`);
+      });
+    };
+
+    const lastUpdatedAt = this.serviceConfig.getLastUpdatedAt();
+
+    if (
+      isFeatureEnabled("sse") ||
+      this.serviceConfig.isRealtimeUpdatesEnabled()
+    ) {
+      listenForConfigUpdates({
+        token: this.token,
+        logger: this.logger,
+        lastUpdatedAt,
+        onConfigUpdate,
+      });
+    }
+
     pollForChanges({
       token: this.token,
       logger: this.logger,
-      lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
-      onConfigUpdate: (config) => {
-        this.updateServiceConfig({ success: true, ...config });
-        this.updateBlockedLists().catch((error) => {
-          this.logger.log(`Failed to update blocked lists: ${error.message}`);
-        });
-      },
+      lastUpdatedAt,
+      onConfigUpdate,
     });
-  }
-
-  private getHostname() {
-    const instanceName = process.env.AIKIDO_INSTANCE_NAME;
-    if (instanceName && instanceName.trim().length > 0) {
-      return instanceName.trim();
-    }
-
-    return hostname() || "";
   }
 
   private getAgentInfo(): AgentInfo {
     return {
       dryMode: !this.block,
       /* c8 ignore next */
-      hostname: this.getHostname(),
+      hostname: getInstanceHostname(),
       version: getAgentVersion(),
       library: "firewall-node",
       /* c8 ignore next */
@@ -541,6 +559,7 @@ export class Agent {
     }
 
     warnIfTsxIsUsed();
+    warnIfReactRouterServeIsUsed();
 
     // When our library is required, we are not intercepting `require` calls yet
     // We need to add our library to the list of packages manually
@@ -604,6 +623,35 @@ export class Agent {
 
   onBuiltinWrapped(name: string) {
     this.logger.log(`node:${name} is supported!`);
+  }
+
+  // We check this.packages, which tracks every package loaded by the app.
+  // Careful: this.packages gets cleared after the first heartbeat (30s).
+  // This works because HTTP servers are created at startup, well before that.
+  hasWebFrameworkLoaded(): boolean {
+    if (this.serverless) {
+      return true;
+    }
+
+    const webFrameworks = [
+      "express",
+      "fastify",
+      "hono",
+      "elysia",
+      "koa",
+      "@hapi/hapi",
+      "restify",
+      "next",
+      "@nestjs/core",
+      "micro",
+      "nuxt",
+      "@trpc/server",
+    ];
+
+    return webFrameworks.some(
+      (framework) =>
+        this.packages.has(framework) || this.wrappedPackages.has(framework)
+    );
   }
 
   onConnectHostname(hostname: string, port: number) {
@@ -731,6 +779,24 @@ export class Agent {
         });
       this.pendingEvents.onAPICall(promise);
     }
+  }
+
+  onTrackEvent(event: Omit<CustomEvent, "agent">) {
+    if (!this.token) {
+      return;
+    }
+
+    const completeEvent: CustomEvent = {
+      ...event,
+      agent: this.getAgentInfo(),
+    };
+
+    const promise = this.api
+      .report(this.token, completeEvent, this.timeoutInMS)
+      .catch(() => {
+        this.logger.log("Failed to send tracked event");
+      });
+    this.pendingEvents.onAPICall(promise);
   }
 
   public async shutdown(timeoutInMS = 1000): Promise<void> {

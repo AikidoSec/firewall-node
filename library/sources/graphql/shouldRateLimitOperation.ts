@@ -61,9 +61,7 @@ export function shouldRateLimitOperation(
     : false;
 
   // Allow requests from allowed IPs, e.g. never rate limit office IPs
-  const isBypassedIP = context.remoteAddress
-    ? agent.getConfig().isBypassedIP(context.remoteAddress)
-    : false;
+  const isBypassedRequest = agent.getConfig().isBypassedRequest(context);
 
   for (const field of topLevelFields.fields) {
     const result = shouldRateLimitField(
@@ -72,7 +70,7 @@ export function shouldRateLimitOperation(
       field,
       topLevelFields.type,
       isFromLocalhostInProduction,
-      isBypassedIP
+      isBypassedRequest
     );
 
     if (result.block) {
@@ -89,7 +87,7 @@ function shouldRateLimitField(
   field: FieldNode,
   operationType: "query" | "mutation",
   isFromLocalhostInProduction: boolean,
-  isBypassedIP: boolean
+  isBypassedRequest: boolean
 ): Result {
   const match = agent
     .getConfig()
@@ -109,7 +107,11 @@ function shouldRateLimitField(
     return { block: false };
   }
 
-  if (context.remoteAddress && !isFromLocalhostInProduction && !isBypassedIP) {
+  if (
+    context.remoteAddress &&
+    !isFromLocalhostInProduction &&
+    !isBypassedRequest
+  ) {
     const result = agent
       .getRateLimiter()
       .isAllowed(

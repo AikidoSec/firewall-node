@@ -1,3 +1,3 @@
 import { createGraphQLTests } from "./GraphQL.tests";
 
-createGraphQLTests("graphql");
+createGraphQLTests("graphql-v16");

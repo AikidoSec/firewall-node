@@ -225,3 +225,31 @@ t.test(
     t.same(detectPathTraversal("//etc//passwd", "/etc"), false);
   }
 );
+
+t.test(
+  "case-insensitive comparison detects traversal on case-insensitive filesystems",
+  async () => {
+    t.same(detectPathTraversal("/etc/passwd", "/ETC/passwd"), true);
+    t.same(detectPathTraversal("/etc/passwd", "/ETC/PASSWD"), true);
+    t.same(
+      detectPathTraversal("/home/user/file.txt", "/HOME/USER/file.txt"),
+      true
+    );
+    t.same(detectPathTraversal("../test.txt", "../"), true);
+  }
+);
+
+t.test("user input is only a prefix of a dangerous folder name", async () => {
+  t.same(
+    detectPathTraversal("/app/node_modules/pkg/package.json", "/a"),
+    false
+  );
+  t.same(
+    detectPathTraversal("/app/node_modules/pkg/package.json", "/ap"),
+    false
+  );
+  t.same(detectPathTraversal("/etc/passwd", "/et"), false);
+  // Partial names inside a dangerous folder are still flagged
+  t.same(detectPathTraversal("/etc/passwd", "/etc/pass"), true);
+  t.same(detectPathTraversal("/app/config/secret.yml", "/app/conf"), true);
+});

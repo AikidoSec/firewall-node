@@ -2,7 +2,7 @@ import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
 import { isLocalhostIP } from "../../helpers/isLocalhostIP";
 import type { Endpoint } from "../../agent/Config";
-import type { IPMatcher } from "../../helpers/ip-matcher/IPMatcher";
+import type { IPMatcher } from "../../helpers/ip-matcher/createIPMatcher";
 
 export function ipAllowedToAccessRoute(context: Context, agent: Agent) {
   // Always allow localhost IPs

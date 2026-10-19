@@ -10,6 +10,7 @@ import {
   setBuiltinsToInstrument,
   setPackagesToInstrument,
 } from "./hooks/instrumentation/instructions";
+import { warnIfUsingTurbopackWithOldSystem } from "../helpers/warnIfUsingTurbopackWithOldSystem";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -23,6 +24,7 @@ export function applyHooks(hooks: Hooks, newInstrumentation: boolean) {
     setPackagesToPatch(hooks.getPackages());
     setBuiltinModulesToPatch(hooks.getBuiltInModules());
     wrapRequire();
+    warnIfUsingTurbopackWithOldSystem();
   } else {
     setPackagesToInstrument(hooks.getPackages());
     setBuiltinsToInstrument(hooks.getBuiltInModules());

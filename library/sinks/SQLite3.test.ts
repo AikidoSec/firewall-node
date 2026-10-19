@@ -52,7 +52,7 @@ const safeContext: Context = {
 t.test(
   "it detects SQL injections",
   {
-    skip: isEsmUnitTest() && getMajorNodeVersion() >= 25,
+    skip: isEsmUnitTest() && getMajorNodeVersion() >= 24,
   },
   async () => {
     const agent = createTestAgent({

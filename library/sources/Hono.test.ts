@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { networkInterfaces } from "node:os";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
@@ -166,6 +167,10 @@ async function getApp() {
 
   app.get("/hono-async-context", (c) => {
     return c.text(getTestProp());
+  });
+
+  app.query("/query/:key", (c) => {
+    return c.json(getContext());
   });
 
   return app;
@@ -394,6 +399,54 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
   t.ok(isLocalhostIP(body.remoteAddress));
   server.close();
 });
+
+const nonLoopbackIPv4 = Object.values(networkInterfaces())
+  .flat()
+  .find((i) => i && i.family === "IPv4" && !i.internal)?.address;
+
+t.test(
+  "uses the peer address of the socket, not the local address",
+  {
+    ...opts,
+    skip: opts.skip || (nonLoopbackIPv4 ? false : "No non-loopback IPv4"),
+  },
+  async (t) => {
+    const { serve } =
+      require("@hono/node-server") as typeof import("@hono/node-server");
+    const server = serve({
+      fetch: (await getApp()).fetch,
+      port: 8769,
+      hostname: "0.0.0.0",
+    });
+
+    try {
+      // Required lazily so that the http module is only loaded after Zen is set up
+      const { request } = require("node:http") as typeof import("node:http");
+      // Connect to the loopback address, but from a different source address
+      const body = await new Promise<string>((resolve, reject) => {
+        const req = request(
+          {
+            host: "127.0.0.1",
+            port: 8769,
+            path: "/",
+            localAddress: nonLoopbackIPv4,
+          },
+          (res) => {
+            let data = "";
+            res.on("data", (chunk) => (data += chunk));
+            res.on("end", () => resolve(data));
+          }
+        );
+        req.on("error", reject);
+        req.end();
+      });
+
+      t.equal(JSON.parse(body).remoteAddress, nonLoopbackIPv4);
+    } finally {
+      server.close();
+    }
+  }
+);
 
 t.test("ip and bot blocking works (real socket)", opts, async (t) => {
   // Start a server with a real socket
@@ -711,4 +764,20 @@ t.test("it does not rate limit excluded users", opts, async (t) => {
     t.match(response.status, 200);
     t.match(await response.text(), "OK");
   }
+});
+
+t.test("it works with query method", opts, async (t) => {
+  const app = await getApp();
+  const response = await app.request("/query/testkey", {
+    method: "QUERY",
+    body: "test",
+  });
+
+  const body = await response.json();
+  t.match(body, {
+    method: "QUERY",
+    source: "hono",
+    route: "/query/testkey",
+    routeParams: { key: "testkey" },
+  });
 });

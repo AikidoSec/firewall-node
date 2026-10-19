@@ -1,5 +1,11 @@
 import * as t from "tap";
-import { isWrapped, originalSymbol, wrap, wrappedSymbol } from "./wrap";
+import {
+  getOriginal,
+  isWrapped,
+  originalSymbol,
+  wrap,
+  wrappedSymbol,
+} from "./wrap";
 
 class MyClass {
   abc = "abc";
@@ -148,4 +154,45 @@ t.test("throws when original property is non-configurable", async (t) => {
     error instanceof Error ? error.message : null,
     "Cannot redefine property: fn"
   );
+});
+
+t.test(
+  "isWrapped returns false for a class extending an already wrapped class",
+  async (t) => {
+    class Base {}
+    const module: any = { Base };
+    wrap(module, "Base", () => {
+      return function wrapped() {
+        return new Base();
+      };
+    });
+
+    class Sub extends module.Base {}
+
+    t.same(isWrapped(Sub), false);
+  }
+);
+
+t.test("getOriginal returns the unwrapped function", async (t) => {
+  const original = () => "original";
+  const moduleObj = { fn: original };
+  wrap(moduleObj, "fn", (orig) => () => `wrapped ${orig()}`);
+
+  t.same(moduleObj.fn(), "wrapped original");
+  t.equal(getOriginal(moduleObj.fn), original);
+});
+
+t.test("getOriginal unwraps multiple layers", async (t) => {
+  const original = () => "original";
+  const moduleObj = { fn: original };
+  wrap(moduleObj, "fn", (orig) => () => orig());
+  wrap(moduleObj, "fn", (orig) => () => orig());
+
+  t.equal(getOriginal(moduleObj.fn), original);
+});
+
+t.test("getOriginal returns unwrapped values as is", async (t) => {
+  const fn = () => "test";
+  t.equal(getOriginal(fn), fn);
+  t.equal(getOriginal(undefined), undefined);
 });

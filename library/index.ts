@@ -1,6 +1,7 @@
 import isFirewallSupported from "./helpers/isFirewallSupported";
 import shouldEnableFirewall from "./helpers/shouldEnableFirewall";
 import { setUser } from "./agent/context/user";
+import { track } from "./agent/context/track";
 import { markUnsafe } from "./agent/context/markUnsafe";
 import { shouldBlockRequest } from "./middleware/shouldBlockRequest";
 import { addExpressMiddleware } from "./middleware/express";
@@ -16,12 +17,19 @@ import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
 import { shutdown } from "./agent/shutdown";
 import { isLibBundled } from "./helpers/isLibBundled";
-import { setTenantId } from "./agent/context/tenantId";
+import {
+  setTenantId,
+  runWithTenant,
+  getTenantId,
+} from "./agent/context/tenantId";
 import { enableIdorProtection } from "./agent/idorProtection";
 import { withoutIdorProtection } from "./agent/context/withoutIdorProtection";
 import { colorText } from "./helpers/colorText";
+import { warnBox } from "./helpers/warnBox";
 import { isPreloaded } from "./helpers/isPreloaded";
 import { warnIfEntrypointIsModule } from "./helpers/warnIfEntrypointIsModule";
+import { elysiaHandler } from "./middleware/elysia";
+import { bypassRequest } from "./agent/context/bypassRequest";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -35,7 +43,9 @@ if (!isNewHookSystemUsed()) {
       console.warn(
         colorText(
           "red",
-          "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions (https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md)."
+          warnBox(
+            "Zen is NOT protecting your application. Your app runs in ESM mode, which requires the new hook system. Setup instructions: https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+          )
         )
       );
     }
@@ -45,7 +55,9 @@ if (!isNewHookSystemUsed()) {
       console.warn(
         colorText(
           "red",
-          "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
+          warnBox(
+            "Zen is NOT protecting your application. Your app uses a bundler without externalizing Zen and the packages it needs to protect. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md"
+          )
         )
       );
     }
@@ -60,6 +72,7 @@ if (!isNewHookSystemUsed()) {
 
 export {
   setUser,
+  track,
   markUnsafe,
   shouldBlockRequest,
   addExpressMiddleware,
@@ -69,18 +82,23 @@ export {
   fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
+  elysiaHandler,
   setRateLimitGroup,
   addH3Middleware,
   shutdown,
   setTenantId,
+  runWithTenant,
+  getTenantId,
   enableIdorProtection,
   withoutIdorProtection,
+  bypassRequest,
 };
 
 // Required for ESM / TypeScript default export support
 // e.g. import Zen from '@aikidosec/firewall'; would not work without this, as Zen.setUser would be undefined
 export default {
   setUser,
+  track,
   markUnsafe,
   shouldBlockRequest,
   addExpressMiddleware,
@@ -90,10 +108,14 @@ export default {
   fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
+  elysiaHandler,
   setRateLimitGroup,
   addH3Middleware,
   shutdown,
   setTenantId,
+  runWithTenant,
+  getTenantId,
   enableIdorProtection,
   withoutIdorProtection,
+  bypassRequest,
 };

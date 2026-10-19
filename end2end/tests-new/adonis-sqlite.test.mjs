@@ -3,7 +3,7 @@ import { getRandomPort } from "./utils/get-port.mjs";
 import { spawnSync, spawn } from "node:child_process";
 import { resolve, join } from "node:path";
 import { timeout } from "./utils/timeout.mjs";
-import { test, before } from "node:test";
+import { test, before, skip } from "node:test";
 import { equal, fail, match, doesNotMatch } from "node:assert";
 import { mkdirSync } from "node:fs";
 
@@ -27,12 +27,12 @@ const envVars = {
 };
 
 before(() => {
-  const { stderr } = spawnSync(`node`, ["ace", "build"], {
+  const { status, stderr } = spawnSync(`node`, ["ace", "build"], {
     cwd: pathToAppDir,
     env: envVars,
   });
 
-  if (stderr && stderr.toString().length > 0) {
+  if (status !== 0) {
     throw new Error(`Failed to build: ${stderr.toString()}`);
   }
 

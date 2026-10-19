@@ -1,4 +1,7 @@
+import { EventEmitter } from "node:events";
 import type { App } from "./apps.ts";
+
+export const configEvents = new EventEmitter();
 
 type AppConfig = {
   success: boolean;
@@ -13,6 +16,7 @@ type AppConfig = {
   failureRate?: number;
   timeout?: number;
   excludedUserIdsFromRateLimiting?: string[];
+  enabledFeatures: string[];
 };
 
 const configs: AppConfig[] = [];
@@ -29,6 +33,7 @@ export function generateConfig(app: App): AppConfig {
     blockNewOutgoingRequests: false,
     domains: [],
     excludedUserIdsFromRateLimiting: [],
+    enabledFeatures: [],
   };
 }
 
@@ -53,6 +58,7 @@ export function updateAppConfig(app: App, newConfig: Partial<AppConfig>) {
     ...newConfig,
     configUpdatedAt: Date.now(),
   };
+  configEvents.emit(`config-updated:${app.id}`);
   return true;
 }
 

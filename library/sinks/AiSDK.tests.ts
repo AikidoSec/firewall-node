@@ -47,7 +47,7 @@ export function createAiSdkTests(
         googlePkgName
       ) as typeof import("@ai-sdk/google-v3");
       const { generateText, generateObject, streamText, streamObject } =
-        require(pkgName) as typeof import("ai-v6");
+        require(pkgName) as typeof import("ai-v7");
 
       const { z } = require(zodPkgName) as typeof import("zod/v4");
 
@@ -58,14 +58,14 @@ export function createAiSdkTests(
         }
 
         await generateText({
-          model: google("models/gemini-2.5-flash-lite"),
+          model: google("models/gemini-3.1-flash-lite"),
           prompt: "What is Zen by Aikido Security? Return one sentence.",
         });
 
         t.match(agent.getAIStatistics().getStats(), [
           {
             provider: "gemini",
-            model: "gemini-2.5-flash-lite",
+            model: "gemini-3.1-flash-lite",
             calls: 1,
           },
         ]);
@@ -89,7 +89,7 @@ export function createAiSdkTests(
         await setTimeout(400);
 
         const resultObj = await generateObject({
-          model: google("models/gemini-2.5-flash-lite"),
+          model: google("models/gemini-3.1-flash-lite"),
           prompt: "Return numbers one to five",
           output: "array",
           schema: z.array(z.number()),
@@ -99,7 +99,7 @@ export function createAiSdkTests(
         t.match(agent.getAIStatistics().getStats(), [
           {
             provider: "gemini",
-            model: "gemini-2.5-flash-lite",
+            model: "gemini-3.1-flash-lite",
             calls: 2,
           },
         ]);
@@ -107,7 +107,7 @@ export function createAiSdkTests(
         await setTimeout(400);
 
         const stream = streamText({
-          model: google("models/gemini-2.5-flash"),
+          model: google("models/gemini-3.5-flash"),
           prompt: "What is Zen by Aikido Security? Return one sentence.",
         });
 
@@ -121,12 +121,12 @@ export function createAiSdkTests(
         t.match(agent.getAIStatistics().getStats(), [
           {
             provider: "gemini",
-            model: "gemini-2.5-flash-lite",
+            model: "gemini-3.1-flash-lite",
             calls: 2,
           },
           {
             provider: "gemini",
-            model: "gemini-2.5-flash",
+            model: "gemini-3.5-flash",
             calls: 1,
           },
         ]);
@@ -150,7 +150,7 @@ export function createAiSdkTests(
         await setTimeout(400);
 
         const objectStream = streamObject({
-          model: google("models/gemini-2.5-flash"),
+          model: google("models/gemini-3.5-flash"),
           prompt: "Return numbers one to five",
           output: "array",
           schema: z.array(z.number()),
@@ -166,12 +166,12 @@ export function createAiSdkTests(
         t.match(agent.getAIStatistics().getStats(), [
           {
             provider: "gemini",
-            model: "gemini-2.5-flash-lite",
+            model: "gemini-3.1-flash-lite",
             calls: 2,
           },
           {
             provider: "gemini",
-            model: "gemini-2.5-flash",
+            model: "gemini-3.5-flash",
             calls: 2,
           },
         ]);
@@ -184,7 +184,7 @@ export function createAiSdkTests(
           // and internally the ToolLoopAgent uses the unwrapped generate function directly
           const { ToolLoopAgent } = require(pkgName) as typeof import("ai-v6");
           const agentInstance = new ToolLoopAgent({
-            model: google("models/gemini-2.5-flash-lite"),
+            model: google("models/gemini-3.1-flash-lite"),
             tools: {},
           });
 
@@ -197,7 +197,7 @@ export function createAiSdkTests(
           t.match(agent.getAIStatistics().getStats(), [
             {
               provider: "gemini",
-              model: "gemini-2.5-flash-lite",
+              model: "gemini-3.1-flash-lite",
               calls: 1,
             },
           ]);

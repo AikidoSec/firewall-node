@@ -61,14 +61,14 @@ export function lists(req: ZenRequest, res: Response) {
         : [],
     monitoredIPAddresses:
       monitoredIps.length > 0
-        ? monitoredIps
-        : [
+        ? [
             {
               key: "geoip/Belgium;BE",
               source: "geoip",
               description: "geo restrictions",
               ips: monitoredIps,
             },
-          ],
+          ]
+        : [],
   });
 }

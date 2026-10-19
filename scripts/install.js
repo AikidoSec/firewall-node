@@ -114,7 +114,12 @@ async function rebuildNativePackages(folder) {
     ...Object.keys(pkg.dependencies ?? {}),
     ...Object.keys(pkg.devDependencies ?? {}),
   ]);
-  const nativePackages = ["sqlite3", "better-sqlite3"];
+  const nativePackages = [
+    "sqlite3",
+    "better-sqlite3",
+    "better-sqlite3-v12",
+    "better-sqlite3-v13",
+  ];
   const packagesToRebuild = nativePackages.filter((pkgName) =>
     allDeps.has(pkgName)
   );
@@ -148,7 +153,7 @@ async function rebuildNativePackages(folder) {
         }
       }
 
-      if (pkgName === "better-sqlite3") {
+      if (pkgName.startsWith("better-sqlite3")) {
         try {
           await execAsync("../.bin/prebuild-install", {
             cwd: packagePath,

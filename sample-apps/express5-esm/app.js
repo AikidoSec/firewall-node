@@ -2,6 +2,7 @@ import Zen from "@aikidosec/firewall";
 import express from "express";
 import http from "node:http";
 import https from "node:https";
+import { readdir } from "node:fs";
 
 import "@aikidosec/firewall/nopp";
 
@@ -11,6 +12,13 @@ Zen.addExpressMiddleware(app);
 
 app.get("/", (req, res) => {
   res.send("Hello, world!");
+});
+
+app.get("/track-custom-events/:requestId", (req, res) => {
+  for (let i = 0; i < 30; i++) {
+    Zen.track(`${req.params.requestId}-${i}`);
+  }
+  res.send("Events tracked");
 });
 
 app.get("/http-request", async (req, res) => {
@@ -30,6 +38,19 @@ app.get("/http-request", async (req, res) => {
   });
   res.json({ method: "http.request", status: statusCode });
 });
+
+const router = express.Router();
+
+router.get("/files/:directory", (req, res) => {
+  readdir(req.params.directory, (err) => {
+    if (err) {
+      return res.status(500).send(err.message);
+    }
+    res.json({ ok: true });
+  });
+});
+
+app.use("/api", router);
 
 const port = parseInt(process.argv[2], 10) || 4000;
 

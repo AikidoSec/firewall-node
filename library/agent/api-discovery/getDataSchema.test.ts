@@ -1,6 +1,14 @@
 import * as t from "tap";
 import { getDataSchema } from "./getDataSchema";
 
+t.test("it is not vulnerable to prototype pollution", async (t) => {
+  const data = JSON.parse('{"__proto__": {"polluted": true}}');
+  const schema = getDataSchema(data);
+
+  t.equal(Object.getPrototypeOf(schema.properties), null);
+  t.same((Object.prototype as { polluted?: boolean }).polluted, undefined);
+});
+
 t.test("it works", async (t) => {
   t.same(getDataSchema("test"), {
     type: "string",
@@ -168,6 +176,22 @@ t.test("test max depth", async (t) => {
   t.notOk(JSON.stringify(schema2).includes('"type":"string"'));
 });
 
+t.test("array nesting counts toward max depth", async (t) => {
+  const wrapInArrays = (levels: number): unknown => {
+    let nested: unknown = { value: "leaf" };
+    for (let i = 0; i < levels; i++) {
+      nested = [nested];
+    }
+    return nested;
+  };
+
+  const shallow = getDataSchema(wrapInArrays(19));
+  t.ok(JSON.stringify(shallow).includes('"value"'));
+
+  const deep = getDataSchema(wrapInArrays(21));
+  t.notOk(JSON.stringify(deep).includes('"value"'));
+});
+
 t.test("test max properties", async (t) => {
   const generateObjectWithProperties = (count: number) => {
     const obj: any = {};
@@ -233,4 +257,25 @@ t.test("it ignores too long property keys", async (t) => {
       },
     },
   });
+});
+
+t.test("it limits the depth for deeply nested arrays", async (t) => {
+  let data: unknown = "value";
+  for (let i = 0; i < 100000; i++) {
+    data = [data];
+  }
+
+  let schema: ReturnType<typeof getDataSchema> | undefined;
+  t.doesNotThrow(() => {
+    schema = getDataSchema(data);
+  });
+
+  // Count the depth of the resulting schema
+  let depth = 0;
+  let current = schema;
+  while (current && current.type === "array" && current.items) {
+    depth++;
+    current = current.items;
+  }
+  t.ok(depth <= 21, `schema depth should be bounded, got ${depth}`);
 });

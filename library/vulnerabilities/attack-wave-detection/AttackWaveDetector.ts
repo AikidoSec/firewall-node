@@ -58,7 +58,7 @@ export class AttackWaveDetector {
    * Will report to core once in a defined time frame when the threshold is exceeded
    * @returns true if an attack wave is detected and should be reported
    */
-  check(context: Context): boolean {
+  check(context: Context, statusCode: number): boolean {
     if (!context.remoteAddress) {
       return false;
     }
@@ -77,7 +77,7 @@ export class AttackWaveDetector {
       return false;
     }
 
-    if (!isWebScanner(context)) {
+    if (!isWebScanner(context, statusCode)) {
       return false;
     }
 

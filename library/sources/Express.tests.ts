@@ -143,6 +143,10 @@ export async function createExpressTests(expressPackageName: string) {
       res.send(getContext());
     });
 
+    newRouter.get("/nested-router/:id", (req, res) => {
+      res.send(getContext());
+    });
+
     app.use(newRouter);
 
     app.use("/", express.static(__dirname + "/fixtures/public/"));
@@ -224,6 +228,31 @@ export async function createExpressTests(expressPackageName: string) {
 
       res.send(context);
     });
+
+    // The types do not work for this, but it works in practice :(
+    app.get("/array-handler/:id", [
+      (_req: any, res: any) => {
+        const context = getContext();
+
+        res.send(context);
+      },
+    ]);
+
+    app.use("/array-middleware/:id", [
+      (req: any, res: any) => {
+        const context = getContext();
+
+        res.send(context);
+      },
+    ]);
+
+    app.get("/array-middleware-inline/:id", [
+      (req: any, res: any) => {
+        const context = getContext();
+
+        res.send(context);
+      },
+    ]);
 
     app.get("/throws", (req, res) => {
       throw new Error("test");
@@ -654,6 +683,20 @@ export async function createExpressTests(expressPackageName: string) {
     });
   });
 
+  t.test(
+    "it sets routeParams in context for routes on a Router instance",
+    async () => {
+      const response = await request(getApp()).get("/nested-router/123");
+
+      t.match(response.body, {
+        method: "GET",
+        source: "express",
+        route: "/nested-router/:number",
+        routeParams: { id: "123" },
+      });
+    }
+  );
+
   t.test("it supports static files", async (t) => {
     const response = await request(getApp()).get("/test.txt");
 
@@ -845,6 +888,46 @@ export async function createExpressTests(expressPackageName: string) {
           blocked: 0,
         },
       },
+    });
+  });
+
+  t.test("it supports array of handlers", async (t) => {
+    const response = await request(getApp()).get("/array-handler/foo");
+
+    t.match(response.body, {
+      method: "GET",
+      query: {},
+      cookies: {},
+      source: "express",
+      route: "/array-handler/foo",
+      routeParams: { id: "foo" },
+    });
+  });
+
+  t.test("it supports array of middleware", async (t) => {
+    const response = await request(getApp()).get("/array-middleware/bar");
+
+    t.match(response.body, {
+      method: "GET",
+      query: {},
+      source: "express",
+      route: "/array-middleware/bar",
+      routeParams: { id: "bar" },
+    });
+  });
+
+  t.test("it supports array of middleware in .get()", async (t) => {
+    const response = await request(getApp()).get(
+      "/array-middleware-inline/hello"
+    );
+
+    t.match(response.body, {
+      method: "GET",
+      query: {},
+      cookies: {},
+      source: "express",
+      route: "/array-middleware-inline/hello",
+      routeParams: { id: "hello" },
     });
   });
 }

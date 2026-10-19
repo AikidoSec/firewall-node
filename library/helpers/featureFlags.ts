@@ -1,3 +1,4 @@
+import { envToBool } from "./envToBool";
 import { isUnitTest } from "./isUnitTest";
 
 const envPrefix = "AIKIDO_FEATURE_";
@@ -15,5 +16,5 @@ export function isFeatureEnabled(feature: string): boolean {
 
   const envVar = `${envPrefix}${feature.toUpperCase()}`;
 
-  return process.env[envVar] === "true" || process.env[envVar] === "1";
+  return envToBool(process.env[envVar]);
 }

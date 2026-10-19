@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { checkContextForPathTraversal } from "./checkContextForPathTraversal";
+import { captureStack } from "../../helpers/captureStack";
 
 const unsafeContext = {
   filename: "../file/test.txt",
@@ -460,3 +461,95 @@ t.test(
     );
   }
 );
+
+t.test(
+  "it detects path traversal using percent-encoded dot segments",
+  async (t) => {
+    const payloads = ["%2e%2e", ".%2e", "%2e.", "%2E%2E"];
+
+    for (const dotSegment of payloads) {
+      const payload = `${dotSegment}/etc/passwd`;
+      t.same(
+        checkContextForPathTraversal({
+          filename: new URL(payload, "file:///var/www/uploads/"),
+          operation: "operation",
+          context: {
+            cookies: {},
+            headers: {},
+            remoteAddress: "ip",
+            method: "POST",
+            url: "url",
+            query: {
+              file: payload,
+            },
+            body: {},
+            routeParams: {},
+            source: "express",
+            route: undefined,
+          },
+        }),
+        {
+          operation: "operation",
+          kind: "path_traversal",
+          source: "query",
+          pathsToPayload: [".file"],
+          metadata: {
+            filename: "/var/www/etc/passwd",
+          },
+          payload: payload,
+        },
+        `payload: ${payload}`
+      );
+    }
+  }
+);
+
+t.test(
+  "it does not flag a segment that only looks like a dot segment",
+  async () => {
+    t.same(
+      checkContextForPathTraversal({
+        filename: new URL(
+          "%2e%2e-backup/etc/passwd",
+          "file:///var/www/uploads/"
+        ),
+        operation: "operation",
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "POST",
+          url: "url",
+          query: {
+            file: "%2e%2e-backup/etc/passwd",
+          },
+          body: {},
+          routeParams: {},
+          source: "express",
+          route: undefined,
+        },
+      }),
+      undefined
+    );
+  }
+);
+
+t.test("it skips the check while a stack trace is captured", async () => {
+  const original = Error.prepareStackTrace;
+  const results: unknown[] = [];
+  Error.prepareStackTrace = (err, callSites) => {
+    results.push(checkContextForPathTraversal(unsafeContext));
+    return original ? original(err, callSites) : String(err);
+  };
+
+  try {
+    captureStack();
+  } finally {
+    Error.prepareStackTrace = original;
+  }
+
+  t.same(results, [undefined]);
+  t.match(checkContextForPathTraversal(unsafeContext), {
+    kind: "path_traversal",
+  });
+});

@@ -6,7 +6,6 @@ import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/ch
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 
@@ -38,7 +37,9 @@ export class Postgres implements Wrapper {
     // Object format: query({ text: "...", values: [...] })
     if (
       args.length > 0 &&
-      isPlainObject(args[0]) &&
+      args[0] &&
+      typeof args[0] === "object" &&
+      "values" in args[0] &&
       Array.isArray(args[0].values)
     ) {
       return args[0].values;
@@ -49,28 +50,26 @@ export class Postgres implements Wrapper {
 
   private inspectQuery(args: unknown[]): InterceptorResult {
     const context = getContext();
-    if (!context) {
-      return undefined;
-    }
 
     if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
       const sql: string = args[0];
       const params = this.findParams(args);
 
       // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
-      const sqlInjectionResult = checkContextForSqlInjection({
-        sql: sql,
-        context: context,
-        operation: "pg.query",
-        dialect: this.dialect,
-      });
-      if (sqlInjectionResult) {
-        return sqlInjectionResult;
+      if (context) {
+        const sqlInjectionResult = checkContextForSqlInjection({
+          sql: sql,
+          context: context,
+          operation: "pg.query",
+          dialect: this.dialect,
+        });
+        if (sqlInjectionResult) {
+          return sqlInjectionResult;
+        }
       }
 
       return checkContextForIdor({
         sql,
-        context,
         dialect: this.dialect,
         resolvePlaceholder: (placeholder, placeholderNumber) =>
           this.resolvePlaceholder(placeholder, placeholderNumber, params),
@@ -79,7 +78,9 @@ export class Postgres implements Wrapper {
 
     if (
       args.length > 0 &&
-      isPlainObject(args[0]) &&
+      args[0] &&
+      typeof args[0] === "object" &&
+      "text" in args[0] &&
       args[0].text &&
       typeof args[0].text === "string"
     ) {
@@ -87,19 +88,20 @@ export class Postgres implements Wrapper {
       const params = this.findParams(args);
 
       // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
-      const sqlInjectionResult = checkContextForSqlInjection({
-        sql: text,
-        context: context,
-        operation: "pg.query",
-        dialect: this.dialect,
-      });
-      if (sqlInjectionResult) {
-        return sqlInjectionResult;
+      if (context) {
+        const sqlInjectionResult = checkContextForSqlInjection({
+          sql: text,
+          context: context,
+          operation: "pg.query",
+          dialect: this.dialect,
+        });
+        if (sqlInjectionResult) {
+          return sqlInjectionResult;
+        }
       }
 
       return checkContextForIdor({
         sql: text,
-        context,
         dialect: this.dialect,
         resolvePlaceholder: (placeholder, placeholderNumber) =>
           this.resolvePlaceholder(placeholder, placeholderNumber, params),

@@ -10,10 +10,14 @@ import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { normalizeHostname } from "../helpers/normalizeHostname";
-import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
+import {
+  getRequestOptions,
+  getUrlFromHTTPRequestArgs,
+} from "./http-request/getUrlFromHTTPRequestArgs";
 import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isOptionsObject } from "./http-request/isOptionsObject";
+import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -81,7 +85,9 @@ export class HTTPRequest implements Wrapper {
 
     const url = getUrlFromHTTPRequestArgs(args, module);
     if (!url) {
-      return undefined;
+      // From the Node.js docs:
+      // Cannot be used if one of host or port is specified, as those specify a TCP Socket.
+      return this.checkForPathTraversalInSocketPath(args, module);
     }
 
     if (url.hostname.length > 0) {
@@ -94,6 +100,35 @@ export class HTTPRequest implements Wrapper {
       if (attack) {
         return attack;
       }
+    }
+
+    return undefined;
+  }
+
+  private checkForPathTraversalInSocketPath(
+    args: unknown[],
+    module: "http" | "https"
+  ): InterceptorResult {
+    const options = getRequestOptions(args);
+    const context = getContext();
+
+    if (
+      !options ||
+      typeof options.socketPath !== "string" ||
+      options.socketPath.length === 0 ||
+      !context
+    ) {
+      return undefined;
+    }
+
+    const foundPathTraversal = checkContextForPathTraversal({
+      filename: options.socketPath,
+      operation: `${module}.request`,
+      context: context,
+    });
+
+    if (foundPathTraversal) {
+      return foundPathTraversal;
     }
 
     return undefined;

@@ -52,7 +52,7 @@
     "@adonisjs/cors": "^2.2.1",
     "@adonisjs/lucid": "^21.6.1",
     "@aikidosec/firewall": "file:../../build",
-    "better-sqlite3": "^12.4.1",
+    "better-sqlite3": "^12.10.0",
     "luxon": "^3.7.2",
     "reflect-metadata": "^0.2.2"
   },
