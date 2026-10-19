@@ -172,6 +172,21 @@ t.test(
     );
 
     router.post(
+      "/post-raw-body-buffer",
+      defineEventHandler(async (event) => {
+        await readRawBody(event, false);
+        return getContext();
+      })
+    );
+
+    router.get(
+      "/context-event-handler/:id",
+      eventHandler(() => {
+        return getContext();
+      })
+    );
+
+    router.post(
       "/post-validated-body",
       defineEventHandler(async (event) => {
         const body = await readValidatedBody(event, (body) => {
@@ -422,6 +437,7 @@ t.test(
       formData.append("arr", "1");
       formData.append("arr", "2");
       formData.append("arr", "3");
+      formData.append("file", new Blob(["a; ls"]), "file.txt");
       const response = await fetch(
         "http://localhost:4123/post-multipart-form-data",
         {
@@ -435,20 +451,11 @@ t.test(
         context: {
           method: "POST",
           route: "/post-multipart-form-data",
-          body: [
-            {
-              name: "abc",
-              data: {
-                type: "Buffer",
-              },
-            },
-            {
-              name: "arr",
-              data: {
-                type: "Buffer",
-              },
-            },
-          ],
+          body: {
+            abc: "123",
+            arr: ["1", "2", "3"],
+            file: "a; ls",
+          },
         },
         body: [
           {
@@ -487,6 +494,29 @@ t.test(
         },
         body: "Hello world",
       });
+    }
+
+    {
+      const response = await fetch(
+        "http://localhost:4123/post-raw-body-buffer",
+        {
+          method: "POST",
+          body: "Hello world",
+          headers: {
+            "content-type": "text/plain",
+          },
+        }
+      );
+      const body = await response.json();
+      t.match(body, { body: "Hello world" });
+    }
+
+    {
+      const response = await fetch(
+        "http://localhost:4123/context-event-handler/42"
+      );
+      const body = await response.json();
+      t.match(body, { source: "h3", routeParams: { id: "42" } });
     }
 
     {

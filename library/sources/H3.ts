@@ -174,12 +174,15 @@ export class H3 implements Wrapper {
           parseCookies: exports.parseCookies,
         });
 
-        wrapExport(exports, "defineEventHandler", pkgInfo, {
-          kind: undefined,
-          modifyArgs: (args) => {
-            return this.wrapEventHandler(args);
-          },
-        });
+        // eventHandler is a separate export that points to the same function
+        for (const func of ["defineEventHandler", "eventHandler"]) {
+          wrapExport(exports, func, pkgInfo, {
+            kind: undefined,
+            modifyArgs: (args) => {
+              return this.wrapEventHandler(args);
+            },
+          });
+        }
 
         wrapExport(exports, "createApp", pkgInfo, {
           kind: undefined,
