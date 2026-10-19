@@ -8,6 +8,7 @@ import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { getContext } from "../agent/Context";
 import type { IncomingMessage, ServerResponse } from "http";
+import { Socket } from "net";
 import { addH3Middleware } from "../middleware/h3";
 import { setUser } from "../agent/context/user";
 
@@ -698,5 +699,144 @@ t.test(
 
     server.close();
     server2.close();
+  }
+);
+
+function createNitroSubRequestApp() {
+  const {
+    createApp,
+    createEvent,
+    createRouter,
+    defineEventHandler,
+    getQuery,
+    readBody,
+  } = require("h3") as typeof import("h3");
+
+  const app = createApp();
+  const router = createRouter();
+  let innerContext: ReturnType<typeof getContext> = undefined;
+
+  router.post(
+    "/inner/:name",
+    defineEventHandler(async (event) => {
+      await readBody(event);
+      innerContext = getContext();
+      return "inner";
+    })
+  );
+
+  router.post(
+    "/outer/:id",
+    defineEventHandler(async (event) => {
+      await readBody(event);
+      const query = getQuery(event);
+      const { req, res } = createSyntheticRequest(
+        query.unenv === "object" ? {} : undefined,
+        "/inner/abc",
+        JSON.stringify({ name: "inner" })
+      );
+      await app.handler(createEvent(req, res));
+      return getContext();
+    })
+  );
+
+  app.use(router);
+
+  return {
+    app,
+    getInnerContext: () => innerContext,
+  };
+}
+
+// Mimics the IncomingMessage that Nitro's localFetch passes to the h3 app.
+function createSyntheticRequest(
+  unenvContext: object | undefined,
+  url: string,
+  body: string
+) {
+  const { IncomingMessage, ServerResponse } =
+    require("http") as typeof import("http");
+  const req = new IncomingMessage(new Socket());
+  req.method = "POST";
+  req.url = url;
+  req.headers = { host: "localhost", "content-type": "application/json" };
+  Object.assign(req, { __unenv__: unenvContext, body });
+
+  return { req, res: new ServerResponse(req) };
+}
+
+t.test(
+  "Nitro sub-requests do not overwrite the context of the outer request",
+  {
+    skip:
+      getMajorNodeVersion() < 20 ? "h3 does not work on node < 20" : undefined,
+  },
+  async (t) => {
+    const { createServer } = require("http") as typeof import("http");
+    const { toNodeListener } = require("h3") as typeof import("h3");
+    const { app, getInnerContext } = createNitroSubRequestApp();
+    const server = createServer(toNodeListener(app));
+    await new Promise<void>((resolve) => {
+      server.listen(4125, resolve);
+    });
+
+    for (const unenv of ["undefined", "object"]) {
+      const outerURL = `http://localhost:4125/outer/1?unenv=${unenv}`;
+      const response = await fetch(outerURL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "1.2.3.4",
+        },
+        body: JSON.stringify({ name: "outer" }),
+      });
+      t.equal(
+        getInnerContext()?.url,
+        outerURL,
+        `sub-request handler ran with the outer context (__unenv__ ${unenv})`
+      );
+      t.match(
+        await response.json(),
+        {
+          url: outerURL,
+          route: "/outer/:number",
+          routeParams: { id: "1" },
+          query: { unenv },
+          remoteAddress: "1.2.3.4",
+          body: { name: "outer" },
+          source: "h3",
+        },
+        `outer context is untouched (__unenv__ ${unenv})`
+      );
+    }
+
+    server.close();
+  }
+);
+
+t.test(
+  "top-level synthetic request without an outer h3 event gets an h3 context",
+  {
+    skip:
+      getMajorNodeVersion() < 20 ? "h3 does not work on node < 20" : undefined,
+  },
+  async (t) => {
+    const { createEvent } = require("h3") as typeof import("h3");
+    const { app, getInnerContext } = createNitroSubRequestApp();
+    const { req, res } = createSyntheticRequest(
+      {},
+      "/inner/abc?x=1",
+      JSON.stringify({ name: "top-level" })
+    );
+
+    await app.handler(createEvent(req, res));
+
+    t.match(getInnerContext(), {
+      url: "http://localhost/inner/abc?x=1",
+      routeParams: { name: "abc" },
+      query: { x: "1" },
+      body: { name: "top-level" },
+      source: "h3",
+    });
   }
 );

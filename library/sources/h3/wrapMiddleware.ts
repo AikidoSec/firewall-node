@@ -1,6 +1,5 @@
 import type { H3Event } from "h3";
-import { runWithContext } from "../../agent/Context";
-import { contextFromEvent } from "./contextFromEvent";
+import { runWithEventContext } from "./runWithEventContext";
 import { createWrappedFunction } from "../../helpers/wrap";
 import type { PartialH3Exports } from "../H3";
 
@@ -18,9 +17,7 @@ export function wrapMiddleware(
         return await middleware(...args);
       }
 
-      const context = contextFromEvent(event, h3);
-
-      return await runWithContext(context, async () => {
+      return await runWithEventContext(event, h3, async () => {
         return await middleware(...args);
       });
     };

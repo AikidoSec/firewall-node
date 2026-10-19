@@ -1,10 +1,12 @@
+import type { H3Event } from "h3";
 import { getContext, updateContext } from "../../agent/Context";
 import { formDataToPlainObject } from "../../helpers/formDataToPlainObject";
 import { isPlainObject } from "../../helpers/isPlainObject";
+import { isNitroSubRequest } from "./runWithEventContext";
 
 type MultipartPart = { name?: string; data: Buffer };
 
-export async function wrapReadBody(_args: unknown[], returnValue: unknown) {
+export async function wrapReadBody(args: unknown[], returnValue: unknown) {
   const context = getContext();
 
   if (!context) {
@@ -12,7 +14,7 @@ export async function wrapReadBody(_args: unknown[], returnValue: unknown) {
   }
 
   const body = returnValue instanceof Promise ? await returnValue : returnValue;
-  if (body) {
+  if (body && !isNitroSubRequest(context, args[0] as H3Event)) {
     updateContext(context, "body", toInspectableBody(body));
   }
 
