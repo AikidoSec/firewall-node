@@ -19,7 +19,6 @@ export function contextFromEvent(
       remoteAddress:
         event.context.clientAddress || event.node.req.socket.remoteAddress,
     }),
-    // Pass the body from the existing context if it's already set, otherwise the body is set in wrapRequestBodyParsing
     body:
       existingContext && existingContext.source === "h3"
         ? existingContext.body

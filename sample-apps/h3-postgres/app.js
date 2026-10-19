@@ -53,15 +53,12 @@ function getHTMLBody(cats) {
   const db = await createConnection();
   const cats = new Cats(db);
 
-  // Create an app instance
   const app = createApp();
 
   Zen.addH3Middleware(app);
 
-  // Create a new router and register it in app
   const router = createRouter();
 
-  // Add a new route that matches GET requests to / path
   router.get(
     "/",
     defineEventHandler(async (event) => {

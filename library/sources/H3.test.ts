@@ -661,7 +661,6 @@ t.test(
       });
     }
 
-    // Trigger onError hook on server2 — verify context was established inside the hook
     {
       await fetch("http://localhost:4124/error");
       t.match(onErrorContext, { source: "h3" });

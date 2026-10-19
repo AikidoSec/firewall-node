@@ -33,7 +33,6 @@ t.test("it blocks in blocking mode", (t) => {
     stderr += data.toString();
   });
 
-  // Wait for the server to start
   timeout(4000)
     .then(() => {
       return Promise.all([
@@ -81,7 +80,6 @@ t.test("it does not block in dry mode", (t) => {
     stderr += data.toString();
   });
 
-  // Wait for the server to start
   timeout(4000)
     .then(() =>
       Promise.all([
