@@ -22,7 +22,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
   const agent = createTestAgent();
   agent.start([new Postgres()]);
 
-  const { Client } = require("pg") as typeof import("pg");
+  const { Client, Query } = require("pg") as typeof import("pg");
   const client = new Client({
     user: "root",
     host: "127.0.0.1",
@@ -82,6 +82,30 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
+        "Zen has blocked an SQL injection: pg.query(...) originating from body.myTitle"
+      );
+    }
+
+    const error3 = await t.rejects(async () => {
+      runWithContext(context, () => {
+        return client.query(new Query("-- should be blocked"));
+      });
+    });
+    if (error3 instanceof Error) {
+      t.same(
+        error3.message,
+        "Zen has blocked an SQL injection: pg.query(...) originating from body.myTitle"
+      );
+    }
+
+    const error4 = await t.rejects(async () => {
+      runWithContext(context, () => {
+        return client.query(new Query({ text: "-- should be blocked" }));
+      });
+    });
+    if (error4 instanceof Error) {
+      t.same(
+        error4.message,
         "Zen has blocked an SQL injection: pg.query(...) originating from body.myTitle"
       );
     }

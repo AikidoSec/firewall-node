@@ -1,4 +1,7 @@
-import { resolve } from "path";
+import { resolve as resolveMaybeWrapped } from "path";
+import { getOriginal } from "./wrap";
+
+const resolve = getOriginal(resolveMaybeWrapped);
 
 export function getAgentVersion(): string {
   try {

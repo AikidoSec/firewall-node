@@ -1,3 +1,4 @@
+import { createSafeObject } from "../../helpers/createSafeObject";
 import { DataSchema } from "./getDataSchema";
 import { onlyContainsPrimitiveTypes } from "./isPrimitiveType";
 
@@ -9,7 +10,7 @@ import { onlyContainsPrimitiveTypes } from "./isPrimitiveType";
  * If the types are the same, the properties of the second schema are merged into the first schema.
  */
 export function mergeDataSchemas(first: DataSchema, second: DataSchema) {
-  const result: DataSchema = { ...first };
+  const result: DataSchema = createSafeObject(first, {});
 
   // Can not merge different types
   if (!isSameType(first.type, second.type)) {
@@ -17,7 +18,7 @@ export function mergeDataSchemas(first: DataSchema, second: DataSchema) {
   }
 
   if (first.properties && second.properties) {
-    result.properties = { ...first.properties };
+    result.properties = createSafeObject(first.properties, {});
 
     for (const key in second.properties) {
       if (result.properties[key]) {

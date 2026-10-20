@@ -1,9 +1,9 @@
 use oxc_allocator::Allocator;
-use oxc_ast::AstBuilder;
 use oxc_ast::ast::{
     AssignmentExpression, AssignmentOperator, Class, ClassElement, Expression, Function,
     FunctionBody, FunctionType, VariableDeclarator,
 };
+use oxc_ast::builder::AstBuilder;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use super::helpers::{
@@ -72,9 +72,15 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             Vec::new()
         };
 
-        let body: &mut oxc_allocator::Box<'_, FunctionBody<'_>> = match &mut node.right {
-            Expression::FunctionExpression(func_expr) => func_expr.body.as_mut().unwrap(),
-            Expression::ArrowFunctionExpression(arrow_func_expr) => &mut arrow_func_expr.body,
+        let body: &mut FunctionBody<'_> = match &mut node.right {
+            Expression::FunctionExpression(func_expr) => func_expr.body.as_deref_mut().unwrap(),
+            Expression::ArrowFunctionExpression(arrow_func_expr) => {
+                match arrow_func_expr.body.as_function_body_mut() {
+                    Some(body) => body,
+                    // Expression bodies (`x => x + 1`) are not instrumented
+                    None => return,
+                }
+            }
             _ => return,
         };
 
@@ -186,9 +192,15 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             Vec::new()
         };
 
-        let body: &mut oxc_allocator::Box<'_, FunctionBody<'_>> = match expr {
-            Expression::FunctionExpression(func_expr) => func_expr.body.as_mut().unwrap(),
-            Expression::ArrowFunctionExpression(arrow_func_expr) => &mut arrow_func_expr.body,
+        let body: &mut FunctionBody<'_> = match expr {
+            Expression::FunctionExpression(func_expr) => func_expr.body.as_deref_mut().unwrap(),
+            Expression::ArrowFunctionExpression(arrow_func_expr) => {
+                match arrow_func_expr.body.as_function_body_mut() {
+                    Some(body) => body,
+                    // Expression bodies (`x => x + 1`) are not instrumented
+                    None => return,
+                }
+            }
             _ => return,
         };
 

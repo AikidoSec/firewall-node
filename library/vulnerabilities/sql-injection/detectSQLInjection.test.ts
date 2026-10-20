@@ -23,6 +23,13 @@ t.test("It ignores safely escaped backslash", async () => {
   isNotSqlInjection("SELECT * FROM users WHERE id = 'users\\\\'", "users\\\\");
 });
 
+t.test("it recovers after deeply nested parentheses", async () => {
+  const payload = "(".repeat(10_000);
+
+  detectSQLInjection(payload, payload, new SQLDialectGeneric());
+  isSqlInjection("SELECT * FROM users WHERE id = '1' OR 1=1", "1' OR 1=1");
+});
+
 t.test("is not", async () => {
   isNotSqlInjection(
     "select * from `a` where `a`.`b` = ? and `a`.`b` is not null and `a`.`c` is null order by `id` asc",

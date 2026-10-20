@@ -14,6 +14,13 @@ app.get("/", (req, res) => {
   res.send("Hello, world!");
 });
 
+app.get("/track-custom-events/:requestId", (req, res) => {
+  for (let i = 0; i < 30; i++) {
+    Zen.track(`${req.params.requestId}-${i}`);
+  }
+  res.send("Events tracked");
+});
+
 app.get("/http-request", async (req, res) => {
   const url = req.query.url;
   if (!url) {

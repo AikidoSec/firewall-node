@@ -116,6 +116,12 @@ export class MySQL implements Wrapper {
           inspectArgs: (args) => this.inspectQuery(args),
         });
       })
+      .onFileRequire("lib/Pool.js", (exports, pkgInfo) => {
+        wrapExport(exports.prototype, "getConnection", pkgInfo, {
+          kind: "sql_op",
+          inspectArgs: () => {},
+        });
+      })
       .addFileInstrumentation({
         path: "lib/Connection.js",
         functions: [
@@ -125,6 +131,18 @@ export class MySQL implements Wrapper {
             operationKind: "sql_op",
             bindContext: true,
             inspectArgs: (args) => this.inspectQuery(args),
+          },
+        ],
+      })
+      .addFileInstrumentation({
+        path: "lib/Pool.js",
+        functions: [
+          {
+            name: "Pool.prototype.getConnection",
+            nodeType: "FunctionAssignment",
+            operationKind: "sql_op",
+            bindContext: true,
+            inspectArgs: () => {},
           },
         ],
       });

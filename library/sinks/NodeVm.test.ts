@@ -29,6 +29,23 @@ t.test("it works", async (t) => {
   agent.start([new NodeVm()]);
 
   const vm = require("vm");
+  const Script = vm.Script as typeof import("node:vm").Script;
+
+  class CustomScript extends Script {
+    runInThisContext() {
+      return "custom-result";
+    }
+  }
+
+  const assertSubclassIsPreserved = (script: CustomScript) => {
+    t.ok(script instanceof CustomScript);
+    t.equal(script.runInThisContext(), "custom-result");
+  };
+
+  assertSubclassIsPreserved(new CustomScript("1 + 1"));
+  assertSubclassIsPreserved(
+    Reflect.construct(vm.Script, ["1 + 1"], CustomScript)
+  );
 
   {
     // @ts-expect-error Not typed
@@ -49,6 +66,8 @@ t.test("it works", async (t) => {
   }
 
   runWithContext(safeContext, () => {
+    assertSubclassIsPreserved(new CustomScript("1 + 1"));
+
     t.doesNotThrow(() => {
       new vm.Script(`console.log('${safeContext.body.code}');`);
     });

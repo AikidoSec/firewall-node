@@ -30,6 +30,7 @@ import { ReportingAPIRateLimitedServerSide } from "./api/ReportingAPIRateLimited
 import { ReportingAPIThatValidatesToken } from "./api/ReportingAPIThatValidatesToken";
 import { Token } from "./api/Token";
 import { getAPIURL } from "./getAPIURL";
+import { getServerlessFromEnv } from "../helpers/getServerlessFromEnv";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
@@ -66,6 +67,7 @@ import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 import { Mongoose } from "../sinks/Mongoose";
 import { NodeVm } from "../sinks/NodeVm";
 import { Zlib } from "../sinks/Zlib";
+import { WorkerThreads } from "../sinks/WorkerThreads";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -186,12 +188,13 @@ export function getWrappers() {
     new Mongoose(),
     new NodeVm(),
     new Zlib(),
+    new WorkerThreads(),
   ];
 }
 
 export function protect() {
   startAgent({
-    serverless: undefined,
+    serverless: getServerlessFromEnv(),
     newInstrumentation: false,
   });
 }
@@ -224,7 +227,7 @@ export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
 
 export function protectWithNewInstrumentation() {
   startAgent({
-    serverless: undefined,
+    serverless: getServerlessFromEnv(),
     newInstrumentation: true,
   });
 }

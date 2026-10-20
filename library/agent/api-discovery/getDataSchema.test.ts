@@ -1,6 +1,14 @@
 import * as t from "tap";
 import { getDataSchema } from "./getDataSchema";
 
+t.test("it is not vulnerable to prototype pollution", async (t) => {
+  const data = JSON.parse('{"__proto__": {"polluted": true}}');
+  const schema = getDataSchema(data);
+
+  t.equal(Object.getPrototypeOf(schema.properties), null);
+  t.same((Object.prototype as { polluted?: boolean }).polluted, undefined);
+});
+
 t.test("it works", async (t) => {
   t.same(getDataSchema("test"), {
     type: "string",
@@ -249,4 +257,25 @@ t.test("it ignores too long property keys", async (t) => {
       },
     },
   });
+});
+
+t.test("it limits the depth for deeply nested arrays", async (t) => {
+  let data: unknown = "value";
+  for (let i = 0; i < 100000; i++) {
+    data = [data];
+  }
+
+  let schema: ReturnType<typeof getDataSchema> | undefined;
+  t.doesNotThrow(() => {
+    schema = getDataSchema(data);
+  });
+
+  // Count the depth of the resulting schema
+  let depth = 0;
+  let current = schema;
+  while (current && current.type === "array" && current.items) {
+    depth++;
+    current = current.items;
+  }
+  t.ok(depth <= 21, `schema depth should be bounded, got ${depth}`);
 });
