@@ -276,7 +276,7 @@ t.test(
 
     const server = createServer(toNodeListener(app));
     await new Promise<void>((resolve) => {
-      server.listen(4123, resolve);
+      server.listen(4125, resolve);
     });
 
     let onErrorContext: ReturnType<typeof getContext> = undefined;
@@ -300,18 +300,18 @@ t.test(
 
     const server2 = createServer(toNodeListener(app2));
     await new Promise<void>((resolve) => {
-      server2.listen(4124, resolve);
+      server2.listen(4126, resolve);
     });
 
     {
-      const response = await fetch("http://localhost:4123/context?abc=123");
+      const response = await fetch("http://localhost:4125/context?abc=123");
       const body = await response.json();
       t.match(
         body,
         {
           method: "GET",
           headers: {
-            host: "localhost:4123",
+            host: "localhost:4125",
             connection: "keep-alive",
             accept: "*/*",
             "accept-language": "*",
@@ -333,7 +333,7 @@ t.test(
     }
 
     {
-      const response = await fetch("http://localhost:4123/context/test", {
+      const response = await fetch("http://localhost:4125/context/test", {
         headers: {
           cookie: "abc=123",
         },
@@ -342,7 +342,7 @@ t.test(
       t.match(body, {
         method: "GET",
         headers: {
-          host: "localhost:4123",
+          host: "localhost:4125",
           connection: "keep-alive",
           accept: "*/*",
         },
@@ -359,12 +359,12 @@ t.test(
     }
 
     {
-      const response = await fetch("http://localhost:4123/context2");
+      const response = await fetch("http://localhost:4125/context2");
       const body = await response.json();
       t.match(body, {
         method: "GET",
         headers: {
-          host: "localhost:4123",
+          host: "localhost:4125",
           connection: "keep-alive",
           accept: "*/*",
           "accept-language": "*",
@@ -381,7 +381,7 @@ t.test(
     }
 
     {
-      const response = await fetch("http://localhost:4123/post-json", {
+      const response = await fetch("http://localhost:4125/post-json", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -410,7 +410,7 @@ t.test(
     }
 
     {
-      const response = await fetch("http://localhost:4123/post-form-data", {
+      const response = await fetch("http://localhost:4125/post-form-data", {
         method: "POST",
         body: "abc=123&arr=1&arr=2&arr=3",
         headers: {
@@ -439,7 +439,7 @@ t.test(
       formData.append("arr", "3");
       formData.append("file", new Blob(["a; ls"]), "file.txt");
       const response = await fetch(
-        "http://localhost:4123/post-multipart-form-data",
+        "http://localhost:4125/post-multipart-form-data",
         {
           method: "POST",
           body: formData,
@@ -475,7 +475,7 @@ t.test(
     }
 
     {
-      const response = await fetch("http://localhost:4123/post-raw-body", {
+      const response = await fetch("http://localhost:4125/post-raw-body", {
         method: "POST",
         body: "Hello world",
         headers: {
@@ -498,7 +498,7 @@ t.test(
 
     {
       const response = await fetch(
-        "http://localhost:4123/post-raw-body-buffer",
+        "http://localhost:4125/post-raw-body-buffer",
         {
           method: "POST",
           body: "Hello world",
@@ -513,7 +513,7 @@ t.test(
 
     {
       const response = await fetch(
-        "http://localhost:4123/context-event-handler/42"
+        "http://localhost:4125/context-event-handler/42"
       );
       const body = await response.json();
       t.match(body, { source: "h3", routeParams: { id: "42" } });
@@ -521,7 +521,7 @@ t.test(
 
     {
       const response = await fetch(
-        "http://localhost:4123/post-validated-body",
+        "http://localhost:4125/post-validated-body",
         {
           method: "POST",
           headers: {
@@ -553,7 +553,7 @@ t.test(
 
     {
       const response = await fetch(
-        "http://localhost:4123/from-node-middleware?abc=123"
+        "http://localhost:4125/from-node-middleware?abc=123"
       );
       const body = await response.json();
       t.match(body, {
@@ -567,7 +567,7 @@ t.test(
     }
 
     {
-      const response = await fetch("http://localhost:4123/middleware-2");
+      const response = await fetch("http://localhost:4125/middleware-2");
       const body = await response.json();
       t.match(body, {
         method: "GET",
@@ -578,7 +578,7 @@ t.test(
     }
 
     {
-      const response = await fetch("http://localhost:4123/middleware-3", {
+      const response = await fetch("http://localhost:4125/middleware-3", {
         method: "POST",
         body: JSON.stringify({ abc: "123", arr: [1, 2, 3] }),
         headers: {
@@ -600,7 +600,7 @@ t.test(
 
     {
       const response = await fetch(
-        "http://localhost:4124/from-node-middleware?abc=123"
+        "http://localhost:4126/from-node-middleware?abc=123"
       );
       const body = await response.json();
       t.match(body, {
@@ -614,7 +614,7 @@ t.test(
     }
 
     {
-      const response = await fetch("http://localhost:4123/from-web-handler");
+      const response = await fetch("http://localhost:4125/from-web-handler");
       const body = await response.json();
       t.match(body, {
         method: "GET",
@@ -625,27 +625,27 @@ t.test(
     }
 
     {
-      const response = await fetch("http://localhost:4123/rate-limited");
+      const response = await fetch("http://localhost:4125/rate-limited");
       t.equal(response.status, 200);
 
-      const response2 = await fetch("http://localhost:4123/rate-limited");
+      const response2 = await fetch("http://localhost:4125/rate-limited");
       t.equal(response2.status, 200);
 
-      const response3 = await fetch("http://localhost:4123/rate-limited");
+      const response3 = await fetch("http://localhost:4125/rate-limited");
       t.equal(response3.status, 429);
       const text = await response3.text();
       t.match(text, /You are rate limited by Zen./);
     }
 
     {
-      const response = await fetch("http://localhost:4123/block-user");
+      const response = await fetch("http://localhost:4125/block-user");
       t.equal(response.status, 403);
       const text = await response.text();
       t.equal(text, "You are blocked by Zen.");
     }
 
     {
-      const response = await fetch("http://localhost:4123/context", {
+      const response = await fetch("http://localhost:4125/context", {
         headers: {
           cookie: "abc=123; xyz=456",
         },
@@ -661,7 +661,7 @@ t.test(
 
     {
       const response = await fetch(
-        "http://localhost:4123/from-web-handler?abc=123"
+        "http://localhost:4125/from-web-handler?abc=123"
       );
       const body = await response.json();
       t.match(body, {
@@ -674,16 +674,16 @@ t.test(
 
     {
       const headers = { "x-forwarded-for": "4.3.2.1" };
-      const r1 = await fetch("http://localhost:4123/rate-limited", { headers });
+      const r1 = await fetch("http://localhost:4125/rate-limited", { headers });
       t.equal(r1.status, 200);
-      const r2 = await fetch("http://localhost:4123/rate-limited", { headers });
+      const r2 = await fetch("http://localhost:4125/rate-limited", { headers });
       t.equal(r2.status, 200);
-      const r3 = await fetch("http://localhost:4123/rate-limited", { headers });
+      const r3 = await fetch("http://localhost:4125/rate-limited", { headers });
       t.equal(r3.status, 200);
     }
 
     {
-      const response = await fetch("http://localhost:4124/from-web-handler");
+      const response = await fetch("http://localhost:4126/from-web-handler");
       const body = await response.json();
       t.match(body, {
         method: "GET",
@@ -692,7 +692,7 @@ t.test(
     }
 
     {
-      await fetch("http://localhost:4124/error");
+      await fetch("http://localhost:4126/error");
       t.match(onErrorContext, { source: "h3" });
     }
 
