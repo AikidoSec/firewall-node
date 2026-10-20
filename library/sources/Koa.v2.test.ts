@@ -12,6 +12,6 @@ t.test(
         : undefined,
   },
   async () => {
-    createKoaTests("koa-v2");
+    await createKoaTests("koa-v2");
   }
 );
