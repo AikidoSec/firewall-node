@@ -87,9 +87,29 @@ t.test("it detects SQL injections", async () => {
       }),
       []
     );
+    t.same(
+      await runWithContext(context, () => {
+        return new Promise((resolve, reject) => {
+          // @ts-expect-error Wrong types
+          const q = mysql.createQuery(
+            "SELECT petname FROM `cats`;",
+            // @ts-expect-error Wrong types
+            (error, results) => {
+              if (error) {
+                return reject(error);
+              }
+
+              resolve(results);
+            }
+          );
+          connection.query(q);
+        });
+      }),
+      []
+    );
 
     const error = await t.rejects(async () => {
-      await runWithContext(context, () => {
+      runWithContext(context, () => {
         return connection.query("-- should be blocked");
       });
     });
@@ -102,7 +122,7 @@ t.test("it detects SQL injections", async () => {
     }
 
     const error2 = await t.rejects(async () => {
-      await runWithContext(context, () => {
+      runWithContext(context, () => {
         return connection.query({ sql: "-- should be blocked" });
       });
     });
@@ -110,6 +130,20 @@ t.test("it detects SQL injections", async () => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
+        "Zen has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
+      );
+    }
+
+    const error3 = await t.rejects(async () => {
+      runWithContext(context, () => {
+        // @ts-expect-error Wrong types
+        return connection.query(mysql.createQuery("-- should be blocked"));
+      });
+    });
+
+    if (error3 instanceof Error) {
+      t.same(
+        error3.message,
         "Zen has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
       );
     }
@@ -125,7 +159,7 @@ t.test("it detects SQL injections", async () => {
       t.same(undefinedQueryError.message, "ER_EMPTY_QUERY: Query was empty");
     }
 
-    await runWithContext(
+    runWithContext(
       {
         remoteAddress: "::1",
         method: "POST",
@@ -151,6 +185,14 @@ t.test("it detects SQL injections", async () => {
   } catch (error: any) {
     t.fail(error);
   } finally {
-    await connection.end();
+    await new Promise<void>((resolve, reject) =>
+      connection.end((err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      })
+    );
   }
 });

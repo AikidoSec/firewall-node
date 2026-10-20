@@ -12,6 +12,7 @@ const METHODS = [
   "delete",
   "options",
   "patch",
+  "query",
   "all",
   "on",
   "use",
@@ -45,14 +46,32 @@ export class Hono implements Wrapper {
 
         wrapNewInstance(newExports, "Hono", pkgInfo, (instance) => {
           METHODS.forEach((method) => {
-            wrapExport(instance, method, pkgInfo, {
-              kind: undefined,
-              modifyArgs: this.wrapArgs,
-            });
+            if (typeof instance[method] === "function") {
+              wrapExport(instance, method, pkgInfo, {
+                kind: undefined,
+                modifyArgs: this.wrapArgs,
+              });
+            }
           });
         });
 
         return newExports;
-      });
+      })
+      .addMultiFileInstrumentation(
+        [
+          "dist/hono-base.js", // ESM
+          "dist/cjs/hono-base.js", // CJS
+        ],
+        [
+          {
+            nodeType: "MethodDefinition",
+            name: "addRoute",
+            operationKind: undefined,
+            modifyArgs: (args) => {
+              return this.wrapArgs(args);
+            },
+          },
+        ]
+      );
   }
 }

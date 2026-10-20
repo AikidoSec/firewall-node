@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import * as dns from "dns";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
@@ -60,18 +59,19 @@ function createContext(): Context {
 
 t.setTimeout(60 * 1000);
 
+const api = new ReportingAPIForTesting();
+const agent = createTestAgent({
+  token: new Token("123"),
+  api,
+});
+agent.start([new HTTPRequest()]);
+
+const http = require("http") as typeof import("http");
+const https = require("https") as typeof import("https");
+const oldUrl = require("url");
+
 t.test("it works", (t) => {
-  const api = new ReportingAPIForTesting();
-  const agent = createTestAgent({
-    token: new Token("123"),
-    api,
-  });
-  agent.start([new HTTPRequest()]);
-
   t.same(agent.getHostnames().asArray(), []);
-
-  const http = require("http") as typeof import("http");
-  const https = require("https") as typeof import("https");
 
   runWithContext(createContext(), () => {
     const aikido = http.request("http://aikido.dev");
@@ -84,7 +84,7 @@ t.test("it works", (t) => {
   agent.getHostnames().clear();
 
   runWithContext(createContext(), () => {
-    const aikido = https.request("https://aikido.dev");
+    const aikido = https.request("https://AIKIDO.dev");
     aikido.end();
   });
   t.same(agent.getHostnames().asArray(), [
@@ -133,7 +133,7 @@ t.test("it works", (t) => {
   t.same(withStringPort instanceof http.ClientRequest, true);
   withStringPort.end();
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: "443", hits: 1 },
+    { hostname: "aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 
@@ -219,53 +219,65 @@ t.test("it works", (t) => {
     google.end();
 
     // With string URL
-    const error = t.throws(() =>
-      https.request("https://localhost:4000/api/internal")
-    );
-    if (error instanceof Error) {
-      t.same(
-        error.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+    https
+      .request("https://localhost:4000/api/internal")
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     // With URL object
-    const error2 = t.throws(() =>
-      https.request(new URL("https://localhost:4000/api/internal"))
-    );
-    if (error2 instanceof Error) {
-      t.same(
-        error2.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+    https
+      .request(new URL("https://localhost:4000/api/internal"))
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     // With object like URL
-    const error3 = t.throws(() =>
-      https.request({
+    https
+      .request({
         protocol: "https:",
         hostname: "localhost",
         port: 4000,
         path: "/api/internal",
       })
-    );
-    if (error3 instanceof Error) {
-      t.same(
-        error3.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     // Using .get
-    const error4 = t.throws(() =>
-      https.get("https://localhost:4000/api/internal")
-    );
-    if (error4 instanceof Error) {
-      t.same(
-        error4.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+    https
+      .get("https://localhost:4000/api/internal")
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     // ECONNREFUSED means that the request is not blocked
     http
@@ -293,31 +305,36 @@ t.test("it works", (t) => {
       });
 
     // With options object at index 1
-    const error5 = t.throws(() =>
-      https.request("", {
+    https
+      .request({
         protocol: "https:",
         hostname: "localhost",
         port: 4000,
         path: "/api/internal",
       })
-    );
-    if (error5 instanceof Error) {
-      t.same(
-        error5.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
-    const oldUrl = require("url");
-    const error6 = t.throws(() =>
-      https.request(oldUrl.parse("https://localhost:4000/api/internal"))
-    );
-    if (error6 instanceof Error) {
-      t.same(
-        error6.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+    https
+      .request(oldUrl.parse("https://localhost:4000/api/internal"))
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
   });
 
   runWithContext(
@@ -357,6 +374,80 @@ t.test("it works", (t) => {
       metadataRequest.end();
     }
   );
+
+  runWithContext(
+    {
+      ...createContext(),
+      body: { path: "/tmp/unixsocket" },
+    },
+    () => {
+      try {
+        https
+          .request(
+            {
+              socketPath: "/tmp/unixsocket",
+            },
+            (res) => {
+              t.fail("should not respond");
+            }
+          )
+          .on("finish", () => {
+            t.fail("should not finish");
+          })
+          .end();
+      } catch (error) {
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen has blocked a path traversal attack: https.request(...) originating from body.path"
+          );
+        }
+      }
+    }
+  );
+
+  agent.getHostnames().clear();
+  agent.getConfig().updateDomains([
+    { hostname: "aikido.dev", mode: "block" },
+    { hostname: "app.aikido.dev", mode: "allow" },
+  ]);
+
+  const blockedError1 = t.throws(() =>
+    https.request("https://aikido.dev/block")
+  );
+  if (blockedError1 instanceof Error) {
+    t.same(
+      blockedError1.message,
+      "Zen has blocked an outbound connection: https.request(...) to aikido.dev"
+    );
+  }
+
+  const notBlocked1 = https.request("https://app.aikido.dev");
+  notBlocked1.end();
+
+  t.same(agent.getHostnames().asArray(), [
+    { hostname: "aikido.dev", port: 443, hits: 1 },
+    { hostname: "app.aikido.dev", port: 443, hits: 1 },
+  ]);
+
+  agent.getConfig().setBlockNewOutgoingRequests(true);
+
+  const blockedError2 = t.throws(() => https.request("https://example.com"));
+  if (blockedError2 instanceof Error) {
+    t.same(
+      blockedError2.message,
+      "Zen has blocked an outbound connection: https.request(...) to example.com"
+    );
+  }
+
+  const notBlocked2 = https.request("https://app.aikido.dev");
+  notBlocked2.end();
+
+  t.same(agent.getHostnames().asArray(), [
+    { hostname: "aikido.dev", port: 443, hits: 1 },
+    { hostname: "app.aikido.dev", port: 443, hits: 2 },
+    { hostname: "example.com", port: 443, hits: 1 },
+  ]);
 
   setTimeout(() => {
     t.end();

@@ -5,9 +5,18 @@ import type { Agent } from "../Agent";
 import { OperationKind } from "../api/Event";
 import { attackKindHumanName } from "../Attack";
 import { getContext, updateContext } from "../Context";
-import type { InterceptorResult } from "./InterceptorResult";
-import type { WrapPackageInfo } from "./WrapPackageInfo";
+import {
+  InterceptorResult,
+  isAttackResult,
+  isBlockOutboundConnectionResult,
+  isIdorViolationResult,
+} from "./InterceptorResult";
+import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { cleanError } from "../../helpers/cleanError";
+import {
+  captureStack,
+  isStackFromSourceMapLookup,
+} from "../../helpers/captureStack";
 
 // Used for cleaning up the stack trace
 const libraryRoot = resolve(__dirname, "../..");
@@ -16,26 +25,46 @@ export function onInspectionInterceptorResult(
   context: ReturnType<typeof getContext>,
   agent: Agent,
   result: InterceptorResult,
-  pkgInfo: WrapPackageInfo,
+  pkgInfo: PartialWrapPackageInfo,
   operation: string,
   kind: OperationKind | undefined
 ) {
+  // Only read when an attack was detected, so the normal path is not affected
+  const stack = isAttackResult(result) && context ? captureStack() : undefined;
+  if (stack && isStackFromSourceMapLookup(stack)) {
+    // Node internals building a stack trace, not an attack by the app
+    return;
+  }
+
+  const isBypassedRequest = agent.getConfig().isBypassedRequest(context);
+
   if (kind) {
     agent.getInspectionStatistics().onInspectedCall({
       operation: operation,
       kind: kind,
-      attackDetected: !!result,
+      attackDetected: !isBypassedRequest && !!result,
       blocked: agent.shouldBlock(),
       withoutContext: !context,
     });
   }
 
-  const isBypassedIP =
-    context &&
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress);
+  if (isBypassedRequest) {
+    return;
+  }
 
-  if (result && context && !isBypassedIP) {
+  if (isIdorViolationResult(result)) {
+    throw cleanError(new Error(result.message));
+  }
+
+  if (isBlockOutboundConnectionResult(result)) {
+    throw cleanError(
+      new Error(
+        `Zen has blocked an outbound connection: ${result.operation}(...) to ${escapeHTML(result.hostname)}`
+      )
+    );
+  }
+
+  if (isAttackResult(result) && context) {
     // Flag request as having an attack detected
     updateContext(context, "attackDetected", true);
 
@@ -45,7 +74,7 @@ export function onInspectionInterceptorResult(
       kind: result.kind,
       source: result.source,
       blocked: agent.shouldBlock(),
-      stack: cleanupStackTrace(new Error().stack!, libraryRoot),
+      stack: cleanupStackTrace(stack!, libraryRoot),
       paths: result.pathsToPayload,
       metadata: result.metadata,
       request: context,

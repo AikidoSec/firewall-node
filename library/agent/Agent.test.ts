@@ -1,7 +1,7 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
+import { createServer } from "http";
 import { hostname, platform, release } from "os";
 import * as t from "tap";
-import * as fetch from "../helpers/fetch";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { wrap } from "../helpers/wrap";
@@ -19,7 +19,16 @@ import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
-import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
+import { colorText } from "../helpers/colorText";
+import { shutdown } from "./shutdown";
+
+t.beforeEach(() => {
+  delete process.env.AIKIDO_INSTANCE_NAME;
+});
+
+t.afterEach(() => {
+  delete process.env.AIKIDO_INSTANCE_NAME;
+});
 
 const mockedFetchListAPI = new FetchListsAPIForTesting({
   blockedIPAddresses: [
@@ -62,6 +71,7 @@ t.test("it throws error if serverless is empty string", async () => {
         new ReportingAPIForTesting(),
         undefined,
         "",
+        false,
         new FetchListsAPIForTesting()
       ),
     "Serverless cannot be an empty string"
@@ -110,7 +120,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.18.0 is supported!",
+    "mongodb@6.21.0 is supported!",
   ]);
 });
 
@@ -149,7 +159,7 @@ t.test("it logs if package is supported or not", async () => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "shell-quote@1.8.1 is not supported!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
   ]);
 });
 
@@ -180,7 +190,6 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     logger,
     token: new Token("123"),
     suppressConsoleLog: false,
-    serverless: "lambda",
   });
   agent.onPrototypePollutionPrevented();
   agent.start([]);
@@ -188,7 +197,6 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     {
       agent: {
         preventedPrototypePollution: true,
-        stack: ["lambda"],
       },
     },
   ]);
@@ -272,8 +280,6 @@ t.test("when attack detected in blocking mode", async () => {
         ipAddress: "::1",
         userAgent: "agent",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
         route: "/posts/:id",
       },
     },
@@ -344,8 +350,6 @@ t.test("when attack detected in detection only mode", async () => {
         ipAddress: "::1",
         userAgent: "agent",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
         route: "/posts/:id",
       },
     },
@@ -407,8 +411,6 @@ t.test("it checks if user agent is a string", async () => {
         method: "POST",
         ipAddress: "::1",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
       },
     },
   ]);
@@ -428,7 +430,8 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
+      blockNewOutgoingRequests: false,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       api,
@@ -497,7 +500,7 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       api,
@@ -1005,6 +1008,7 @@ t.test("it enables blocking mode after sending startup event", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     block: true,
+    excludedUserIdsFromRateLimiting: [],
   });
   const agent = createTestAgent({
     token: new Token("123"),
@@ -1032,6 +1036,7 @@ t.test("it goes into monitoring mode after sending startup event", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     block: false,
+    excludedUserIdsFromRateLimiting: [],
   });
   const agent = createTestAgent({
     api,
@@ -1047,6 +1052,163 @@ t.test("it goes into monitoring mode after sending startup event", async () => {
 
   t.same(agent.shouldBlock(), false);
 });
+
+t.test(
+  "it stores realtimeUpdatesEnabled from the startup event response",
+  async () => {
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      excludedUserIdsFromRateLimiting: [],
+      enabledFeatures: ["realtime_updates"],
+    });
+    const agent = createTestAgent({
+      token: new Token("123"),
+      suppressConsoleLog: false,
+      api,
+      logger,
+    });
+    t.same(agent.getConfig().isRealtimeUpdatesEnabled(), false);
+    agent.start([]);
+
+    // Wait for the event to be sent
+    await setTimeout(0);
+
+    t.same(agent.getConfig().isRealtimeUpdatesEnabled(), true);
+  }
+);
+
+t.test(
+  "it defaults realtimeUpdatesEnabled to false when absent from the response",
+  async () => {
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      excludedUserIdsFromRateLimiting: [],
+    });
+    const agent = createTestAgent({
+      token: new Token("123"),
+      suppressConsoleLog: false,
+      api,
+      logger,
+    });
+    agent.start([]);
+
+    // Wait for the event to be sent
+    await setTimeout(0);
+
+    t.same(agent.getConfig().isRealtimeUpdatesEnabled(), false);
+  }
+);
+
+t.test(
+  "it does not connect to the SSE stream when realtimeUpdatesEnabled is false",
+  async () => {
+    let requestReceived = false;
+    const server = createServer((req, res) => {
+      requestReceived = true;
+      res.writeHead(200, { "Content-Type": "text/event-stream" });
+      res.end();
+    });
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    server.unref();
+    server.on("connection", (socket) => socket.unref());
+    const port = (server.address() as { port: number }).port;
+    process.env.AIKIDO_REALTIME_ENDPOINT = `http://localhost:${port}/`;
+
+    // isFeatureEnabled("sse") is forced true in unit tests unless we opt out,
+    // which would mask the effect of enabledFeatures not including realtime_updates
+    process.env.AIKIDO_UNIT_TESTS = "0";
+    delete process.env.AIKIDO_FEATURE_SSE;
+
+    try {
+      const logger = new LoggerNoop();
+      const api = new ReportingAPIForTesting({
+        success: true,
+        endpoints: [],
+        configUpdatedAt: 0,
+        heartbeatIntervalInMS: 10 * 60 * 1000,
+        blockedUserIds: [],
+        allowedIPAddresses: [],
+        excludedUserIdsFromRateLimiting: [],
+        enabledFeatures: [],
+      });
+      const agent = createTestAgent({
+        token: new Token("123"),
+        suppressConsoleLog: false,
+        api,
+        logger,
+      });
+      agent.start([]);
+
+      await setTimeout(200);
+
+      t.equal(requestReceived, false);
+    } finally {
+      delete process.env.AIKIDO_REALTIME_ENDPOINT;
+      process.env.AIKIDO_UNIT_TESTS = "1";
+    }
+  }
+);
+
+t.test(
+  "it connects to the SSE stream when realtimeUpdatesEnabled is true",
+  async () => {
+    let requestPath: string | undefined;
+    const server = createServer((req, res) => {
+      requestPath = req.url;
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      });
+      res.write(": ping\n\n");
+    });
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    server.unref();
+    server.on("connection", (socket) => socket.unref());
+    const port = (server.address() as { port: number }).port;
+    process.env.AIKIDO_REALTIME_ENDPOINT = `http://localhost:${port}/`;
+
+    try {
+      const logger = new LoggerNoop();
+      const api = new ReportingAPIForTesting({
+        success: true,
+        endpoints: [],
+        configUpdatedAt: 0,
+        heartbeatIntervalInMS: 10 * 60 * 1000,
+        blockedUserIds: [],
+        allowedIPAddresses: [],
+        excludedUserIdsFromRateLimiting: [],
+        enabledFeatures: ["realtime_updates"],
+      });
+      const agent = createTestAgent({
+        token: new Token("123"),
+        suppressConsoleLog: false,
+        api,
+        logger,
+      });
+      agent.start([]);
+
+      await setTimeout(200);
+
+      t.equal(requestPath, "/api/runtime/stream");
+    } finally {
+      delete process.env.AIKIDO_REALTIME_ENDPOINT;
+      server.close();
+    }
+  }
+);
 
 t.test("it sends middleware installed with heartbeat", async () => {
   const clock = FakeTimers.install();
@@ -1089,6 +1251,7 @@ t.test("it fetches blocked lists", async () => {
   agent.start([]);
 
   await setTimeout(0);
+  await agent.firewallListsUpdate;
 
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: true,
@@ -1130,8 +1293,6 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
   });
 
   agent.start([]);
-
-  await setTimeout(0);
 
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: false,
@@ -1193,6 +1354,7 @@ t.test("it only allows some IP addresses", async () => {
   agent.start([]);
 
   await setTimeout(0);
+  await agent.firewallListsUpdate;
 
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: true,
@@ -1270,9 +1432,6 @@ t.test("attack wave detected event", async (t) => {
       route: "/posts/:id",
       routeParams: {},
     },
-    metadata: {
-      x: "test",
-    },
   });
 
   t.match(api.getEvents(), [
@@ -1280,7 +1439,7 @@ t.test("attack wave detected event", async (t) => {
       type: "detected_attack_wave",
       attack: {
         metadata: {
-          x: "test",
+          samples: "[]",
         },
       },
       request: {
@@ -1290,4 +1449,268 @@ t.test("attack wave detected event", async (t) => {
       },
     },
   ]);
+});
+
+t.test("it blocks new outgoing requests if config says so", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: [],
+    block: true,
+    blockNewOutgoingRequests: true,
+    domains: [
+      { hostname: "example.com", mode: "block" },
+      { hostname: "aikido.dev", mode: "allow" },
+    ],
+    excludedUserIdsFromRateLimiting: [],
+  });
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  await agent.flushStats(1000);
+
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("foo.bar"), true);
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
+
+  clock.uninstall();
+});
+
+t.test(
+  "it does not block new outgoing requests if config says so",
+  async () => {
+    const clock = FakeTimers.install();
+
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      block: true,
+      blockNewOutgoingRequests: false,
+      domains: [
+        { hostname: "example.com", mode: "block" },
+        { hostname: "aikido.dev", mode: "allow" },
+      ],
+      excludedUserIdsFromRateLimiting: [],
+    });
+    const agent = createTestAgent({
+      api,
+      logger,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    await agent.flushStats(1000);
+
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("foo.bar"), false);
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
+
+    clock.uninstall();
+  }
+);
+
+t.test("Wrapped packages is working correctly", async () => {
+  const logger = new LoggerForTesting();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+  ]);
+
+  agent.onPackageWrapped("shell-quote", { version: "1.8.1", supported: false });
+
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+  ]);
+
+  agent.onPackageWrapped("shell-quote", { version: "3.0.0", supported: true });
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+    "shell-quote@3.0.0 is supported!",
+  ]);
+
+  // It does not log again if the same package is wrapped again
+  agent.onPackageWrapped("shell-quote", { version: "3.0.0", supported: true });
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+    "shell-quote@3.0.0 is supported!",
+  ]);
+
+  // It logs again if the same package is wrapped with different version
+  agent.onPackageWrapped("shell-quote", { version: "4.3.2", supported: true });
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+    "shell-quote@3.0.0 is supported!",
+    "shell-quote@4.3.2 is supported!",
+  ]);
+});
+
+t.test("getHostname uses AIKIDO_INSTANCE_NAME env var when set", async (t) => {
+  process.env.AIKIDO_INSTANCE_NAME = "my-instance";
+
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+      agent: { hostname: "my-instance" },
+    },
+  ]);
+});
+
+t.test("getHostname trims whitespace from AIKIDO_INSTANCE_NAME", async (t) => {
+  process.env.AIKIDO_INSTANCE_NAME = "  my-instance  ";
+
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+      agent: { hostname: "my-instance" },
+    },
+  ]);
+});
+
+t.test(
+  "getHostname falls back to os.hostname() when AIKIDO_INSTANCE_NAME is empty",
+  async (t) => {
+    process.env.AIKIDO_INSTANCE_NAME = "";
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      api,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+        agent: { hostname: hostname() },
+      },
+    ]);
+  }
+);
+
+t.test(
+  "getHostname falls back to os.hostname() when AIKIDO_INSTANCE_NAME is whitespace-only",
+  async (t) => {
+    process.env.AIKIDO_INSTANCE_NAME = "   ";
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      api,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+        agent: { hostname: hostname() },
+      },
+    ]);
+  }
+);
+
+t.test(
+  "getHostname falls back to os.hostname() when AIKIDO_INSTANCE_NAME is not set",
+  async (t) => {
+    delete process.env.AIKIDO_INSTANCE_NAME;
+
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      api,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+        agent: { hostname: hostname() },
+      },
+    ]);
+  }
+);
+
+t.test("it sends heartbeat when shutdown is called", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  clock.tick(1000 * 5);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+  ]);
+
+  await shutdown();
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+  ]);
+
+  clock.uninstall();
 });

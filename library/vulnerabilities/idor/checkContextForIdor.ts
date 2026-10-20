@@ -1,0 +1,289 @@
+import { getInstance } from "../../agent/AgentSingleton";
+import { getContext } from "../../agent/Context";
+import { isIdorProtectionIgnored } from "../../agent/context/withoutIdorProtection";
+import {
+  getTenantContext,
+  type TenantContext,
+} from "../../agent/context/tenantId";
+import { IdorViolationResult } from "../../agent/hooks/InterceptorResult";
+import { LRUMap } from "../../ratelimiting/LRUMap";
+import { isDebugging } from "../../helpers/isDebugging";
+import {
+  __wbg_reset_state as resetWasmInstance,
+  wasm_idor_analyze_sql,
+} from "../../internals/zen_internals";
+import { SQLDialect } from "../sql-injection/dialects/SQLDialect";
+import type { SqlQueryResult } from "./IdorAnalysisResult";
+import { IdorProtectionConfig } from "../../agent/IdorProtectionConfig";
+
+export function checkContextForIdor({
+  sql,
+  dialect,
+  resolvePlaceholder,
+}: {
+  sql: string;
+  dialect: SQLDialect;
+  resolvePlaceholder: (
+    placeholder: string,
+    placeholderNumber: number | undefined
+  ) => unknown;
+}): IdorViolationResult | undefined {
+  const agent = getInstance();
+  if (!agent) {
+    return undefined;
+  }
+
+  const config = agent.getIdorProtectionConfig();
+  if (!config) {
+    return undefined;
+  }
+
+  if (isIdorProtectionIgnored()) {
+    return undefined;
+  }
+
+  const analysis = getAnalysisResults(sql, dialect);
+
+  if (!analysis) {
+    return violation("Zen IDOR protection: failed to analyze SQL query");
+  }
+
+  if ("error" in analysis) {
+    return violation(`Zen IDOR protection: ${analysis.error}`);
+  }
+
+  const tenant = getTenantContext();
+  if (!tenant) {
+    // Requests always need a tenant, unless the query only touches excluded tables.
+    // Background work only needs one if requireTenantId is on.
+    if (getContext() || config.requireTenantId) {
+      for (const queryResult of analysis.results) {
+        const tables = nonExcludedTables(queryResult, config.excludedTables);
+        if (tables.length > 0) {
+          const noun = tables.length > 1 ? "tables" : "table";
+          return violation(
+            `Zen IDOR protection: query on ${noun} '${joinWithLimit(tables)}' requires a tenant ID, but setTenantId() was not called (use runWithTenant(...) for background work)`
+          );
+        }
+      }
+    }
+    return undefined;
+  }
+
+  for (const queryResult of analysis.results) {
+    if (queryResult.kind === "insert") {
+      const insertViolation = checkInsert(
+        queryResult,
+        config,
+        tenant,
+        resolvePlaceholder
+      );
+      if (insertViolation) {
+        return insertViolation;
+      }
+    } else {
+      const whereViolation = checkWhereFilters(
+        queryResult,
+        config,
+        tenant,
+        resolvePlaceholder
+      );
+      if (whereViolation) {
+        return whereViolation;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function joinWithLimit(items: string[], limit = 5): string {
+  if (items.length <= limit) {
+    return items.join(", ");
+  }
+
+  return `${items.slice(0, limit).join(", ")}, ...`;
+}
+
+function nonExcludedTables(
+  queryResult: SqlQueryResult,
+  excludedTables: string[]
+): string[] {
+  return queryResult.tables
+    .filter((table) => !excludedTables.includes(table.name))
+    .map((table) => table.name);
+}
+
+function checkWhereFilters(
+  queryResult: SqlQueryResult,
+  config: IdorProtectionConfig,
+  context: TenantContext,
+  resolvePlaceholder: (
+    placeholder: string,
+    placeholderNumber: number | undefined
+  ) => unknown
+): IdorViolationResult | undefined {
+  for (const table of queryResult.tables) {
+    if (config.excludedTables.includes(table.name)) {
+      continue;
+    }
+
+    const tenantFilter = queryResult.filters.find((f) => {
+      if (f.column !== config.tenantColumnName) {
+        return false;
+      }
+      // If qualified (e.g. u.tenant_id), match against table name or alias
+      if (f.table) {
+        return (
+          f.table === table.name || (table.alias && f.table === table.alias)
+        );
+      }
+      // Unqualified column (e.g. WHERE tenant_id = $1 without table prefix):
+      // We can only safely attribute it to the current table when there's
+      // exactly one table in the query. With multiple tables, we can't know
+      // which table the unqualified column belongs to.
+      return queryResult.tables.length === 1;
+    });
+
+    if (!tenantFilter) {
+      return violation(
+        `Zen IDOR protection: query on table '${table.name}' is missing a filter on column '${config.tenantColumnName}'`
+      );
+    }
+
+    const resolvedValue = resolvePlaceholder(
+      tenantFilter.value,
+      tenantFilter.placeholder_number
+    );
+
+    const resolved =
+      typeof resolvedValue === "string" || typeof resolvedValue === "number";
+
+    // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
+    if (tenantFilter.is_placeholder && !resolved) {
+      return violation(
+        `Zen IDOR protection: query on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
+      );
+    }
+
+    const value = resolved ? String(resolvedValue) : tenantFilter.value;
+    const tenantIdStr = context.tenantId.toString();
+
+    if (value !== tenantIdStr) {
+      return violation(
+        `Zen IDOR protection: query on table '${table.name}' filters '${config.tenantColumnName}' with value '${value}' but tenant ID is '${tenantIdStr}'`
+      );
+    }
+  }
+
+  return undefined;
+}
+
+function checkInsert(
+  queryResult: SqlQueryResult,
+  config: IdorProtectionConfig,
+  context: TenantContext,
+  resolvePlaceholder: (
+    placeholder: string,
+    placeholderNumber: number | undefined
+  ) => unknown
+): IdorViolationResult | undefined {
+  for (const table of queryResult.tables) {
+    if (config.excludedTables.includes(table.name)) {
+      continue;
+    }
+
+    if (!queryResult.insert_columns) {
+      // INSERT ... SELECT without explicit columns — can't verify tenant column
+      return violation(
+        `Zen IDOR protection: INSERT on table '${table.name}' is missing column '${config.tenantColumnName}'`
+      );
+    }
+
+    for (const row of queryResult.insert_columns) {
+      const tenantCol = row.find((c) => c.column === config.tenantColumnName);
+
+      if (!tenantCol) {
+        return violation(
+          `Zen IDOR protection: INSERT on table '${table.name}' is missing column '${config.tenantColumnName}'`
+        );
+      }
+
+      const resolvedValue = resolvePlaceholder(
+        tenantCol.value,
+        tenantCol.placeholder_number
+      );
+
+      const resolved =
+        typeof resolvedValue === "string" || typeof resolvedValue === "number";
+
+      // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
+      if (tenantCol.is_placeholder && !resolved) {
+        return violation(
+          `Zen IDOR protection: INSERT on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
+        );
+      }
+
+      const value = resolved ? String(resolvedValue) : tenantCol.value;
+      const tenantIdStr = context.tenantId.toString();
+
+      if (value !== tenantIdStr) {
+        return violation(
+          `Zen IDOR protection: INSERT on table '${table.name}' sets '${config.tenantColumnName}' to '${value}' but tenant ID is '${tenantIdStr}'`
+        );
+      }
+    }
+  }
+
+  return undefined;
+}
+
+const cache = new LRUMap<string, SqlQueryResult[]>(1000);
+
+function getAnalysisResults(
+  sql: string,
+  dialect: SQLDialect
+): { results: SqlQueryResult[] } | { error: string } | undefined {
+  const cacheKey = `${dialect.getWASMDialectInt()}:${sql}`;
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    return { results: cached };
+  }
+
+  let result: ReturnType<typeof wasm_idor_analyze_sql>;
+  try {
+    result = wasm_idor_analyze_sql(sql, dialect.getWASMDialectInt());
+  } catch {
+    if (isDebugging()) {
+      // oxlint-disable-next-line no-console
+      console.warn(
+        "AIKIDO: Zen could not check for IDOR due to an internal error."
+      );
+    }
+    // A failed WASM call poisons the current instance, so replace it.
+    try {
+      resetWasmInstance();
+    } catch {
+      // The WASM error is already handled, so a failed reset should not throw.
+    }
+    return undefined;
+  }
+
+  // The WASM function returns null if it cannot serialize the result.
+  if (!result) {
+    return undefined;
+  }
+
+  if (result.error) {
+    return { error: result.error };
+  }
+
+  const results = result as SqlQueryResult[];
+  cache.set(cacheKey, results);
+
+  return { results };
+}
+
+function violation(message: string): IdorViolationResult {
+  return { idorViolation: true, message };
+}

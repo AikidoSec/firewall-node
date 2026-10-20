@@ -23,6 +23,28 @@ t.test("It ignores safely escaped backslash", async () => {
   isNotSqlInjection("SELECT * FROM users WHERE id = 'users\\\\'", "users\\\\");
 });
 
+t.test("it recovers after deeply nested parentheses", async () => {
+  const payload = "(".repeat(10_000);
+
+  detectSQLInjection(payload, payload, new SQLDialectGeneric());
+  isSqlInjection("SELECT * FROM users WHERE id = '1' OR 1=1", "1' OR 1=1");
+});
+
+t.test("is not", async () => {
+  isNotSqlInjection(
+    "select * from `a` where `a`.`b` = ? and `a`.`b` is not null and `a`.`c` is null order by `id` asc",
+    "is not"
+  );
+});
+
+t.test("short strings with space", async () => {
+  isNotSqlInjection('select * from "a" where "id" = $1 limit $2', "1 li");
+});
+
+t.test("2 chars partial match", async () => {
+  isNotSqlInjection("UPDATE a SET b=b+1, c=NOW() WHERE (id=:parentid)", ":p");
+});
+
 t.test("It allows escape sequences", async (t) => {
   isNotSqlInjection("SELECT * FROM users WHERE id = '\nusers'", "\nusers");
   isNotSqlInjection("SELECT * FROM users WHERE id = '\rusers'", "\rusers");
@@ -43,6 +65,25 @@ t.test("user input inside IN (...)", async () => {
   isSqlInjection(
     "SELECT * FROM users WHERE id IN (13, 14, 154) OR (1=1)",
     "13, 14, 154) OR (1=1"
+  );
+});
+
+t.test("digits followed by a closing parenthesis", async () => {
+  isNotSqlInjection(
+    "SELECT * FROM table WHERE (a = 1 OR b = 2) AND a = 1",
+    "2)"
+  );
+  isNotSqlInjection(
+    "SELECT * FROM table WHERE (a = 1 OR b = 12) AND a = 1",
+    "12)"
+  );
+  isSqlInjection(
+    "SELECT * FROM table WHERE (a = 1 OR b = 2) AND a = 1",
+    "2) AND a = 1"
+  );
+  isSqlInjection(
+    "SELECT * FROM table WHERE (a = 1 OR b = 12) AND a = 1",
+    "12) AND a = 1"
   );
 });
 
@@ -211,6 +252,21 @@ t.test("It does not flag key keyword as SQL injection", async () => {
   isNotSqlInjection(query, "UPDATE");
   isNotSqlInjection(query, "INSERT");
   isNotSqlInjection(query, "INTO");
+  isNotSqlInjection(
+    `
+    SELECT * FROM users u
+    WHERE u.status NOT IN ('active', 'pending')
+  `,
+    "not in"
+  );
+  isNotSqlInjection(
+    `SELECT *::timestamptz AT TIME ZONE 'UTC' AS created_at_utc FROM events`,
+    "TIME ZONE"
+  );
+});
+
+t.test("short string of letters, digits and spaces", async () => {
+  isNotSqlInjection(`select * from "table" where "id" = $1 limit $2`, "1 l");
 });
 
 t.test("It flags function calls as SQL injections", async () => {
@@ -267,36 +323,43 @@ t.test("It does not match GROUP keyword", async () => {
 
 t.test("It works with non-UTF-8 characters and emojis", async () => {
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a \udce9'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a \udce9'\nOR 1=1 -- '",
     "a \udce9'\nOR 1=1 --"
   );
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a \uD800'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a \uD800'\nOR 1=1 -- '",
     "a \uD800'\nOR 1=1 --"
   );
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a \uDFFF'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a \uDFFF'\nOR 1=1 -- '",
     "a \uDFFF'\nOR 1=1 --"
   );
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a \uDFFF\uDFFF'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a \uDFFF\uDFFF'\nOR 1=1 -- '",
     "a \uDFFF\uDFFF'\nOR 1=1 --"
   );
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a \uDFAB'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a \uDFAB'\nOR 1=1 -- '",
     "a \uDFAB'\nOR 1=1 --"
   );
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a 😀'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a 😀'\nOR 1=1 -- '",
     "a 😀'\nOR 1=1 --"
   );
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a 🛡️'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a 🛡️'\nOR 1=1 -- '",
     "a 🛡️'\nOR 1=1 --"
   );
 
   isNotSqlInjection("SELECT * FROM users WHERE id = 'a \uD800'", "a \uD800");
   isNotSqlInjection("SELECT * FROM users WHERE id = 'a 🛡️'", "a 🛡️");
+});
+
+t.test("detects injection with trailing spaces in user input", async () => {
+  isSqlInjection(
+    "INSERT INTO pets (name, owner) VALUES ('x', 'dummy'), ('injected', 'hacker'); -- ', 'owner')",
+    "x', 'dummy'), ('injected', 'hacker'); --    "
+  );
 });
 
 const files = [
@@ -334,7 +397,7 @@ for (const file of files) {
             sql,
             new SQLDialectMySQL()
           ),
-          false,
+          0,
           `${sql} (mysql)`
         );
       }
@@ -350,7 +413,7 @@ for (const file of files) {
             sql,
             new SQLDialectMySQL()
           ),
-          false,
+          0,
           `${sql} (mysql)`
         );
       }

@@ -5,6 +5,7 @@ import { Wrapper } from "./Wrapper";
 
 export function wrapInstalledPackages(
   wrappers: Wrapper[],
+  newInstrumentation: boolean,
   serverless: string | undefined
 ) {
   const hooks = new Hooks();
@@ -13,11 +14,11 @@ export function wrapInstalledPackages(
   });
 
   if (!serverless && isAnyPkgAlreadyRequired(hooks.getPackages())) {
-    // eslint-disable-next-line no-console
+    // oxlint-disable-next-line no-console
     console.warn(
       "AIKIDO: Some packages can't be protected because they were imported before Zen was initialized. Please make sure to import Zen as the first module in your application."
     );
   }
 
-  return applyHooks(hooks);
+  return applyHooks(hooks, newInstrumentation);
 }

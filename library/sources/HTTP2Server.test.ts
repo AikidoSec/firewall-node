@@ -1,6 +1,7 @@
 import * as t from "tap";
+import { setTimeout } from "node:timers/promises";
 import { Token } from "../agent/api/Token";
-import { connect, IncomingHttpHeaders } from "http2";
+import type { IncomingHttpHeaders } from "http2";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { HTTPServer } from "./HTTPServer";
@@ -8,6 +9,7 @@ import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { resolve } from "path";
 import { FileSystem } from "../sinks/FileSystem";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 
 // Allow self-signed certificates
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -39,16 +41,46 @@ const api = new ReportingAPIForTesting({
         windowSizeInMS: 60 * 60 * 1000,
       },
     },
+    {
+      route: "/protection-off",
+      method: "GET",
+      forceProtectionOff: true,
+      rateLimiting: {
+        enabled: false,
+        windowSizeInMS: 0,
+        maxRequests: 0,
+      },
+    },
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
+  excludedUserIdsFromRateLimiting: [],
 });
+
+const mockedFetchListAPI = new FetchListsAPIForTesting({
+  allowedIPAddresses: [],
+  blockedIPAddresses: [
+    {
+      key: "geoip/Belgium;BE",
+      source: "geoip",
+      ips: ["9.9.9.9"],
+      description: "geo restrictions",
+    },
+  ],
+  blockedUserAgents: "hackerbot",
+  monitoredUserAgents: "",
+  monitoredIPAddresses: [],
+  userAgentDetails: [],
+});
+
 const agent = createTestAgent({
   token: new Token("123"),
   api,
+  fetchListsAPI: mockedFetchListAPI,
 });
 agent.start([new HTTPServer(), new FileSystem()]);
 
 const { readFileSync } = require("fs");
+const { connect } = require("http2") as typeof import("http2");
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
@@ -246,7 +278,7 @@ t.test("it parses cookies", async () => {
 
 t.test("it sets body in context", async () => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = createMinimalTestServer();
 
@@ -271,7 +303,7 @@ t.test("it sets body in context", async () => {
 
 t.test("it sends 413 when body is larger than 20 Mb", async () => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = createMinimalTestServer();
 
@@ -344,10 +376,10 @@ t.test("it works then using the on stream event", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.match(context, {
-          url: "/",
+          url: "/?test=abc",
           method: "GET",
           headers: {
-            ":path": "/",
+            ":path": "/?test=abc",
             ":method": "GET",
             ":authority": "localhost:3424",
             ":scheme": "http",
@@ -450,7 +482,7 @@ t.test("it wraps the createSecureServer function of http2 module", async () => {
               ":path": "/",
               ":method": "GET",
               ":authority": "localhost:3427",
-              ":scheme": "http",
+              ":scheme": "https",
             },
             query: {},
             route: "/",
@@ -490,7 +522,7 @@ t.test("it wraps the createSecureServer on request event", async () => {
               ":path": "/",
               ":method": "GET",
               ":authority": "localhost:3428",
-              ":scheme": "http",
+              ":scheme": "https",
             },
             query: {},
             route: "/",
@@ -530,7 +562,7 @@ t.test("it wraps the createSecureServer stream event", async () => {
               ":path": "/",
               ":method": "GET",
               ":authority": "localhost:3429",
-              ":scheme": "http",
+              ":scheme": "https",
             },
             query: {},
             route: "/",
@@ -545,6 +577,45 @@ t.test("it wraps the createSecureServer stream event", async () => {
       );
     });
   });
+});
+
+t.test("it does not interfere with non-stream session listeners", async (t) => {
+  const server = http2.createSecureServer({
+    key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+    cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+  });
+
+  let sessionClosed = false;
+
+  server.on("session", (session) => {
+    session.on("close", () => {
+      sessionClosed = true;
+    });
+    session.once("close", () => {});
+    session.addListener("close", () => {});
+    session.prependListener("close", () => {});
+    session.prependOnceListener("close", () => {});
+
+    session.on("stream", (stream) => {
+      stream.respond({ ":status": 200 });
+      stream.end("ok");
+    });
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3430, () => {
+      http2Request(new URL("https://localhost:3430"), "GET", {}).then(
+        ({ body }) => {
+          t.same(body, "ok");
+          server.close();
+          resolve();
+        }
+      );
+    });
+  });
+
+  await setTimeout(100);
+  t.ok(sessionClosed);
 });
 
 t.test("real injection test", async (t) => {
@@ -640,10 +711,10 @@ t.test("it works then using the on stream end event", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.match(context, {
-          url: "/",
+          url: "/?test=abc",
           method: "POST",
           headers: {
-            ":path": "/",
+            ":path": "/?test=abc",
             ":method": "POST",
             ":authority": "localhost:3433",
             ":scheme": "http",
@@ -732,3 +803,254 @@ t.test("it reports attack waves", async (t) => {
     });
   });
 });
+
+t.test("it does not count blocked bot requests as attack waves", async (t) => {
+  const server = http2.createServer();
+  server.on("stream", (stream) => {
+    stream.respond({ ":status": 200 });
+    stream.end("OK");
+  });
+
+  api.clear();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3442, async () => {
+      for (let i = 0; i < 16; i++) {
+        const result = await http2Request(
+          new URL("http://localhost:3442/.env"),
+          "GET",
+          { "User-Agent": "hackerbot 1.0", "x-forwarded-for": "5.6.7.8" }
+        );
+        t.same(result.headers[":status"], 403);
+      }
+
+      // Give the close handlers time to run
+      await setTimeout(100);
+      await agent.flushStats(1000);
+
+      t.same(
+        api.getEvents().filter((e) => e.type === "detected_attack_wave"),
+        []
+      );
+      t.same(agent.getInspectionStatistics().getStats().requests.attackWaves, {
+        total: 0,
+        blocked: 0,
+      });
+
+      server.close();
+      resolve();
+    });
+  });
+});
+
+t.test("it parses Multipart body", async () => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "1";
+
+  const server = createMinimalTestServer();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3435, () => {
+      http2Request(
+        new URL("http://localhost:3435"),
+        "POST",
+        {
+          "Content-Type":
+            "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+        },
+        '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalue1\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field2"\r\n\r\n{"abc": "test", "arr": ["c"]}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--'
+      ).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, {
+          fields: [
+            { name: "field1", value: "value1" },
+            { name: "field2", value: { abc: "test", arr: ["c"] } },
+          ],
+        });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it ignores files in Multipart body", async () => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "1";
+
+  const server = createMinimalTestServer();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3436, () => {
+      http2Request(
+        new URL("http://localhost:3436"),
+        "POST",
+        {
+          "Content-Type":
+            "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+        },
+        '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalueabc\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="file1"; filename="test.txt"\r\nContent-Type: text/plain\r\n\r\nThis is the content of the file.\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field2"\r\n\r\n{"abc": "test", "arr": ["c"]}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--'
+      ).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, {
+          fields: [
+            { name: "field1", value: "valueabc" },
+            { name: "field2", value: { abc: "test", arr: ["c"] } },
+          ],
+        });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("invalid Multipart body results in empty body", async () => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "1";
+
+  const server = createMinimalTestServer();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3437, () => {
+      http2Request(
+        new URL("http://localhost:3437"),
+        "POST",
+        {
+          "Content-Type":
+            "multipart/form-data; boundary=----WebKitFormBoundaryABCDEFGHIJ",
+        },
+        '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalueabc\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field2"\r\n\r\n{"abc": "test", "arr": ["c"]}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--'
+      ).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, undefined);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it blocks bots", async (t) => {
+  const server = http2.createSecureServer({
+    key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+    cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+  });
+
+  server.on("stream", (stream, headers) => {
+    stream.respond({ ":status": 200 });
+    stream.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3438, () => {
+      http2Request(new URL("https://localhost:3438"), "GET", {
+        "User-Agent": "hackerbot 1.0",
+      }).then(({ headers, body }) => {
+        t.same(headers[":status"], 403);
+        t.same(
+          body,
+          "You are not allowed to access this resource because you have been identified as a bot."
+        );
+
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it blocks blocked IPs", async (t) => {
+  const server = http2.createSecureServer({
+    key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+    cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+  });
+
+  server.on("stream", (stream, headers) => {
+    stream.respond({ ":status": 200 });
+    stream.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3439, () => {
+      http2Request(new URL("https://localhost:3439"), "GET", {
+        "x-forwarded-for": "9.9.9.9",
+      }).then(({ headers, body }) => {
+        t.same(headers[":status"], 403);
+        t.same(
+          body,
+          "Your IP address is blocked due to geo restrictions. (Your IP: 9.9.9.9)"
+        );
+
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it blocks blocked IPs using session stream event", async (t) => {
+  const server = http2.createSecureServer({
+    key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+    cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+  });
+
+  server.on("session", (session) => {
+    session.on("stream", (stream, headers) => {
+      stream.respond({ ":status": 200 });
+      stream.end(JSON.stringify(getContext()));
+    });
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3440, () => {
+      http2Request(new URL("https://localhost:3440"), "GET", {
+        "x-forwarded-for": "9.9.9.9",
+      }).then(({ headers, body }) => {
+        t.same(headers[":status"], 403);
+        t.same(
+          body,
+          "Your IP address is blocked due to geo restrictions. (Your IP: 9.9.9.9)"
+        );
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test(
+  "it does not count requests for routes with forceProtectionOff",
+  async () => {
+    const server = createMinimalTestServer();
+
+    const totalBefore = agent.getInspectionStatistics().getStats()
+      .requests.total;
+
+    await new Promise<void>((resolve) => {
+      server.listen(3441, () => {
+        http2Request(new URL("http://localhost:3441/protection-off"), "GET", {})
+          .then(() => {
+            t.same(
+              agent.getInspectionStatistics().getStats().requests.total,
+              totalBefore
+            );
+
+            return http2Request(
+              new URL("http://localhost:3441/not-protection-off"),
+              "GET",
+              {}
+            );
+          })
+          .then(() => {
+            t.same(
+              agent.getInspectionStatistics().getStats().requests.total,
+              totalBefore + 1
+            );
+            server.close();
+            resolve();
+          });
+      });
+    });
+  }
+);

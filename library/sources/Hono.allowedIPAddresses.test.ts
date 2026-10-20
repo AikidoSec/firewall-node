@@ -28,6 +28,7 @@ const agent = createTestAgent({
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["5.6.7.8"],
+    excludedUserIdsFromRateLimiting: [],
   }),
   fetchListsAPI: new FetchListsAPIForTesting({
     blockedIPAddresses: [

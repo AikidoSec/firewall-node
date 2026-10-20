@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
@@ -76,6 +75,8 @@ const redirectUrl = {
   domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
   ipv6: `${redirectTestUrl}/ssrf-test-ipv6`, // Redirects to http://[::1]/test
   ipv6Twice: `${redirectTestUrl}/ssrf-test-ipv6-twice`, // Redirects to /ssrf-test-ipv6
+  protocolRelative: `${redirectTestUrl}/ssrf-test-protocol-relative`, // Redirects to //127.0.0.1/test
+  protocolRelativeTwice: `${redirectTestUrl}/ssrf-test-protocol-relative-twice`, // Redirects to /ssrf-test-protocol-relative
 };
 
 t.test(
@@ -99,7 +100,7 @@ t.test(
     ]);
     agent.getHostnames().clear();
 
-    await fetch(new URL("https://app.aikido.dev"));
+    await fetch(new URL("https://app.AIKIDO.dev"));
 
     t.same(agent.getHostnames().asArray(), [
       { hostname: "app.aikido.dev", port: 443, hits: 1 },
@@ -137,7 +138,8 @@ t.test(
       );
       if (error instanceof Error) {
         t.same(
-          error.message,
+          // @ts-expect-error Type is not defined
+          error.cause.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
@@ -146,17 +148,22 @@ t.test(
         .getEvents()
         .filter((e) => e.type === "detected_attack");
       t.same(events.length, 1);
-      t.same(events[0].attack.metadata, {
-        hostname: "localhost",
-        port: 4000,
-      });
+      t.same(events[0].attack.metadata.hostname, "localhost");
+      t.same(events[0].attack.metadata.port, "4000");
+      // localhost resolves to ::1 on older Node.js and 127.0.0.1 on Node.js v26+
+      t.ok(
+        events[0].attack.metadata.privateIP === "::1" ||
+          events[0].attack.metadata.privateIP === "127.0.0.1",
+        "privateIP should be a localhost address"
+      );
 
       const error2 = await t.rejects(() =>
         fetch(new URL("http://localhost:4000/api/internal"))
       );
       if (error2 instanceof Error) {
         t.same(
-          error2.message,
+          // @ts-expect-error Type is not defined
+          error2.cause.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
@@ -167,7 +174,8 @@ t.test(
       );
       if (error3 instanceof Error) {
         t.same(
-          error3.message,
+          // @ts-expect-error Type is not defined
+          error3.cause.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
@@ -177,7 +185,8 @@ t.test(
       );
       if (error4 instanceof Error) {
         t.same(
-          error4.message,
+          // @ts-expect-error Type is not defined
+          error4.cause.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
@@ -300,6 +309,52 @@ t.test(
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ipTwice));
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { image: redirectUrl.protocolRelative },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(redirectUrl.protocolRelative)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+
+        const events = api
+          .getEvents()
+          .filter((event) => event.type === "detected_attack");
+        t.same(events[events.length - 1].attack.metadata, {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: "80",
+        });
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { image: redirectUrl.protocolRelativeTwice },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(redirectUrl.protocolRelativeTwice)
+        );
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
@@ -562,5 +617,48 @@ t.test(
         }
       }
     );
+
+    agent.getHostnames().clear();
+    agent.getConfig().updateDomains([
+      { hostname: "aikido.dev", mode: "block" },
+      { hostname: "app.aikido.dev", mode: "allow" },
+    ]);
+
+    const blockedError1 = await t.rejects(() =>
+      fetch("https://aikido.dev/block")
+    );
+    t.ok(blockedError1 instanceof Error);
+    if (blockedError1 instanceof Error) {
+      t.same(
+        blockedError1.message,
+        "Zen has blocked an outbound connection: fetch(...) to aikido.dev"
+      );
+    }
+
+    await fetch("https://app.aikido.dev");
+
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443, hits: 1 },
+      { hostname: "app.aikido.dev", port: 443, hits: 1 },
+    ]);
+
+    agent.getConfig().setBlockNewOutgoingRequests(true);
+
+    const blockedError2 = await t.rejects(() => fetch("https://example.com"));
+    t.ok(blockedError2 instanceof Error);
+    if (blockedError2 instanceof Error) {
+      t.same(
+        blockedError2.message,
+        "Zen has blocked an outbound connection: fetch(...) to example.com"
+      );
+    }
+
+    await fetch("https://app.aikido.dev");
+
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443, hits: 1 },
+      { hostname: "app.aikido.dev", port: 443, hits: 2 },
+      { hostname: "example.com", port: 443, hits: 1 },
+    ]);
   }
 );

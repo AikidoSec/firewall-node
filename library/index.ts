@@ -1,7 +1,7 @@
-/* eslint-disable no-console */
 import isFirewallSupported from "./helpers/isFirewallSupported";
 import shouldEnableFirewall from "./helpers/shouldEnableFirewall";
 import { setUser } from "./agent/context/user";
+import { track } from "./agent/context/track";
 import { markUnsafe } from "./agent/context/markUnsafe";
 import { shouldBlockRequest } from "./middleware/shouldBlockRequest";
 import { addExpressMiddleware } from "./middleware/express";
@@ -9,34 +9,69 @@ import { addHonoMiddleware } from "./middleware/hono";
 import { addHapiMiddleware } from "./middleware/hapi";
 import { addFastifyHook, fastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
+import { isNewHookSystemUsed } from "./agent/isNewHookSystemUsed";
 import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
+import { shutdown } from "./agent/shutdown";
 import { isLibBundled } from "./helpers/isLibBundled";
+import {
+  setTenantId,
+  runWithTenant,
+  getTenantId,
+} from "./agent/context/tenantId";
+import { enableIdorProtection } from "./agent/idorProtection";
+import { withoutIdorProtection } from "./agent/context/withoutIdorProtection";
+import { colorText } from "./helpers/colorText";
+import { warnBox } from "./helpers/warnBox";
+import { isPreloaded } from "./helpers/isPreloaded";
+import { warnIfEntrypointIsModule } from "./helpers/warnIfEntrypointIsModule";
+import { elysiaHandler } from "./middleware/elysia";
+import { bypassRequest } from "./agent/context/bypassRequest";
 
-const supported = isFirewallSupported();
-const shouldEnable = shouldEnableFirewall();
-const notAlreadyImported = checkIndexImportGuard();
+// Prevent logging twice / trying to start agent twice
+if (!isNewHookSystemUsed()) {
+  const supported = isFirewallSupported();
+  const shouldEnable = shouldEnableFirewall();
+  const notAlreadyImported = checkIndexImportGuard();
 
-if (supported && shouldEnable && notAlreadyImported) {
-  if (isESM()) {
-    console.warn(
-      "AIKIDO: Your application seems to be running in ESM mode. Zen does not support ESM at runtime yet."
-    );
+  if (supported && shouldEnable && notAlreadyImported) {
+    if (isESM() === true) {
+      // oxlint-disable-next-line no-console
+      console.warn(
+        colorText(
+          "red",
+          warnBox(
+            "Zen is NOT protecting your application. Your app runs in ESM mode, which requires the new hook system. Setup instructions: https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+          )
+        )
+      );
+    }
+
+    if (isLibBundled()) {
+      // oxlint-disable-next-line no-console
+      console.warn(
+        colorText(
+          "red",
+          warnBox(
+            "Zen is NOT protecting your application. Your app uses a bundler without externalizing Zen and the packages it needs to protect. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md"
+          )
+        )
+      );
+    }
+
+    if (isPreloaded()) {
+      warnIfEntrypointIsModule();
+    }
+
+    require("./agent/protect").protect();
   }
-
-  if (isLibBundled()) {
-    console.warn(
-      "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
-    );
-  }
-
-  require("./agent/protect").protect();
 }
 
 export {
   setUser,
+  track,
   markUnsafe,
   shouldBlockRequest,
   addExpressMiddleware,
@@ -46,13 +81,22 @@ export {
   fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
+  elysiaHandler,
   setRateLimitGroup,
+  shutdown,
+  setTenantId,
+  runWithTenant,
+  getTenantId,
+  enableIdorProtection,
+  withoutIdorProtection,
+  bypassRequest,
 };
 
 // Required for ESM / TypeScript default export support
 // e.g. import Zen from '@aikidosec/firewall'; would not work without this, as Zen.setUser would be undefined
 export default {
   setUser,
+  track,
   markUnsafe,
   shouldBlockRequest,
   addExpressMiddleware,
@@ -62,5 +106,13 @@ export default {
   fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
+  elysiaHandler,
   setRateLimitGroup,
+  shutdown,
+  setTenantId,
+  runWithTenant,
+  getTenantId,
+  enableIdorProtection,
+  withoutIdorProtection,
+  bypassRequest,
 };

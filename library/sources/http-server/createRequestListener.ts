@@ -1,8 +1,15 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
-import { type Context, getContext, runWithContext } from "../../agent/Context";
+import {
+  type Context,
+  getContext,
+  runWithContext,
+  updateContext,
+} from "../../agent/Context";
+import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPackageInstalled } from "../../helpers/isPackageInstalled";
-import { checkIfRequestIsBlocked } from "./checkIfRequestIsBlocked";
+import { shouldBlockRequest } from "../../middleware/shouldBlockRequest";
+import { blockIPsAndBots } from "./blockIPsAndBots";
 import { contextFromRequest } from "./contextFromRequest";
 import { readBodyStream } from "./readBodyStream";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
@@ -20,10 +27,19 @@ export function createRequestListener(
     // This is tricky, see replaceRequestBody(...)
     // e.g. Hono uses web requests and web streams
     // (uses Readable.toWeb(req) to convert to a web stream)
-    const readBody = "NEXT_DEPLOYMENT_ID" in process.env || isMicroInstalled;
+    const readBodyAndRateLimit =
+      "NEXT_DEPLOYMENT_ID" in process.env || isMicroInstalled;
 
-    if (!readBody) {
-      return callListenerWithContext(listener, req, res, module, agent, "");
+    if (!readBodyAndRateLimit) {
+      return callListenerWithContext(
+        listener,
+        req,
+        res,
+        module,
+        agent,
+        "",
+        readBodyAndRateLimit
+      );
     }
 
     const result = await readBodyStream(req, res, agent);
@@ -38,7 +54,8 @@ export function createRequestListener(
       res,
       module,
       agent,
-      result.body
+      result.body,
+      readBodyAndRateLimit
     );
   };
 }
@@ -52,7 +69,8 @@ function callListenerWithContext(
   res: ServerResponse,
   module: string,
   agent: Agent,
-  body: string
+  body: unknown,
+  shouldRateLimit: boolean
 ) {
   const context = contextFromRequest(req, body, module);
 
@@ -69,13 +87,44 @@ function callListenerWithContext(
       });
     }
 
-    if (checkIfRequestIsBlocked(res, agent)) {
+    if (blockIPsAndBots(res, agent)) {
+      if (context) {
+        // To prevent attack wave detection from checking this request
+        updateContext(context, "blockedDueToIPOrBot", true);
+      }
+
       // The return is necessary to prevent the listener from being called
+      return;
+    }
+
+    // Rate limiting normally happens in our framework specific middleware (e.g. express)
+    // For certain frameworks, e.g. next.js, we need to do this here so that it works out of the box
+    if (shouldRateLimit && applyRateLimiting(res)) {
       return;
     }
 
     return listener(req, res);
   });
+}
+
+function applyRateLimiting(res: ServerResponse): boolean {
+  const result = shouldBlockRequest();
+
+  // We don't support blocked users here because the user's code hasn't been called yet
+  if (result.block && result.type === "ratelimited") {
+    let message = "You are rate limited by Zen.";
+    if (result.trigger === "ip" && result.ip) {
+      message += ` (Your IP: ${escapeHTML(result.ip)})`;
+    }
+    res.writeHead(429, {
+      "Content-Type": "text/plain",
+      "Retry-After": result.retryAfterSeconds.toString(),
+    });
+    res.end(message);
+    return true;
+  }
+
+  return false;
 }
 
 function onFinishRequestHandler(
@@ -93,11 +142,16 @@ function onFinishRequestHandler(
   // Mark the request as counted
   req[countedRequest] = true;
 
+  if (agent.getConfig().isBypassedRequest(context)) {
+    return;
+  }
+
   if (context.route && context.method) {
     const shouldDiscover = shouldDiscoverRoute({
       statusCode: res.statusCode,
       route: context.route,
       method: context.method,
+      forceProtectionOff: agent.getConfig().isForceProtectionOffRoute(context),
     });
 
     if (shouldDiscover) {
@@ -113,8 +167,14 @@ function onFinishRequestHandler(
       agent.onRouteRateLimited(context.rateLimitedEndpoint);
     }
 
-    if (agent.getAttackWaveDetector().check(context)) {
-      agent.onDetectedAttackWave({ request: context, metadata: {} });
+    if (
+      context.remoteAddress &&
+      !context.blockedDueToIPOrBot &&
+      agent.getAttackWaveDetector().check(context, res.statusCode)
+    ) {
+      agent.onDetectedAttackWave({
+        request: context,
+      });
       agent.getInspectionStatistics().onAttackWaveDetected();
     }
   }

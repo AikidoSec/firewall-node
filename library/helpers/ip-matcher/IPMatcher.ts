@@ -4,6 +4,7 @@
 import * as shared from "./shared";
 import * as sort from "./sort";
 import { Network } from "./Network";
+import { extractIPv4FromMapped } from "../extractIPv4FromMapped";
 
 export class IPMatcher {
   private readonly sorted = [] as Network[];
@@ -52,5 +53,20 @@ export class IPMatcher {
     }
     this.sorted.splice(idx, 0, net);
     return this;
+  }
+
+  // Checks if the given IP address is in the list of networks,
+  // also checking the IPv4 address if it's an IPv4-mapped IPv6 address.
+  public hasWithMappedCheck(ip: string): boolean {
+    if (this.has(ip)) {
+      return true;
+    }
+
+    const ipv4 = extractIPv4FromMapped(ip);
+    if (ipv4) {
+      return this.has(ipv4);
+    }
+
+    return false;
   }
 }

@@ -1,0 +1,74 @@
+# ElysiaJS
+
+💡 ElysiaJS runs on more JavaScript runtimes than just Node.js. Right now, Zen only supports Node.js.
+
+At the very beginning of your app.js file, add the following line:
+
+```js
+require("@aikidosec/firewall"); // <-- Include this before any other code or imports
+
+const { Elysia } = require("elysia");
+
+new Elysia({ adapter: node() }).get("/", () => "Hello World").listen(3000);
+
+// ...
+```
+
+or using `import` syntax:
+
+```js
+import "@aikidosec/firewall";
+
+// ...
+```
+
+> [!NOTE]
+> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](./esm.md) for additional steps.
+
+## Blocking mode
+
+By default, the firewall will run in non-blocking mode. When it detects an attack, the attack will be reported to Aikido if the environment variable `AIKIDO_TOKEN` is set and continue executing the call.
+
+You can enable blocking mode by setting the environment variable `AIKIDO_BLOCK` to `true`:
+
+```sh
+AIKIDO_BLOCK=true node app.js
+```
+
+It's recommended to enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).
+
+## Rate limiting and user blocking
+
+If you want to add the rate limiting feature to your app, modify your code like this:
+
+```js
+const Zen = require("@aikidosec/firewall");
+
+new Elysia({ adapter: node() })
+  .onBeforeHandle(Zen.elysiaHandler) // <-- Add this line
+  .get("/", () => "Hello World")
+  .listen(3000);
+```
+
+## Debug mode
+
+If you need to debug the firewall, you can run your ElysiaJS app with the environment variable `AIKIDO_DEBUG` set to `true`:
+
+```sh
+AIKIDO_DEBUG=true node app.js
+```
+
+This will output debug information to the console (e.g. if the agent failed to start, no token was found, unsupported packages, ...).
+
+## Preventing prototype pollution
+
+Zen can also protect your application against prototype pollution attacks.
+
+Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.
+
+That's it! Your app is now protected by Zen.  
+If you want to see a full example, check our [ElysiaJS sample app](../sample-apps/elysiajs-pg-esm).
+
+## Graceful shutdown
+
+It is recommended to add a shutdown handler to your app to ensure that no statistics are lost when the app is stopped. You can find more information [here](./graceful-shutdown.md).

@@ -1,5 +1,5 @@
-import { isAbsolute, resolve } from "path";
-import { isWrapped } from "../../helpers/wrap";
+import { isAbsolute, resolve, sep } from "path";
+import { getOriginal } from "../../helpers/wrap";
 
 const rootFolders = [
   "/bin/",
@@ -21,6 +21,9 @@ const rootFolders = [
   "/tmp/",
   "/usr/",
   "/var/",
+  // Common container/cloud directories
+  "/app/",
+  "/code/",
   // macOS specific
   "/applications/",
   "/cores/",
@@ -40,10 +43,7 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
     return false;
   }
 
-  let origResolve = resolve;
-  if (isWrapped(resolve)) {
-    origResolve = resolve.__original;
-  }
+  const origResolve = getOriginal(resolve);
 
   const normalizedPath = origResolve(filePath).toLowerCase();
   const normalizedUserInput = origResolve(userInput).toLowerCase();
@@ -51,6 +51,7 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
   for (const dangerousStart of dangerousPathStarts) {
     if (
       normalizedPath.startsWith(dangerousStart) &&
+      `${normalizedUserInput}${sep}`.startsWith(dangerousStart) &&
       normalizedPath.startsWith(normalizedUserInput)
     ) {
       // If the user input is the same as the dangerous start, we don't want to flag it to prevent false positives

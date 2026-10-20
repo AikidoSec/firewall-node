@@ -72,7 +72,7 @@ function logWarningSetUserCalledAfterMiddleware() {
     return;
   }
 
-  // eslint-disable-next-line no-console
+  // oxlint-disable-next-line no-console
   console.warn(
     `setUser(...) must be called before the Zen middleware is executed.`
   );
@@ -87,7 +87,7 @@ function logWarningSetUserCalledWithoutContext() {
     return;
   }
 
-  // eslint-disable-next-line no-console
+  // oxlint-disable-next-line no-console
   console.warn(
     "setUser(...) was called without a context. The user will not be tracked. Make sure to call setUser(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen. Also ensure you import Zen at the top of your main app file (before any other imports)."
   );

@@ -16,6 +16,17 @@ type Response = {
   };
 };
 
+type InteractionResponse = {
+  id: string;
+  status: string;
+  created: string;
+  model?: string;
+  usage?: {
+    total_input_tokens?: number;
+    total_output_tokens?: number;
+  };
+};
+
 export class GoogleGenAi implements Wrapper {
   private isResponse(response: unknown): response is Response {
     // Not possible to use isPlainObject because it is a class
@@ -70,6 +81,83 @@ export class GoogleGenAi implements Wrapper {
             module: "@google/genai",
           });
         });
+    } else {
+      try {
+        // The new instrumentation wraps the return statements inside the async function
+        // Inside an async function you can just return normal values (it's not a promise yet)
+        this.inspectResponse(agent, returnValue);
+      } catch (error) {
+        agent.onErrorThrownByInterceptor({
+          error: error instanceof Error ? error : new Error("Unknown error"),
+          method: "generateContent",
+          module: "@google/genai",
+        });
+      }
+    }
+  }
+
+  private isInteractionResponse(
+    response: unknown
+  ): response is InteractionResponse {
+    return (
+      !!response &&
+      typeof response === "object" &&
+      !Array.isArray(response) &&
+      "id" in response &&
+      "status" in response &&
+      "created" in response
+    );
+  }
+
+  private inspectInteractionResponse(agent: Agent, response: any) {
+    if (!this.isInteractionResponse(response)) {
+      return;
+    }
+
+    const usage = response.usage;
+    if (!usage) {
+      return;
+    }
+
+    const inputTokens = usage.total_input_tokens ?? 0;
+    const outputTokens = usage.total_output_tokens ?? 0;
+
+    if (inputTokens === 0 && outputTokens === 0) {
+      return;
+    }
+
+    const aiStats = agent.getAIStatistics();
+    aiStats.onAICall({
+      provider: "google",
+      model: response.model ?? "unknown",
+      inputTokens,
+      outputTokens,
+    });
+  }
+
+  private inspectInteractionReturnValue(agent: Agent, returnValue: any) {
+    if (returnValue instanceof Promise) {
+      returnValue
+        .then((response) => {
+          this.inspectInteractionResponse(agent, response);
+        })
+        .catch((error) => {
+          agent.onErrorThrownByInterceptor({
+            error: error,
+            method: "interactions.create.<promise>",
+            module: "@google/genai",
+          });
+        });
+    } else {
+      try {
+        this.inspectInteractionResponse(agent, returnValue);
+      } catch (error) {
+        agent.onErrorThrownByInterceptor({
+          error: error instanceof Error ? error : new Error("Unknown error"),
+          method: "interactions.create",
+          module: "@google/genai",
+        });
+      }
     }
   }
 
@@ -95,19 +183,54 @@ export class GoogleGenAi implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@google/genai")
-      .withVersion("^1.6.0")
+      .withVersion("^1.6.0 || ^2.0.0")
       .onRequire((exports, pkgInfo) => {
         wrapNewInstance(exports, "GoogleGenAI", pkgInfo, (instance) => {
           wrapExport(instance.models, "generateContent", pkgInfo, {
             kind: undefined,
-            modifyReturnValue: (args, returnValue, agent) => {
+            modifyReturnValue: (_args, returnValue, agent) => {
               this.inspectReturnValue(agent, returnValue);
               return returnValue;
             },
           });
+          // Access getter once
+          const interactions = instance.interactions;
+          if (interactions && typeof interactions.create === "function") {
+            wrapExport(interactions, "create", pkgInfo, {
+              kind: undefined,
+              modifyReturnValue: (_args, returnValue, agent) => {
+                this.inspectInteractionReturnValue(agent, returnValue);
+                return returnValue;
+              },
+            });
+          }
         });
 
         return exports;
-      });
+      })
+      .addMultiFileInstrumentation(
+        ["dist/node/index.cjs", "dist/node/index.mjs"],
+        [
+          {
+            name: "this.generateContent",
+            nodeType: "FunctionAssignment",
+            operationKind: "ai_op",
+            modifyReturnValue: (_args, returnValue, agent) => {
+              this.inspectReturnValue(agent, returnValue);
+              return returnValue;
+            },
+          },
+          {
+            name: "create",
+            nodeType: "MethodDefinition",
+            className: "BaseInteractions",
+            operationKind: "ai_op",
+            modifyReturnValue: (_args, returnValue, agent) => {
+              this.inspectInteractionReturnValue(agent, returnValue);
+              return returnValue;
+            },
+          },
+        ]
+      );
   }
 }

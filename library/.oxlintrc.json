@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["oxc", "typescript", "unicorn", "node", "promise"],
+  "plugins": ["oxc", "typescript", "unicorn", "node", "promise", "eslint"],
   "env": {
     "browser": false,
     "node": true
@@ -13,15 +13,23 @@
     "no-regex-spaces": "error",
     "eqeqeq": "error",
     "no-prototype-builtins": "error",
-    "require-await": "error"
+    "require-await": "error",
+    "no-floating-promises": "off",
+    "unbound-method": "off",
+    "func-names": ["error", "as-needed"],
+    "no-eval": "error",
+    "no-var": "error",
+    "no-warning-comments": "error",
+    "no-duplicate-imports": "error"
   },
   "overrides": [
     {
-      "files": ["**/*.ts"],
+      "files": ["**/*.test.ts", "**/*.tests.ts"],
       "rules": {
         "require-await": "off",
         "no-unused-vars": "off"
       }
     }
-  ]
+  ],
+  "ignorePatterns": ["**/wasm/**", "helpers/form-parsing/**"]
 }

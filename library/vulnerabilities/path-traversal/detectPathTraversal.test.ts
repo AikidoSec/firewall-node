@@ -175,6 +175,23 @@ t.test("absolute macOS path", async () => {
   );
 });
 
+t.test("container /app/ directory", async () => {
+  t.same(detectPathTraversal("/app/config/secret.yml", "/app/config"), true);
+  t.same(
+    detectPathTraversal("/app/config/secret.yml", "/app/config/secret.yml"),
+    true
+  );
+  t.same(detectPathTraversal("/app/test.txt", "/app/"), false);
+  t.same(detectPathTraversal("/app/test.txt", "/app"), false);
+});
+
+t.test("container /code/ directory", async () => {
+  t.same(detectPathTraversal("/code/src/index.js", "/code/src"), true);
+  t.same(detectPathTraversal("/code/src/index.js", "/code/src/index.js"), true);
+  t.same(detectPathTraversal("/code/test.txt", "/code/"), false);
+  t.same(detectPathTraversal("/code/test.txt", "/code"), false);
+});
+
 t.test("AWS credentials protection", async () => {
   t.same(
     detectPathTraversal(
@@ -183,4 +200,56 @@ t.test("AWS credentials protection", async () => {
     ),
     true
   );
+});
+
+t.test("current directory references (/./) are normalized", async () => {
+  t.same(detectPathTraversal("/./etc/passwd", "/./etc"), true);
+  t.same(detectPathTraversal("/etc/./passwd", "/etc/./"), true);
+  t.same(detectPathTraversal("/etc/./passwd", "/etc/./passwd"), true);
+  t.same(detectPathTraversal("/./etc/./passwd", "/./etc/./passwd"), true);
+  // Multiple /./ sequences
+  t.same(detectPathTraversal("/././etc/passwd", "/././etc"), true);
+  t.same(detectPathTraversal("/etc/././passwd", "/etc/././passwd"), true);
+});
+
+t.test("paths with multiple slashes are normalized", async () => {
+  t.same(detectPathTraversal("///.///etc/passwd", "///.///etc"), true);
+  t.same(detectPathTraversal("///.///etc/passwd", "///.///etc/passwd"), true);
+});
+
+t.test(
+  "normalized paths still trigger false positive prevention for bare root dirs",
+  async () => {
+    // User input that resolves to just a root dir should still be safe
+    t.same(detectPathTraversal("/etc/./passwd", "/etc"), false);
+    t.same(detectPathTraversal("//etc//passwd", "/etc"), false);
+  }
+);
+
+t.test(
+  "case-insensitive comparison detects traversal on case-insensitive filesystems",
+  async () => {
+    t.same(detectPathTraversal("/etc/passwd", "/ETC/passwd"), true);
+    t.same(detectPathTraversal("/etc/passwd", "/ETC/PASSWD"), true);
+    t.same(
+      detectPathTraversal("/home/user/file.txt", "/HOME/USER/file.txt"),
+      true
+    );
+    t.same(detectPathTraversal("../test.txt", "../"), true);
+  }
+);
+
+t.test("user input is only a prefix of a dangerous folder name", async () => {
+  t.same(
+    detectPathTraversal("/app/node_modules/pkg/package.json", "/a"),
+    false
+  );
+  t.same(
+    detectPathTraversal("/app/node_modules/pkg/package.json", "/ap"),
+    false
+  );
+  t.same(detectPathTraversal("/etc/passwd", "/et"), false);
+  // Partial names inside a dangerous folder are still flagged
+  t.same(detectPathTraversal("/etc/passwd", "/etc/pass"), true);
+  t.same(detectPathTraversal("/app/config/secret.yml", "/app/conf"), true);
 });

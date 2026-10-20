@@ -1,7 +1,10 @@
 import { SQLDialect } from "./dialects/SQLDialect";
 import { shouldReturnEarly } from "./shouldReturnEarly";
-// eslint-disable-next-line camelcase
-import { wasm_detect_sql_injection } from "../../internals/zen_internals";
+import { isDebugging } from "../../helpers/isDebugging";
+import {
+  __wbg_reset_state as resetWasmInstance,
+  wasm_detect_sql_injection,
+} from "../../internals/zen_internals";
 
 export const SQLInjectionDetectionResult = {
   SAFE: 0,
@@ -18,15 +21,33 @@ export function detectSQLInjection(
   userInput: string,
   dialect: SQLDialect
 ): SQLInjectionDetectionResultType {
-  if (shouldReturnEarly(query, userInput)) {
+  const userInputNormalized = userInput.toLowerCase().trim();
+  if (shouldReturnEarly(query, userInputNormalized)) {
     return SQLInjectionDetectionResult.SAFE;
   }
 
-  const code = wasm_detect_sql_injection(
-    query.toLowerCase(),
-    userInput.toLowerCase(),
-    dialect.getWASMDialectInt()
-  );
+  let code: number;
+  try {
+    code = wasm_detect_sql_injection(
+      query.toLowerCase(),
+      userInputNormalized,
+      dialect.getWASMDialectInt()
+    );
+  } catch {
+    if (isDebugging()) {
+      // oxlint-disable-next-line no-console
+      console.warn(
+        "AIKIDO: Zen could not check for SQL injection due to an internal error."
+      );
+    }
+    // A failed WASM call poisons the current instance, so replace it.
+    try {
+      resetWasmInstance();
+    } catch {
+      // The WASM error is already handled, so a failed reset should not throw.
+    }
+    return SQLInjectionDetectionResult.INTERNAL_ERROR;
+  }
 
   if (
     code === SQLInjectionDetectionResult.SAFE ||

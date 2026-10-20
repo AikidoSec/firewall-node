@@ -4,10 +4,12 @@ import {
   Context,
   getContext,
   runWithContext,
+  updateContext,
 } from "../../../agent/Context";
 import { contextFromStream } from "./contextFromStream";
 import { shouldDiscoverRoute } from "../shouldDiscoverRoute";
 import { IncomingHttpHeaders, ServerHttp2Stream } from "http2";
+import { blockIPsAndBots } from "../blockIPsAndBots";
 
 /**
  * Wraps the http2 stream listener to get the request context of http2 requests.
@@ -18,7 +20,7 @@ export function createStreamListener(
   module: string,
   agent: Agent
 ) {
-  return function requestListener(
+  return function streamListener(
     stream: ServerHttp2Stream,
     headers: IncomingHttpHeaders,
     flags: number,
@@ -43,6 +45,16 @@ export function createStreamListener(
       stream.prependListener = wrapStreamEvent(stream.prependListener);
       stream.prependOnceListener = wrapStreamEvent(stream.prependOnceListener);
 
+      if (blockIPsAndBots(stream, agent)) {
+        if (context) {
+          // To prevent attack wave detection from checking this request
+          updateContext(context, "blockedDueToIPOrBot", true);
+        }
+
+        // The return is necessary to prevent the listener from being called
+        return;
+      }
+
       return listener(stream, headers, flags, rawHeaders);
     });
   };
@@ -53,7 +65,15 @@ function discoverRouteFromStream(
   stream: ServerHttp2Stream,
   agent: Agent
 ) {
-  if (context && context.route && context.method) {
+  if (!context) {
+    return;
+  }
+
+  if (agent.getConfig().isBypassedRequest(context)) {
+    return;
+  }
+
+  if (context.route && context.method) {
     const statusCode = parseInt(stream.sentHeaders[":status"] as string);
 
     if (!isNaN(statusCode)) {
@@ -61,6 +81,9 @@ function discoverRouteFromStream(
         statusCode: statusCode,
         route: context.route,
         method: context.method,
+        forceProtectionOff: agent
+          .getConfig()
+          .isForceProtectionOffRoute(context),
       });
 
       if (shouldDiscover) {
@@ -76,8 +99,14 @@ function discoverRouteFromStream(
         agent.onRouteRateLimited(context.rateLimitedEndpoint);
       }
 
-      if (agent.getAttackWaveDetector().check(context)) {
-        agent.onDetectedAttackWave({ request: context, metadata: {} });
+      if (
+        context.remoteAddress &&
+        !context.blockedDueToIPOrBot &&
+        agent.getAttackWaveDetector().check(context, statusCode)
+      ) {
+        agent.onDetectedAttackWave({
+          request: context,
+        });
         agent.getInspectionStatistics().onAttackWaveDetected();
       }
     }
@@ -89,13 +118,11 @@ function discoverRouteFromStream(
  */
 function wrapStreamEvent(orig: Function) {
   return function wrap() {
-    // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
     if (args.length < 2 || typeof args[1] !== "function") {
       return orig.apply(
         // @ts-expect-error We don't know the type of `this`
         this,
-        // eslint-disable-next-line prefer-rest-params
         arguments
       );
     }

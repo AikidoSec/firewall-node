@@ -10,4 +10,4 @@ Try the following URLs:
 - http://localhost:4000/?petname=Kitty : This will add a new cat named "Kitty"
 - http://localhost:4000/?petname=Kitty'); DELETE FROM cats;-- H : This will delete all cats
 
-This sample app demonstrates SQL injection vulnerabilities using Restify as the web framework. 
+This sample app demonstrates SQL injection vulnerabilities using Restify as the web framework.

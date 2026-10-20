@@ -2,7 +2,7 @@
 {
   "name": "Zen Node.js",
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:24-trixie",
 
   // Features to add to the dev container. More info: https://containers.dev/features.
   "features": {
@@ -20,7 +20,8 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "YoavBls.pretty-ts-errors",
-        "rust-lang.rust-analyzer"
+        "rust-lang.rust-analyzer",
+        "oxc.oxc-vscode"
       ]
     }
   },

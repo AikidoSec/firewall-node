@@ -157,6 +157,16 @@ export class AiSDK implements Wrapper {
                 module: "ai",
               });
             });
+        } else {
+          try {
+            this.inspectAiCall(agent, args, returnValue);
+          } catch (error) {
+            agent.onErrorThrownByInterceptor({
+              error: error instanceof Error ? error : new Error(String(error)),
+              method: methodName,
+              module: "ai",
+            });
+          }
         }
         return returnValue;
       },
@@ -171,14 +181,18 @@ export class AiSDK implements Wrapper {
           !returnValue ||
           typeof returnValue !== "object" ||
           !("response" in returnValue) ||
-          !(returnValue.response instanceof Promise) ||
-          !("usage" in returnValue) ||
-          !(returnValue.usage instanceof Promise)
+          !("usage" in returnValue)
         ) {
           return returnValue;
         }
 
-        Promise.allSettled([returnValue.response, returnValue.usage])
+        const response = returnValue.response;
+        const usage = returnValue.usage;
+        if (!(response instanceof Promise) || !(usage instanceof Promise)) {
+          return returnValue;
+        }
+
+        Promise.allSettled([response, usage])
           .then((promiseResults) => {
             const response =
               promiseResults[0].status === "fulfilled"
@@ -214,7 +228,7 @@ export class AiSDK implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("ai")
-      .withVersion("^5.0.0 || ^4.0.0")
+      .withVersion("^7.0.0 || ^6.0.0 || ^5.0.0 || ^4.0.0")
       .onRequire((exports, pkgInfo) => {
         // Can't wrap it directly because it's a readonly proxy
         const generateTextFunc = exports.generateText;
@@ -249,6 +263,39 @@ export class AiSDK implements Wrapper {
             this.getStreamInterceptors("streamObject")
           ),
         };
-      });
+      })
+      .addMultiFileInstrumentation(
+        ["dist/index.js", "dist/index.mjs"],
+        [
+          {
+            name: "generateText",
+            nodeType: "FunctionDeclaration",
+            operationKind: "ai_op",
+            modifyReturnValue:
+              this.getInterceptors("generateText").modifyReturnValue,
+          },
+          {
+            name: "generateObject",
+            nodeType: "FunctionDeclaration",
+            operationKind: "ai_op",
+            modifyReturnValue:
+              this.getInterceptors("generateObject").modifyReturnValue,
+          },
+          {
+            name: "streamText",
+            nodeType: "FunctionDeclaration",
+            operationKind: "ai_op",
+            modifyReturnValue:
+              this.getStreamInterceptors("streamText").modifyReturnValue,
+          },
+          {
+            name: "streamObject",
+            nodeType: "FunctionDeclaration",
+            operationKind: "ai_op",
+            modifyReturnValue:
+              this.getStreamInterceptors("streamObject").modifyReturnValue,
+          },
+        ]
+      );
   }
 }

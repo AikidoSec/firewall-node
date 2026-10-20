@@ -8,6 +8,8 @@ import {
 import { Package } from "./Package";
 import { BuiltinModule } from "./BuiltinModule";
 
+// @esm-tests-skip
+
 t.test("Wrap require does not throw an error", async (t) => {
   wrapRequire();
   t.pass();
@@ -22,12 +24,14 @@ t.test("Can wrap external package", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire((exports, pkgInfo) => {
     exports._test = "aikido";
     t.same(pkgInfo.name, "sqlite3");
     t.same(pkgInfo.type, "external");
-    t.ok(pkgInfo.path?.base.endsWith("node_modules/sqlite3"));
-    t.same(pkgInfo.path?.relative, "lib/sqlite3.js");
+    if (pkgInfo.type === "external") {
+      t.ok(pkgInfo.path.base.endsWith("node_modules/sqlite3"));
+      t.same(pkgInfo.path.relative, "lib/sqlite3.js");
+    }
   });
   setPackagesToPatch([pkg]);
 
@@ -56,8 +60,10 @@ t.test("Can wrap file of external package", async (t) => {
       exports._test = "aikido";
       t.same(pkgInfo.name, "hono");
       t.same(pkgInfo.type, "external");
-      t.ok(pkgInfo.path?.base.endsWith("node_modules/hono"));
-      t.same(pkgInfo.path?.relative, "dist/cjs/hono-base.js");
+      if (pkgInfo.type === "external") {
+        t.ok(pkgInfo.path.base.endsWith("node_modules/hono"));
+        t.same(pkgInfo.path.relative, "dist/cjs/hono-base.js");
+      }
     });
   setPackagesToPatch([pkg]);
 
@@ -79,6 +85,7 @@ t.test("Can wrap builtin module", async (t) => {
     exports._test = "aikido";
     t.same(pkgInfo.name, "fs");
     t.same(pkgInfo.type, "builtin");
+    // @ts-expect-error Test to ensure types are correct
     t.same(pkgInfo.path, undefined);
   });
   setBuiltinModulesToPatch([module]);
@@ -115,7 +122,7 @@ t.test("Does not wrap package with no interceptors", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0");
+  pkg.withVersion("^5.0.0 || ^6.0.0");
   setPackagesToPatch([pkg]);
 
   // Require original sqlite3
@@ -138,7 +145,7 @@ t.test("Replace default export", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire((exports, pkgInfo) => {
     return "aikido";
   });
   setPackagesToPatch([pkg]);
@@ -158,7 +165,7 @@ t.test("Confirm its caching the exports", async (t) => {
   let counter = 0;
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire((exports, pkgInfo) => {
     counter++;
     return "aikido";
   });
@@ -179,7 +186,7 @@ t.test("Returns original exports on exception", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire((exports, pkgInfo) => {
     exports._test = "aikido";
     throw new Error("Test error");
   });
@@ -293,11 +300,11 @@ t.test("Pass invalid arguments to VersionedPackage", async (t) => {
 t.test("Add two packages with same name", async (t) => {
   let intercepted = 0;
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire(() => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire(() => {
     intercepted++;
   });
   const pkg2 = new Package("sqlite3");
-  pkg2.withVersion("^5.0.0").onRequire(() => {
+  pkg2.withVersion("^5.0.0 || ^6.0.0").onRequire(() => {
     intercepted++;
   });
 
@@ -365,26 +372,158 @@ t.test(
       : false,
   },
   async (t) => {
-    const error = t.throws(() => process.getBuiltinModule("unknown"));
-    t.ok(error instanceof Error);
-    if (error instanceof Error) {
-      t.match(error.message, /Cannot find module .unknown./);
-    }
+    // Stock process.getBuiltinModule() returns undefined for unrecognized
+    // identifiers instead of resolving / loading them like require() does.
+    t.same(process.getBuiltinModule("unknown"), undefined);
   }
 );
 
 t.test(
-  "process.getBuiltinModule with non-builtin module",
+  "process.getBuiltinModule with non-builtin package name",
   {
     skip: !process.getBuiltinModule
       ? "Not available in Node.js < v22.3.0"
       : false,
   },
   async (t) => {
-    const error = t.throws(() => process.getBuiltinModule("sqlite3"));
-    t.ok(error instanceof Error);
+    // Must not fall through to require() and load/execute the package.
+    t.same(process.getBuiltinModule("sqlite3"), undefined);
+  }
+);
+
+t.test(
+  "process.getBuiltinModule must not execute an arbitrary JS file path",
+  {
+    skip: !process.getBuiltinModule
+      ? "Not available in Node.js < v22.3.0"
+      : false,
+  },
+  async (t) => {
+    const fs = require("fs");
+    const path = require("path");
+    const os = require("os");
+
+    const file = path.join(os.tmpdir(), `wrap-require-test-${Date.now()}.js`);
+    fs.writeFileSync(file, "global.__wrapRequireTestExecuted = true;");
+
+    t.teardown(() => fs.unlinkSync(file));
+
+    const result = process.getBuiltinModule(file);
+
+    t.same(result, undefined);
+    t.notOk((global as Record<string, unknown>).__wrapRequireTestExecuted);
+  }
+);
+
+t.test(
+  "process.getBuiltinModule with node: prefix is patched the same as the bare name",
+  {
+    skip: !process.getBuiltinModule
+      ? "Not available in Node.js < v22.3.0"
+      : false,
+  },
+  async (t) => {
+    const module = new BuiltinModule("fs");
+    module.onRequire((exports, pkgInfo) => {
+      exports._test = "aikido";
+      t.same(pkgInfo.name, "fs");
+    });
+    setBuiltinModulesToPatch([module]);
+
+    const fs = process.getBuiltinModule("node:fs");
+    // @ts-expect-error Test property added by interceptor
+    t.same(fs._test, "aikido");
+
+    setBuiltinModulesToPatch([]);
+  }
+);
+
+t.test(
+  "process.getBuiltinModule with a node:-only module",
+  {
+    skip: !process.getBuiltinModule
+      ? "Not available in Node.js < v22.3.0"
+      : false,
+  },
+  async (t) => {
+    // Some builtins (e.g. node:test) only resolve with the node: prefix,
+    // stock Node.js returns undefined for the bare name.
+    t.same(process.getBuiltinModule("test"), undefined);
+    t.same(typeof process.getBuiltinModule("node:test"), "function");
+  }
+);
+
+t.test(
+  "process.getBuiltinModule shares the require() cache and only runs interceptors once",
+  {
+    skip: !process.getBuiltinModule
+      ? "Not available in Node.js < v22.3.0"
+      : false,
+  },
+  async (t) => {
+    let counter = 0;
+
+    const module = new BuiltinModule("fs");
+    module.onRequire((exports) => {
+      counter++;
+      exports._test = "aikido";
+    });
+    setBuiltinModulesToPatch([module]);
+
+    const fsViaRequire = require("fs");
+    t.same(fsViaRequire._test, "aikido");
+
+    const fsViaGetBuiltinModule = process.getBuiltinModule("fs");
+    // @ts-expect-error Test property added by interceptor
+    t.same(fsViaGetBuiltinModule._test, "aikido");
+
+    const fsViaGetBuiltinModulePrefixed = process.getBuiltinModule("node:fs");
+    // @ts-expect-error Test property added by interceptor
+    t.same(fsViaGetBuiltinModulePrefixed._test, "aikido");
+
+    setBuiltinModulesToPatch([]);
+
+    t.same(counter, 1);
+  }
+);
+
+t.test(
+  "process.getBuiltinModule without a string id still throws like stock Node.js",
+  {
+    skip: !process.getBuiltinModule
+      ? "Not available in Node.js < v22.3.0"
+      : false,
+  },
+  async (t) => {
+    // @ts-expect-error Testing invalid call
+    const error = t.throws(() => process.getBuiltinModule());
+    t.ok(error instanceof TypeError);
     if (error instanceof Error) {
-      t.match(error.message, /Cannot find module .sqlite3./);
+      t.match(error.message, /"id" argument must be of type string/);
     }
+  }
+);
+
+t.test(
+  "process.getBuiltinModule returns original exports on interceptor exception",
+  {
+    skip: !process.getBuiltinModule
+      ? "Not available in Node.js < v22.3.0"
+      : false,
+  },
+  async (t) => {
+    const initialFs = process.getBuiltinModule("fs");
+
+    const module = new BuiltinModule("fs");
+    module.onRequire((exports) => {
+      exports._test = "aikido";
+      throw new Error("Test error");
+    });
+    setBuiltinModulesToPatch([module]);
+
+    const fs = process.getBuiltinModule("fs");
+    t.same(fs, initialFs);
+
+    setBuiltinModulesToPatch([]);
   }
 );

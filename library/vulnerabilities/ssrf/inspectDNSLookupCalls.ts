@@ -6,6 +6,7 @@ import { getContext } from "../../agent/Context";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPlainObject } from "../../helpers/isPlainObject";
+import { normalizeHostname } from "../../helpers/normalizeHostname";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
@@ -34,6 +35,9 @@ export function inspectDNSLookupCalls(
       return lookup(...args);
     }
 
+    // Normalize hostname for security checks while preserving original for lookup compatibility
+    const normalizedHostname = normalizeHostname(hostname);
+
     const options = args.find((arg) => isPlainObject(arg)) as
       | Record<string, unknown>
       | undefined;
@@ -44,7 +48,7 @@ export function inspectDNSLookupCalls(
           options,
           wrapDNSLookupCallback(
             callback as Function,
-            hostname,
+            normalizedHostname,
             module,
             agent,
             operation,
@@ -56,7 +60,7 @@ export function inspectDNSLookupCalls(
           hostname,
           wrapDNSLookupCallback(
             callback as Function,
-            hostname,
+            normalizedHostname,
             module,
             agent,
             operation,
@@ -69,7 +73,6 @@ export function inspectDNSLookupCalls(
   };
 }
 
-// eslint-disable-next-line max-lines-per-function
 function wrapDNSLookupCallback(
   callback: Function,
   hostname: string,
@@ -79,7 +82,6 @@ function wrapDNSLookupCallback(
   urlArg?: URL,
   callingLocationStackTrace?: Error
 ): Function {
-  // eslint-disable-next-line max-lines-per-function
   return function wrappedDNSLookupCallback(
     err: Error,
     addresses: string | LookupAddress[],
@@ -103,14 +105,24 @@ function wrapDNSLookupCallback(
 
     const resolvedIPAddresses = getResolvedIPAddresses(addresses);
 
-    if (resolvesToIMDSIP(resolvedIPAddresses, hostname)) {
+    const imdsIpResult = resolvesToIMDSIP(resolvedIPAddresses, hostname);
+    if (!context && imdsIpResult.isIMDS) {
+      reportStoredImdsIpSSRF({
+        agent,
+        module,
+        operation,
+        hostname,
+        privateIp: imdsIpResult.ip,
+        callingLocationStackTrace,
+      });
+
       // Block stored SSRF attack that target IMDS IP addresses
       // An attacker could have stored a hostname in a database that points to an IMDS IP address
       // We don't check if the user input contains the hostname because there's no context
       if (agent.shouldBlock()) {
         return callback(
           new Error(
-            `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from unknown source`
+            `Zen has blocked ${attackKindHumanName("stored_ssrf")}: ${operation}(...) originating from unknown source`
           )
         );
       }
@@ -156,6 +168,7 @@ function wrapDNSLookupCallback(
       }
 
       if (url) {
+        url.hostname = normalizeHostname(url.hostname);
         // Get the origin of the redirect chain (the first URL in the chain), if the URL is the result of a redirect
         const redirectOrigin = getRedirectOrigin(
           context.outgoingRequestRedirects,
@@ -173,19 +186,38 @@ function wrapDNSLookupCallback(
       }
     }
 
-    if (!found) {
-      // If we can't find the hostname in the context, it's not an SSRF attack
+    const isBypassedRequest = agent.getConfig().isBypassedRequest(context);
+
+    if (isBypassedRequest) {
+      // If the IP address is allowed, we don't need to block the request
       // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }
 
-    const isBypassedIP =
-      context &&
-      context.remoteAddress &&
-      agent.getConfig().isBypassedIP(context.remoteAddress);
+    if (!found) {
+      if (imdsIpResult.isIMDS) {
+        // Stored SSRF attack executed during another request (context set)
+        reportStoredImdsIpSSRF({
+          agent,
+          module,
+          operation,
+          hostname,
+          privateIp: imdsIpResult.ip,
+          callingLocationStackTrace,
+        });
 
-    if (isBypassedIP) {
-      // If the IP address is allowed, we don't need to block the request
+        // Block stored SSRF attack that target IMDS IP addresses
+        // An attacker could have stored a hostname in a database that points to an IMDS IP address
+        if (agent.shouldBlock()) {
+          return callback(
+            new Error(
+              `Zen has blocked ${attackKindHumanName("stored_ssrf")}: ${operation}(...) originating from unknown source`
+            )
+          );
+        }
+      }
+
+      // If we can't find the hostname in the context, it's not an SSRF attack
       // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }
@@ -242,12 +274,58 @@ function getResolvedIPAddresses(addresses: string | LookupAddress[]): string[] {
 function resolvesToIMDSIP(
   resolvedIPAddresses: string[],
   hostname: string
-): boolean {
+): { isIMDS: false } | { isIMDS: true; ip: string } {
   // Allow access to Google Cloud metadata service as you need to set specific headers to access it
   // We don't want to block legitimate requests
   if (isTrustedHostname(hostname)) {
-    return false;
+    return {
+      isIMDS: false,
+    };
   }
 
-  return resolvedIPAddresses.some((ip) => isIMDSIPAddress(ip));
+  const matchingIp = resolvedIPAddresses.find((ip) => isIMDSIPAddress(ip));
+  if (matchingIp) {
+    return {
+      isIMDS: true,
+      ip: matchingIp,
+    };
+  }
+
+  return {
+    isIMDS: false,
+  };
+}
+
+function reportStoredImdsIpSSRF({
+  agent,
+  callingLocationStackTrace,
+  module,
+  operation,
+  hostname,
+  privateIp,
+}: {
+  agent: Agent;
+  callingLocationStackTrace?: Error;
+  module: string;
+  operation: string;
+  hostname: string;
+  privateIp: string;
+}) {
+  const stackTraceError = callingLocationStackTrace || new Error();
+  agent.onDetectedAttack({
+    module: module,
+    operation: operation,
+    kind: "stored_ssrf",
+    source: undefined,
+    blocked: agent.shouldBlock(),
+    stack: cleanupStackTrace(stackTraceError.stack!, getLibraryRoot()),
+    paths: [],
+    metadata: getMetadataForSSRFAttack({
+      hostname,
+      port: undefined,
+      privateIP: privateIp,
+    }),
+    request: undefined,
+    payload: undefined,
+  });
 }

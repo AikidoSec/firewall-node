@@ -101,3 +101,40 @@ t.test("it works with ports", async () => {
     false
   );
 });
+
+t.test("it normalizes trailing dot in hostname parameter", async (t) => {
+  t.same(findHostnameInUserInput("http://example.com", "example.com."), true);
+  t.same(findHostnameInUserInput("example.com", "example.com."), true);
+});
+
+t.test("it normalizes trailing dot in user input", async (t) => {
+  t.same(findHostnameInUserInput("http://example.com.", "example.com"), true);
+  t.same(findHostnameInUserInput("example.com.", "example.com"), true);
+});
+
+t.test("it normalizes trailing dot on both sides", async (t) => {
+  t.same(findHostnameInUserInput("http://example.com.", "example.com."), true);
+});
+
+t.test("it reliably parses a Unicode hostname after warmup", async (t) => {
+  for (let i = 0; i < 3_000; i++) {
+    findHostnameInUserInput(`http://example.com/path/${i}`, "example.com", 80);
+  }
+
+  const userInput = JSON.parse(
+    Buffer.concat([
+      Buffer.from('{"url":"http://ssrf-r', "ascii"),
+      Buffer.from([0xc3, 0xa9]),
+      Buffer.from('directs.testssandbox.com/ssrf-test-4"}', "ascii"),
+    ]).toString("utf8")
+  ).url;
+
+  t.same(
+    findHostnameInUserInput(
+      userInput,
+      "xn--ssrf-rdirects-ghb.testssandbox.com",
+      80
+    ),
+    true
+  );
+});

@@ -6,9 +6,11 @@ export const SOURCES = [
   "routeParams",
   "graphql",
   "xml",
+  "trpc",
   "subdomains",
   "markUnsafe",
   "url",
+  "rawBody",
 ] as const;
 
 export type Source = (typeof SOURCES)[number];

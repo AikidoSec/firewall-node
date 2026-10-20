@@ -4,31 +4,60 @@ import { fileNames } from "./paths/fileNames";
 import { directoryNames } from "./paths/directoryNames";
 
 t.test("isWebScanPath", async (t) => {
-  t.ok(isWebScanPath("/.env"));
-  t.ok(isWebScanPath("/test/.env"));
-  t.ok(isWebScanPath("/test/.env.bak"));
-  t.ok(isWebScanPath("/.git/config"));
-  t.ok(isWebScanPath("/.aws/config"));
-  t.ok(isWebScanPath("/some/path/.git/test"));
-  t.ok(isWebScanPath("/some/path/.gitlab-ci.yml"));
-  t.ok(isWebScanPath("/some/path/.github/workflows/test.yml"));
-  t.ok(isWebScanPath("/.travis.yml"));
-  t.ok(isWebScanPath("/../example/"));
-  t.ok(isWebScanPath("/./test"));
-  t.ok(isWebScanPath("/Cargo.lock"));
-  t.ok(isWebScanPath("/System32/test"));
+  t.ok(isWebScanPath("/.env", 404));
+  t.ok(isWebScanPath("/test/.env", 404));
+  t.ok(isWebScanPath("/test/.env.bak", 404));
+  t.ok(isWebScanPath("/.git/config", 404));
+  t.ok(isWebScanPath("/.aws/config", 404));
+  t.ok(isWebScanPath("/some/path/.git/test", 404));
+  t.ok(isWebScanPath("/some/path/.gitlab-ci.yml", 404));
+  t.ok(isWebScanPath("/some/path/.github/workflows/test.yml", 404));
+  t.ok(isWebScanPath("/.travis.yml", 404));
+  t.ok(isWebScanPath("/../example/", 404));
+  t.ok(isWebScanPath("/./test", 404));
+  t.ok(isWebScanPath("/Cargo.lock", 404));
+  t.ok(isWebScanPath("/System32/test", 404));
 });
 
 t.test("is not a web scan path", async (t) => {
-  t.notOk(isWebScanPath("/test/file.txt"));
-  t.notOk(isWebScanPath("/some/route/to/file.txt"));
-  t.notOk(isWebScanPath("/some/route/to/file.json"));
-  t.notOk(isWebScanPath("/en"));
-  t.notOk(isWebScanPath("/"));
-  t.notOk(isWebScanPath("/test/route"));
-  t.notOk(isWebScanPath("/static/file.css"));
-  t.notOk(isWebScanPath("/static/file.a461f56e.js"));
+  t.notOk(isWebScanPath("/test/file.txt", 404));
+  t.notOk(isWebScanPath("/some/route/to/file.txt", 404));
+  t.notOk(isWebScanPath("/some/route/to/file.json", 404));
+  t.notOk(isWebScanPath("/en", 404));
+  t.notOk(isWebScanPath("/", 404));
+  t.notOk(isWebScanPath("/test/route", 404));
+  t.notOk(isWebScanPath("/static/file.css", 404));
+  t.notOk(isWebScanPath("/static/file.a461f56e.js", 404));
 });
+
+t.test("foreign extension with 404 is a scan path", async (t) => {
+  t.ok(isWebScanPath("/admin.php", 404));
+  t.ok(isWebScanPath("/login.php3", 404));
+  t.ok(isWebScanPath("/test.php4", 404));
+  t.ok(isWebScanPath("/old.php5", 404));
+  t.ok(isWebScanPath("/page.phtml", 404));
+  t.ok(isWebScanPath("/App.java", 404));
+  t.ok(isWebScanPath("/app.jsp", 404));
+  t.ok(isWebScanPath("/app.jspx", 404));
+  t.ok(isWebScanPath("/nested/path/admin.php", 404));
+  t.ok(isWebScanPath("/ADMIN.PHP", 404));
+});
+
+t.test("foreign extension with 200 is not a scan path", async (t) => {
+  t.notOk(isWebScanPath("/admin.php", 200));
+  t.notOk(isWebScanPath("/login.php3", 200));
+  t.notOk(isWebScanPath("/app.jsp", 200));
+  t.notOk(isWebScanPath("/App.java", 200));
+});
+
+t.test(
+  "foreign extension with other status codes is not a scan path",
+  async (t) => {
+    t.notOk(isWebScanPath("/admin.php", 301));
+    t.notOk(isWebScanPath("/admin.php", 403));
+    t.notOk(isWebScanPath("/admin.php", 500));
+  }
+);
 
 t.test("Not duplicates in fileNames", async (t) => {
   const uniqueFileNames = new Set(fileNames);

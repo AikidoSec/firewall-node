@@ -1,6 +1,16 @@
 import { shouldReturnEarly } from "./shouldReturnEarly";
-// eslint-disable-next-line camelcase
-import { wasm_detect_js_injection } from "../../internals/zen_internals";
+import { isDebugging } from "../../helpers/isDebugging";
+import {
+  __wbg_reset_state as resetWasmInstance,
+  wasm_detect_js_injection,
+} from "../../internals/zen_internals";
+
+export type ZenInternalsJsSourceType =
+  | 0 // js (auto-detect CJS or ESM)
+  | 1 // ts (TypeScript)
+  | 2 // cjs (CommonJS)
+  | 3 // mjs (ESM)
+  | 4; // tsx (TypeScript with JSX)
 
 /**
  * Detects if the user input is a JS injection
@@ -10,18 +20,28 @@ import { wasm_detect_js_injection } from "../../internals/zen_internals";
 export function detectJsInjection(
   code: string,
   userInput: string,
-  sourceType = 0
+  // Assume CommonJS by default, as the eval-function and new Function-constructor can not execute ESM directly
+  sourceType: ZenInternalsJsSourceType = 2
 ): boolean {
-  const codeLowercase = code.toLowerCase();
-  const userInputLowercase = userInput.toLowerCase();
-
-  if (shouldReturnEarly(codeLowercase, userInputLowercase)) {
+  if (shouldReturnEarly(code.toLowerCase(), userInput.toLowerCase())) {
     return false;
   }
 
-  return wasm_detect_js_injection(
-    codeLowercase,
-    userInputLowercase,
-    sourceType
-  );
+  try {
+    return wasm_detect_js_injection(code, userInput, sourceType);
+  } catch {
+    if (isDebugging()) {
+      // oxlint-disable-next-line no-console
+      console.warn(
+        "AIKIDO: Zen could not check for JavaScript injection due to an internal error."
+      );
+    }
+    // A failed WASM call poisons the current instance, so replace it.
+    try {
+      resetWasmInstance();
+    } catch {
+      // The WASM error is already handled, so a failed reset should not throw.
+    }
+    return false;
+  }
 }

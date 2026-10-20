@@ -9,12 +9,10 @@ export function wrapMiddleware(origMiddleware: Middleware): Middleware {
         // @ts-expect-error We don't know the type of this
         this,
         // @ts-expect-error We don't know the type of arguments
-        // eslint-disable-next-line prefer-rest-params
         arguments
       );
     };
 
-    // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
     if (
       typeof args[0] !== "object" ||

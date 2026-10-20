@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import type { RequestHandler } from "express";
 import { runWithContext } from "../../agent/Context";
 import { contextFromRequest } from "./contextFromRequest";

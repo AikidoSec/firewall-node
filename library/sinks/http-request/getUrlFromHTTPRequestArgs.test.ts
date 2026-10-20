@@ -79,7 +79,6 @@ t.test("it does not throw on invalid arguments", async (t) => {
   t.same(getURL([], "http"), undefined);
   // @ts-expect-error Test
   t.same(getURL(["%test%"], undefined), undefined);
-  t.same(new Date(), []);
 });
 
 t.test("it works without url and only options", async (t) => {

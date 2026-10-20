@@ -1,10 +1,12 @@
 import type { Callback, Context, Handler } from "aws-lambda";
+import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
 import { runWithContext, Context as AgentContext } from "../agent/Context";
-import { isJsonContentType } from "../helpers/isJsonContentType";
+import { envToBool } from "../helpers/envToBool";
 import { isPlainObject } from "../helpers/isPlainObject";
-import { parse } from "../helpers/parseCookies";
 import { shouldDiscoverRoute } from "./http-server/shouldDiscoverRoute";
+import { getContextForGatewayEvent, isGatewayEvent } from "./lambda/gateway";
+import { tryParseJSON } from "../helpers/tryParseJSON";
 
 type CallbackHandler<TEvent, TResult> = (
   event: TEvent,
@@ -52,51 +54,6 @@ function convertToAsyncFunction<TEvent, TResult>(
   };
 }
 
-function normalizeHeaders(headers: Record<string, string | undefined>) {
-  const normalized: Record<string, string | undefined> = {};
-  for (const key in headers) {
-    normalized[key.toLowerCase()] = headers[key];
-  }
-
-  return normalized;
-}
-
-function tryParseAsJSON(json: string) {
-  try {
-    return JSON.parse(json);
-  } catch {
-    return undefined;
-  }
-}
-
-function parseBody(event: APIGatewayProxyEvent) {
-  const headers = event.headers ? normalizeHeaders(event.headers) : {};
-
-  if (!event.body || !isJsonContentType(headers["content-type"] || "")) {
-    return undefined;
-  }
-
-  return tryParseAsJSON(event.body);
-}
-
-export type APIGatewayProxyEvent = {
-  resource: string;
-  httpMethod: string;
-  headers: Record<string, string | undefined>;
-  queryStringParameters?: Record<string, string>;
-  pathParameters?: Record<string, string>;
-  requestContext?: {
-    identity?: {
-      sourceIp?: string;
-    };
-  };
-  body?: string;
-};
-
-function isGatewayEvent(event: unknown): event is APIGatewayProxyEvent {
-  return isPlainObject(event) && "httpMethod" in event && "headers" in event;
-}
-
 type GatewayResponse = {
   statusCode: number;
 };
@@ -119,7 +76,7 @@ function isSQSEvent(event: unknown): event is SQSEvent {
   return isPlainObject(event) && "Records" in event;
 }
 
-function getFlushEveryMS(): number {
+export function getFlushEveryMS(): number {
   if (process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS) {
     const parsed = parseInt(process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS, 10);
     // Minimum is 1 minute
@@ -131,20 +88,42 @@ function getFlushEveryMS(): number {
   return 10 * 60 * 1000; // 10 minutes
 }
 
-// eslint-disable-next-line max-lines-per-function
+export function getTimeoutInMS(): number {
+  if (process.env.AIKIDO_LAMBDA_TIMEOUT_MS) {
+    const parsed = parseInt(process.env.AIKIDO_LAMBDA_TIMEOUT_MS, 10);
+    // Minimum is 1 second
+    if (!isNaN(parsed) && parsed >= 1000) {
+      return parsed;
+    }
+  }
+
+  return 1000; // 1 second
+}
+
 export function createLambdaWrapper(handler: Handler): Handler {
   const asyncHandler = convertToAsyncFunction(handler);
   const agent = getInstance();
 
   let lastFlushStatsAt: number | undefined = undefined;
+  let startupEventSent = false;
 
-  // eslint-disable-next-line max-lines-per-function
   return async (event, context) => {
+    // Send startup event on first invocation
+    if (agent && !startupEventSent) {
+      startupEventSent = true;
+      try {
+        await agent.onStart(getTimeoutInMS());
+      } catch (err: any) {
+        // oxlint-disable-next-line no-console
+        console.error(`Aikido: Failed to start agent: ${err.message}`);
+      }
+    }
+
     let agentContext: AgentContext | undefined = undefined;
 
     if (isSQSEvent(event)) {
       const body: unknown[] = event.Records.map((record) =>
-        tryParseAsJSON(record.body)
+        tryParseJSON(record.body)
       ).filter((body) => body);
 
       agentContext = {
@@ -164,18 +143,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
         route: undefined,
       };
     } else if (isGatewayEvent(event)) {
-      agentContext = {
-        url: undefined,
-        method: event.httpMethod,
-        remoteAddress: event.requestContext?.identity?.sourceIp,
-        body: parseBody(event),
-        headers: event.headers,
-        routeParams: event.pathParameters ? event.pathParameters : {},
-        query: event.queryStringParameters ? event.queryStringParameters : {},
-        cookies: event.headers?.cookie ? parse(event.headers.cookie) : {},
-        source: "lambda/gateway",
-        route: event.resource ? event.resource : undefined,
-      };
+      agentContext = getContextForGatewayEvent(event);
     }
 
     if (!agentContext) {
@@ -196,31 +164,15 @@ export function createLambdaWrapper(handler: Handler): Handler {
       return result;
     } finally {
       if (agent) {
-        if (
-          isGatewayEvent(event) &&
-          isGatewayResponse(result) &&
-          agentContext.route &&
-          agentContext.method
-        ) {
-          const shouldDiscover = shouldDiscoverRoute({
-            statusCode: result.statusCode,
-            method: agentContext.method,
-            route: agentContext.route,
-          });
+        incrementStatsAndDiscoverAPISpec(agentContext, agent, event, result);
 
-          if (shouldDiscover) {
-            agent.onRouteExecute(agentContext);
-          }
-        }
-
-        const stats = agent.getInspectionStatistics();
-        stats.onRequest();
+        await agent.getPendingEvents().waitUntilSent(getTimeoutInMS());
 
         if (
           lastFlushStatsAt === undefined ||
           lastFlushStatsAt + getFlushEveryMS() < performance.now()
         ) {
-          await agent.flushStats(1000);
+          await agent.flushStats(getTimeoutInMS());
           lastFlushStatsAt = performance.now();
         }
       }
@@ -228,14 +180,65 @@ export function createLambdaWrapper(handler: Handler): Handler {
   };
 }
 
-let loggedWarningUnsupportedTrigger = false;
-
-function logWarningUnsupportedTrigger() {
-  if (loggedWarningUnsupportedTrigger) {
+function incrementStatsAndDiscoverAPISpec(
+  agentContext: AgentContext,
+  agent: Agent,
+  event: unknown,
+  result: unknown
+) {
+  if (agent.getConfig().isBypassedRequest(agentContext)) {
     return;
   }
 
-  // eslint-disable-next-line no-console
+  const forceProtectionOff = agent
+    .getConfig()
+    .isForceProtectionOffRoute(agentContext);
+
+  if (isGatewayEvent(event) && agentContext.route && agentContext.method) {
+    if (isGatewayResponse(result)) {
+      const shouldDiscover = shouldDiscoverRoute({
+        statusCode: result.statusCode,
+        method: agentContext.method,
+        route: agentContext.route,
+        forceProtectionOff,
+      });
+
+      if (shouldDiscover) {
+        agent.onRouteExecute(agentContext);
+      }
+
+      if (
+        agentContext.remoteAddress &&
+        !agentContext.blockedDueToIPOrBot &&
+        agent.getAttackWaveDetector().check(agentContext, result.statusCode)
+      ) {
+        agent.onDetectedAttackWave({
+          request: agentContext,
+        });
+        agent.getInspectionStatistics().onAttackWaveDetected();
+      }
+    }
+  }
+
+  if (forceProtectionOff) {
+    return;
+  }
+
+  const stats = agent.getInspectionStatistics();
+  stats.onRequest();
+}
+
+let loggedWarningUnsupportedTrigger = false;
+
+function logWarningUnsupportedTrigger() {
+  if (
+    loggedWarningUnsupportedTrigger ||
+    envToBool(process.env.AIKIDO_LAMBDA_IGNORE_UNSUPPORTED_TRIGGER_WARNING)
+  ) {
+    return;
+  }
+
+  // oxlint-disable-next-line no-console
   console.warn(
     "Zen detected a lambda function call with an unsupported trigger. Only API Gateway and SQS triggers are currently supported."
   );

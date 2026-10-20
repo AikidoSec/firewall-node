@@ -49,6 +49,15 @@ export class ClickHouse implements Wrapper {
             inspectArgs: (args) => this.inspectQuery(method, args),
           });
         }
+      })
+      .addFileInstrumentation({
+        path: "dist/client.js",
+        functions: methodsToWrap.map((method) => ({
+          name: method,
+          nodeType: "MethodDefinition",
+          operationKind: "sql_op",
+          inspectArgs: (args) => this.inspectQuery(method, args),
+        })),
       });
   }
 }

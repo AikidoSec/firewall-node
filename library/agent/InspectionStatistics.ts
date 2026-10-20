@@ -82,13 +82,11 @@ export class InspectionStatistics {
       breakdown: {},
     };
     this.startedAt = Date.now();
-    this.sqlTokenizationFailures = 0;
   }
 
   getStats(): {
     operations: Record<string, OperationStats>;
     startedAt: number;
-    sqlTokenizationFailures: number;
     requests: {
       total: number;
       aborted: number;
@@ -127,7 +125,6 @@ export class InspectionStatistics {
     return {
       operations: operations,
       startedAt: this.startedAt,
-      sqlTokenizationFailures: this.sqlTokenizationFailures,
       requests: this.requests,
       userAgents: this.userAgents,
       ipAddresses: this.ipAddresses,

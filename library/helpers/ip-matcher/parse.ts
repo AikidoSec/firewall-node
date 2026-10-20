@@ -60,7 +60,7 @@ export function v4AddrToBytes(old: string) {
   return null;
 }
 
-/* 
+/*
   https://tools.ietf.org/html/rfc4291
   https://tools.ietf.org/html/rfc5952#section-4
   https://tools.ietf.org/html/rfc3986
@@ -78,6 +78,11 @@ export function v6AddrToBytes(s: string) {
   const bytes = Array.from({ length: 16 }).fill(0) as number[];
   if (s.length === 0) return null;
   s = removeBrackets(s);
+  const zoneIndex = s.indexOf("%");
+  if (zoneIndex !== -1) {
+    if (zoneIndex === s.length - 1) return null;
+    s = s.substring(0, zoneIndex);
+  }
   if (s === "::") return bytes;
   const halves = s.split("::");
   if (halves.length === 0 || halves.length > 2) return null;

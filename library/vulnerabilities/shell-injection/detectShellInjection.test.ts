@@ -427,6 +427,44 @@ done`,
   );
 });
 
+t.test("carriage return in user input is flagged", async () => {
+  isShellInjection("ls \rrm", "\rrm");
+  isShellInjection("ls \rrm -rf", "\rrm -rf");
+});
+
+t.test("form feed in user input is flagged", async () => {
+  isShellInjection("ls \frm", "\frm");
+  isShellInjection("ls \frm -rf", "\frm -rf");
+});
+
+t.test(
+  "carriage return in user input is flagged when user input is command",
+  async () => {
+    isShellInjection("sleep\r10", "sleep\r10");
+    isShellInjection("shutdown\r-h\rnow", "shutdown\r-h\rnow");
+  }
+);
+
+t.test(
+  "form feed in user input is flagged when user input is command",
+  async () => {
+    isShellInjection("sleep\f10", "sleep\f10");
+    isShellInjection("shutdown\f-h\fnow", "shutdown\f-h\fnow");
+  }
+);
+
+t.test("carriage return as separator between commands", async () => {
+  isShellInjection("ls\rrm", "rm");
+  isShellInjection("echo test\rrm -rf /", "rm");
+  isShellInjection("rm\rls", "rm");
+});
+
+t.test("form feed as separator between commands", async () => {
+  isShellInjection("ls\frm", "rm");
+  isShellInjection("echo test\frm -rf /", "rm");
+  isShellInjection("rm\fls", "rm");
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),

@@ -1,3 +1,6 @@
+import { hostnameToUnicode } from "../helpers/hostnameToUnicode";
+import { normalizeHostname } from "../helpers/normalizeHostname";
+
 type Ports = Map<number, number>;
 
 export class Hostnames {
@@ -7,6 +10,12 @@ export class Hostnames {
 
   add(hostname: string, port: number) {
     if (port <= 0) {
+      return;
+    }
+
+    hostname = hostnameToUnicode(normalizeHostname(hostname));
+
+    if (!hostname) {
       return;
     }
 

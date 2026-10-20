@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import * as mod from "module";
 import { BuiltinModule } from "./BuiltinModule";
 import { isBuiltinModule } from "./isBuiltinModule";
@@ -12,7 +11,8 @@ import { isMainJsFile } from "./isMainJsFile";
 import { WrapPackageInfo } from "./WrapPackageInfo";
 import { getInstance } from "../AgentSingleton";
 
-const originalRequire = mod.prototype.require;
+const originalRequire = mod.prototype?.require;
+const originalGetBuiltinModule = process.getBuiltinModule;
 let isRequireWrapped = false;
 
 let packages: Package[] = [];
@@ -40,15 +40,13 @@ export function wrapRequire() {
   isRequireWrapped = true;
 
   mod.prototype.require = function wrapped() {
-    // eslint-disable-next-line prefer-rest-params
     return patchedRequire.call(this, arguments);
   };
 
   // Wrap process.getBuiltinModule, which allows requiring builtin modules (since Node.js v22.3.0)
-  if (typeof process.getBuiltinModule === "function") {
+  if (typeof originalGetBuiltinModule === "function") {
     process.getBuiltinModule = function wrappedGetBuiltinModule() {
-      // eslint-disable-next-line prefer-rest-params
-      return patchedRequire.call(this, arguments);
+      return patchedGetBuiltinModule.call(this, arguments);
     };
   }
 }
@@ -113,6 +111,38 @@ function patchedRequire(this: mod | NodeJS.Process, args: IArguments) {
   }
 }
 
+function patchedGetBuiltinModule(
+  this: NodeJS.Process,
+  args: IArguments
+): object | undefined {
+  if (!args.length || typeof args[0] !== "string") {
+    return originalGetBuiltinModule.apply(this, args as unknown as [string]);
+  }
+
+  const id = args[0] as string;
+
+  if (!isBuiltinModule(id)) {
+    return originalGetBuiltinModule.apply(this, args as unknown as [string]);
+  }
+
+  const originalExports = originalGetBuiltinModule.apply(
+    this,
+    args as unknown as [string]
+  );
+
+  try {
+    return patchBuiltinModule.call(this, id, originalExports) as
+      | object
+      | undefined;
+  } catch (error) {
+    if (error instanceof Error) {
+      getInstance()?.onFailedToWrapModule(id, error);
+    }
+
+    return originalExports;
+  }
+}
+
 /**
  * Run all require interceptors for the builtin module and cache the result.
  */
@@ -133,6 +163,8 @@ function patchBuiltinModule(id: string, originalExports: unknown) {
   if (!matchingBuiltins.length) {
     return originalExports;
   }
+
+  getInstance()?.onBuiltinWrapped(moduleName);
 
   // Get interceptors from all matching builtin modules
   const interceptors = matchingBuiltins
@@ -219,14 +251,13 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     (pkg) => satisfiesVersion(pkg.getRange(), installedPkgVersion)
   );
 
-  // Report to the agent that the package was wrapped or not if it's version is not supported
-  agent?.onPackageWrapped(moduleName, {
-    version: installedPkgVersion,
-    supported: !!matchingVersionedPackages.length,
-  });
-
   if (!matchingVersionedPackages.length) {
     // We don't want to patch this package version
+    // Report to the agent that the package version is not supported
+    agent?.onPackageWrapped(moduleName, {
+      version: installedPkgVersion,
+      supported: false,
+    });
     return originalExports;
   }
 
@@ -244,6 +275,16 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     interceptors = matchingVersionedPackages
       .map((pkg) => pkg.getRequireFileInterceptor(pathInfo.path) || [])
       .flat();
+  }
+
+  if (interceptors.length) {
+    // Report to the agent that the package was wrapped
+    // We don't want to report a package as supported if there are no matching hooks for the required file,
+    // even if the package version is supported
+    agent?.onPackageWrapped(moduleName, {
+      version: installedPkgVersion,
+      supported: true,
+    });
   }
 
   return executeInterceptors(
@@ -287,7 +328,7 @@ function executeInterceptors(
     try {
       const returnVal = interceptor(exports, wrapPackageInfo);
       // If the interceptor returns a value, we want to use this value as the new exports
-      if (typeof returnVal !== "undefined") {
+      if (returnVal !== undefined) {
         exports = returnVal;
       }
     } catch (error) {

@@ -35,6 +35,8 @@ t.beforeEach(async () => {
   t.same(lists.status, 200);
 });
 
+t.setTimeout(80000);
+
 t.test("it does not block monitored IPs", (t) => {
   const server = spawn(`node`, [pathToApp, "4005"], {
     env: {
@@ -93,6 +95,27 @@ t.test("it does not block monitored IPs", (t) => {
       });
       t.same(resp2.status, 200);
       t.same(await resp2.text(), JSON.stringify({ success: true }));
+
+      // Wait on heartbeat
+      await timeout(60 * 1000);
+
+      const events = await fetch(`${testServerUrl}/api/runtime/events`, {
+        method: "GET",
+        headers: {
+          Authorization: token,
+        },
+      }).then((res) => res.json());
+
+      const heartbeats = events.filter((event) => event.type === "heartbeat");
+      t.same(heartbeats.length, 1);
+      t.match(heartbeats[0].stats, {
+        ipAddresses: {
+          breakdown: {
+            // Both the IPv4 and IPv6 request matched the monitored list
+            "geoip/Belgium;BE": 2,
+          },
+        },
+      });
     })
     .catch((error) => {
       t.fail(error);

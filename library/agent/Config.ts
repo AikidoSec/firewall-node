@@ -1,4 +1,4 @@
-import type { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
+import type { IPMatcher } from "../helpers/ip-matcher/createIPMatcher";
 
 export type EndpointConfig = {
   method: string;
@@ -20,12 +20,17 @@ export type Endpoint = Omit<EndpointConfig, "allowedIPAddresses"> & {
   allowedIPAddresses: IPMatcher | undefined;
 };
 
+export type Domain = { hostname: string; mode: "allow" | "block" };
+
 export type Config = {
   endpoints: EndpointConfig[];
   heartbeatIntervalInMS: number;
   configUpdatedAt: number;
   blockedUserIds: string[];
+  excludedUserIdsFromRateLimiting: string[];
   allowedIPAddresses: string[];
   block?: boolean;
-  receivedAnyStats?: boolean;
+  blockNewOutgoingRequests?: boolean;
+  domains?: Domain[];
+  enabledFeatures?: string[];
 };

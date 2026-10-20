@@ -1,9 +1,12 @@
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
-import { SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
-import { detectJsInjection } from "./detectJsInjection";
+import { getSourceForUserString } from "../../helpers/getSourceForUserString";
+import {
+  type ZenInternalsJsSourceType,
+  detectJsInjection,
+} from "./detectJsInjection";
 
 /**
  * This function goes over all the different input types in the context and checks
@@ -13,19 +16,17 @@ export function checkContextForJsInjection({
   js,
   operation,
   context,
+  sourceType,
 }: {
   js: string;
   operation: string;
   context: Context;
+  sourceType?: ZenInternalsJsSourceType;
 }): InterceptorResult {
-  for (const source of SOURCES) {
-    const userInput = extractStringsFromUserInputCached(context, source);
-    if (!userInput) {
-      continue;
-    }
-
-    for (const str of userInput) {
-      if (detectJsInjection(js, str)) {
+  for (const str of extractStringsFromUserInputCached(context)) {
+    if (detectJsInjection(js, str, sourceType)) {
+      const source = getSourceForUserString(context, str);
+      if (source) {
         return {
           operation: operation,
           kind: "code_injection",

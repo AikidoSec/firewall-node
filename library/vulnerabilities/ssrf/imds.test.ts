@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { isIMDSIPAddress } from "./imds";
+import { isIMDSIPAddress, isTrustedHostname } from "./imds";
 
 t.test("it returns true for IMDS IP addresses", async (t) => {
   t.same(
@@ -17,9 +17,21 @@ t.test("it returns true for IMDS IP addresses", async (t) => {
     true
   );
   t.same(isIMDSIPAddress("100.100.100.200"), true);
+  t.same(isIMDSIPAddress("fd00:ec2:0::0:0:254"), true);
+  t.same(isIMDSIPAddress("::ffff:169.254.169.254"), true);
+  t.same(isIMDSIPAddress("::ffff:100.100.100.200"), true);
+  t.same(isIMDSIPAddress("fd00:ec2:0:0000:0:0:0000:0254"), true);
+  t.same(isIMDSIPAddress("0::ffff:6464:64c8"), true);
+  t.same(isIMDSIPAddress("0000:0000:0:0000:0000:ffff:a9fe:a9fe"), true);
 });
 
 t.test("it returns false for non-IMDS IP addresses", async (t) => {
   t.same(isIMDSIPAddress("1.2.3.4"), false);
   t.same(isIMDSIPAddress("example.com"), false);
+});
+
+t.test("isTrustedHostname normalizes hostnames before checking", async (t) => {
+  t.same(isTrustedHostname("metadata.google.internal."), true);
+  t.same(isTrustedHostname("METADATA.GOOGLE.INTERNAL"), true);
+  t.same(isTrustedHostname("another.hostname"), false);
 });

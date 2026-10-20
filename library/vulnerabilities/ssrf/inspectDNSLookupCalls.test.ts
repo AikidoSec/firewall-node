@@ -3,7 +3,6 @@ import * as t from "tap";
 import { ReportingAPIForTesting } from "../../agent/api/ReportingAPIForTesting";
 import { Token } from "../../agent/api/Token";
 import { Context, runWithContext } from "../../agent/Context";
-import { LoggerNoop } from "../../agent/logger/LoggerNoop";
 import { wrap } from "../../helpers/wrap";
 import { inspectDNSLookupCalls } from "./inspectDNSLookupCalls";
 import { getMajorNodeVersion } from "../../helpers/getNodeVersion";
@@ -103,7 +102,6 @@ t.test("it blocks lookup in blocking mode", (t) => {
             kind: "ssrf",
             metadata: {
               hostname: "localhost",
-              port: undefined,
             },
           },
         },
@@ -111,6 +109,41 @@ t.test("it blocks lookup in blocking mode", (t) => {
       t.end();
     });
   });
+});
+
+t.test("it blocks a scoped link-local IPv6 address", (t) => {
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
+  agent.start([]);
+
+  const wrappedLookup = inspectDNSLookupCalls(
+    (
+      _hostname: string,
+      _options: unknown,
+      callback: (err: null, address: string, family: number) => void
+    ) => callback(null, "fe80::1%eth0", 6),
+    agent,
+    "module",
+    "operation"
+  );
+
+  runWithContext(
+    { ...context, body: { image: "http://internal.host:8080" } },
+    () => {
+      wrappedLookup("internal.host", {}, (err, address) => {
+        t.same(err instanceof Error, true);
+        if (err instanceof Error) {
+          t.same(
+            err.message,
+            "Zen has blocked a server-side request forgery: operation(...) originating from body.image"
+          );
+        }
+        t.same(address, undefined);
+        t.end();
+      });
+    }
+  );
 });
 
 t.test("it allows resolved public IP", (t) => {
@@ -192,6 +225,7 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       configUpdatedAt: 0,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       token: new Token("123"),
@@ -335,7 +369,7 @@ const imdsMockLookup = (
   hostname: string,
   options: any,
   callback: (
-    err: any | null,
+    err: any,
     address: string | LookupAddress[],
     family: number
   ) => void
@@ -343,6 +377,7 @@ const imdsMockLookup = (
   if (
     hostname === "imds.test.com" ||
     hostname === "metadata.google.internal" ||
+    hostname === "metadata.google.internal." ||
     hostname === "metadata.goog"
   ) {
     return callback(null, "169.254.169.254", 4);
@@ -370,7 +405,7 @@ t.test("Blocks IMDS SSRF with untrusted domain", async (t) => {
         if (err instanceof Error) {
           t.same(
             err.message,
-            "Zen has blocked a server-side request forgery: operation(...) originating from unknown source"
+            "Zen has blocked a stored server-side request forgery: operation(...) originating from unknown source"
           );
         }
         t.same(address, undefined);
@@ -384,7 +419,7 @@ t.test("Blocks IMDS SSRF with untrusted domain", async (t) => {
           if (err instanceof Error) {
             t.same(
               err.message,
-              "Zen has blocked a server-side request forgery: operation(...) originating from unknown source"
+              "Zen has blocked a stored server-side request forgery: operation(...) originating from unknown source"
             );
           }
           t.same(address, undefined);
@@ -416,6 +451,7 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       configUpdatedAt: 0,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       token: new Token("123"),
@@ -484,6 +520,110 @@ t.test("Does not block IMDS SSRF with Google metadata domain", async (t) => {
   ]);
 });
 
+t.test(
+  "Does not block IMDS SSRF with Google metadata domain with trailing dot",
+  async (t) => {
+    const agent = createTestAgent({
+      token: new Token("123"),
+    });
+    agent.start([]);
+
+    const wrappedLookup = inspectDNSLookupCalls(
+      imdsMockLookup,
+      agent,
+      "module",
+      "operation"
+    );
+
+    await Promise.all([
+      new Promise<void>((resolve) => {
+        wrappedLookup(
+          "metadata.google.internal.",
+          { family: 4 },
+          (err, address) => {
+            t.same(err, null);
+            t.same(address, "169.254.169.254");
+            resolve();
+          }
+        );
+      }),
+      new Promise<void>((resolve) => {
+        runWithContext(context, () => {
+          wrappedLookup(
+            "metadata.google.internal.",
+            { family: 4 },
+            (err, address) => {
+              t.same(err, null);
+              t.same(address, "169.254.169.254");
+              resolve();
+            }
+          );
+        });
+      }),
+    ]);
+  }
+);
+
+t.test(
+  "detects SSRF via redirect chain when urlArg hostname has trailing dot",
+  (t) => {
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({ token: new Token("123"), api });
+    agent.start([]);
+    api.clear();
+
+    const hopMockLookup = (
+      hostname: string,
+      options: any,
+      callback: (
+        err: any,
+        address: string | LookupAddress[],
+        family: number
+      ) => void
+    ) => {
+      if (hostname === "hop.internal" || hostname === "hop.internal.") {
+        return callback(null, "127.0.0.1", 4);
+      }
+      return lookup(hostname, options, callback);
+    };
+
+    const urlArg = new URL("http://hop.internal./");
+    const wrappedLookup = inspectDNSLookupCalls(
+      hopMockLookup as any,
+      agent,
+      "http",
+      "request",
+      urlArg
+    );
+
+    runWithContext(
+      {
+        ...context,
+        body: { image: "http://attacker.com" },
+        outgoingRequestRedirects: [
+          {
+            source: new URL("http://attacker.com/"),
+            destination: new URL("http://hop.internal/"),
+          },
+        ],
+      },
+      () => {
+        wrappedLookup("hop.internal.", {}, (err: any, address: any) => {
+          t.same(err instanceof Error, true);
+          if (err instanceof Error) {
+            t.same(
+              err.message,
+              "Zen has blocked a server-side request forgery: request(...) originating from body.image"
+            );
+          }
+          t.same(address, undefined);
+          t.end();
+        });
+      }
+    );
+  }
+);
+
 t.test("it ignores when the argument is an IP address", async (t) => {
   const agent = createTestAgent({
     token: new Token("123"),
@@ -522,5 +662,207 @@ t.test("it ignores when the argument is an IP address", async (t) => {
         }
       );
     }),
+  ]);
+});
+
+t.test("Reports stored SSRF without context", async (t) => {
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    token: new Token("123"),
+    api,
+  });
+  agent.start([]);
+
+  const wrappedLookup = inspectDNSLookupCalls(
+    imdsMockLookup,
+    agent,
+    "http",
+    "request"
+  );
+
+  await new Promise<void>((resolve) => {
+    wrappedLookup("imds.test.com", { family: 4 }, (err, address) => {
+      t.same(err instanceof Error, true);
+      if (err instanceof Error) {
+        t.same(
+          err.message,
+          "Zen has blocked a stored server-side request forgery: request(...) originating from unknown source"
+        );
+      }
+      t.same(address, undefined);
+      resolve();
+    });
+  });
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "detected_attack",
+      attack: {
+        kind: "stored_ssrf",
+        operation: "request",
+        module: "http",
+        blocked: true,
+        source: undefined,
+        path: "",
+        payload: undefined,
+        metadata: {
+          hostname: "imds.test.com",
+          privateIP: "169.254.169.254",
+        },
+        user: undefined,
+      },
+      request: undefined,
+    },
+  ]);
+});
+
+t.test("Reports stored SSRF with context set", async (t) => {
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    token: new Token("123"),
+    api,
+  });
+  agent.start([]);
+
+  await runWithContext(
+    {
+      remoteAddress: "::1",
+      method: "POST",
+      url: "http://app.example.com:4000",
+      query: {},
+      headers: {},
+      body: {
+        image: "test.png",
+      },
+      cookies: {},
+      routeParams: {},
+      source: "express",
+      route: "/posts/:id",
+    },
+    async () => {
+      const wrappedLookup = inspectDNSLookupCalls(
+        imdsMockLookup,
+        agent,
+        "http",
+        "request"
+      );
+
+      await new Promise<void>((resolve) => {
+        wrappedLookup("imds.test.com", { family: 4 }, (err, address) => {
+          t.same(err instanceof Error, true);
+          if (err instanceof Error) {
+            t.same(
+              err.message,
+              "Zen has blocked a stored server-side request forgery: request(...) originating from unknown source"
+            );
+          }
+          t.same(address, undefined);
+          resolve();
+        });
+      });
+    }
+  );
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "detected_attack",
+      attack: {
+        kind: "stored_ssrf",
+        operation: "request",
+        module: "http",
+        blocked: true,
+        source: undefined,
+        path: "",
+        payload: undefined,
+        metadata: {
+          hostname: "imds.test.com",
+          privateIP: "169.254.169.254",
+        },
+        user: undefined,
+      },
+      request: undefined,
+    },
+  ]);
+});
+
+t.test("Reports IDMS SSRF from current request context", async (t) => {
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    token: new Token("123"),
+    api,
+  });
+  agent.start([]);
+
+  await runWithContext(
+    {
+      remoteAddress: "::1",
+      method: "POST",
+      url: "http://app.example.com:4000",
+      query: {},
+      headers: {},
+      body: {
+        image: "https://imds.test.com",
+      },
+      cookies: {},
+      routeParams: {},
+      source: "express",
+      route: "/posts/:id",
+    },
+    async () => {
+      const wrappedLookup = inspectDNSLookupCalls(
+        imdsMockLookup,
+        agent,
+        "http",
+        "request"
+      );
+
+      await new Promise<void>((resolve) => {
+        wrappedLookup("imds.test.com", { family: 4 }, (err, address) => {
+          t.same(err instanceof Error, true);
+          if (err instanceof Error) {
+            t.same(
+              err.message,
+              "Zen has blocked a server-side request forgery: request(...) originating from body.image"
+            );
+          }
+          t.same(address, undefined);
+          resolve();
+        });
+      });
+    }
+  );
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "detected_attack",
+      attack: {
+        kind: "ssrf",
+        operation: "request",
+        module: "http",
+        blocked: true,
+        source: "body",
+        path: ".image",
+        payload: '"https://imds.test.com"',
+        metadata: {
+          hostname: "imds.test.com",
+          privateIP: "169.254.169.254",
+        },
+        user: undefined,
+      },
+      request: {
+        method: "POST",
+        ipAddress: "::1",
+        url: "http://app.example.com:4000",
+      },
+    },
   ]);
 });

@@ -19,7 +19,11 @@ export function addExpressMiddleware(app: Express | Router) {
           message += ` (Your IP: ${escapeHTML(result.ip)})`;
         }
 
-        res.status(429).type("text").send(message);
+        res
+          .status(429)
+          .type("text")
+          .header("Retry-After", result.retryAfterSeconds.toString())
+          .send(message);
         return;
       }
 

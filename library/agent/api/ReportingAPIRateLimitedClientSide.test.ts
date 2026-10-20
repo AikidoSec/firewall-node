@@ -62,7 +62,7 @@ function generateAttackWaveEvent(): Event {
     type: "detected_attack_wave",
     time: Date.now(),
     request: {
-      ipAddress: undefined,
+      ipAddress: "::1",
       userAgent: undefined,
       source: "express",
     },
@@ -194,6 +194,10 @@ function generateHeartbeatEvent(): Event {
           blocked: 0,
           total: 0,
         },
+        attackWaves: {
+          blocked: 0,
+          total: 0,
+        },
       },
       userAgents: {
         breakdown: {},
@@ -201,7 +205,6 @@ function generateHeartbeatEvent(): Event {
       ipAddresses: {
         breakdown: {},
       },
-      sqlTokenizationFailures: 0,
     },
     agent: {
       version: "1.0.0",
@@ -274,6 +277,9 @@ t.test("it does not blow memory", async () => {
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
       allowedIPAddresses: [],
+      blockNewOutgoingRequests: false,
+      domains: [],
+      excludedUserIdsFromRateLimiting: [],
     });
   }
 

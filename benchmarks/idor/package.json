@@ -1,0 +1,12 @@
+{
+  "name": "idor-benchmark",
+  "version": "1.0.0",
+  "description": "Benchmark for IDOR",
+  "main": "benchmark.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "express": "^4.21.0",
+    "mysql": "^2.18.1"
+  }
+}

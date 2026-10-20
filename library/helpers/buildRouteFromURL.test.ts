@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { buildRouteFromURL } from "./buildRouteFromURL";
 import * as ObjectID from "bson-objectid";
+import { createHash } from "crypto";
 
 t.test("it returns undefined for invalid URLs", async () => {
   t.same(buildRouteFromURL(""), undefined);
@@ -34,10 +35,6 @@ t.test("it replaces dates", async () => {
     "/posts/:date/comments/:date"
   );
   t.same(buildRouteFromURL("/posts/01-05-2023"), "/posts/:date");
-});
-
-t.test("it ignores comma numbers", async () => {
-  t.same(buildRouteFromURL("/posts/3,000"), "/posts/3,000");
 });
 
 t.test("it ignores API version numbers", async () => {
@@ -129,7 +126,7 @@ t.test("it replaces IP addresses", async () => {
 });
 
 function generateHash(type: string) {
-  return require("crypto").createHash(type).update("test").digest("hex");
+  return createHash(type).update("test").digest("hex");
 }
 
 t.test("it replaces hashes", async () => {
@@ -185,4 +182,19 @@ t.test("it does not detect static files as secrets", async () => {
   for (const file of files) {
     t.same(buildRouteFromURL(`/assets/${file}`), `/assets/${file}`);
   }
+});
+
+t.test("it detects numeric comma separated arrays", async (t) => {
+  t.same(buildRouteFromURL("/users/1,2"), "/users/:array(number)");
+  t.same(buildRouteFromURL("/users/1,2,3,4,5"), "/users/:array(number)");
+  t.same(
+    buildRouteFromURL("/users/100,200,3000000,40000000,500000000"),
+    "/users/:array(number)"
+  );
+
+  t.same(buildRouteFromURL("/users/1,2,3,4,"), "/users/1,2,3,4,");
+  t.same(buildRouteFromURL("/users/1,"), "/users/1,");
+  t.same(buildRouteFromURL("/users/,1,2"), "/users/,1,2");
+  t.same(buildRouteFromURL("/users/1,2,3_"), "/users/1,2,3_");
+  t.same(buildRouteFromURL("/users/1,2,3a"), "/users/1,2,3a");
 });

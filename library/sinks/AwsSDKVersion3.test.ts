@@ -35,9 +35,7 @@ t.test(
       modelId: expectedModelId,
       contentType: "application/json",
       body: JSON.stringify({
-        // eslint-disable-next-line camelcase
         anthropic_version: "bedrock-2023-05-31",
-        // eslint-disable-next-line camelcase
         max_tokens: 100,
         messages: [
           {
@@ -75,9 +73,7 @@ t.test(
       modelId: modelArn,
       contentType: "application/json",
       body: JSON.stringify({
-        // eslint-disable-next-line camelcase
         anthropic_version: "bedrock-2023-05-31",
-        // eslint-disable-next-line camelcase
         max_tokens: 100,
         messages: [
           {

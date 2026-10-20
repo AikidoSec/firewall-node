@@ -104,3 +104,31 @@ t.test("without hostname", async (t) => {
   t.same(get([{}]), undefined);
   t.same(get([{ protocol: "https:", port: 4000 }]), undefined);
 });
+
+t.test("it normalizes trailing dots in url string", async (t) => {
+  t.same(get(["http://example.com.:4000"]), {
+    hostname: "example.com",
+    port: 4000,
+  });
+});
+
+t.test("it normalizes trailing dots in url object", async (t) => {
+  t.same(get([new URL("http://example.com.:4000")]), {
+    hostname: "example.com",
+    port: 4000,
+  });
+});
+
+t.test("it normalizes trailing dots in options object hostname", async (t) => {
+  t.same(get([{ hostname: "example.com.", port: 4000 }]), {
+    hostname: "example.com",
+    port: 4000,
+  });
+});
+
+t.test("it normalizes trailing dots in options object origin", async (t) => {
+  t.same(get([{ origin: "http://example.com.:4000" }]), {
+    hostname: "example.com",
+    port: 4000,
+  });
+});

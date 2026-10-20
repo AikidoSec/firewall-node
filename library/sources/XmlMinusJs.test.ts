@@ -10,13 +10,15 @@ agent.start([new XmlMinusJs()]);
 
 const xmljs = require("xml-js");
 
-t.test("xml2js works", async () => {
+t.test("xml-js works", async () => {
   const xmlString = (
     await readFile(join(__dirname, "fixtures", "products.xml"), "utf8")
   ).toString();
 
   const result = xmljs.xml2js(xmlString);
-  const expected = require(join(__dirname, "fixtures", "xml2js.json"));
+  const expected = JSON.parse(
+    await readFile(join(__dirname, "fixtures", "xml2js.json"), "utf8")
+  );
   t.same(result, expected);
 
   const context = {
@@ -32,14 +34,20 @@ t.test("xml2js works", async () => {
     route: "/posts/:id",
   };
 
-  const expectedCompact = require(
-    join(__dirname, "fixtures", "xml2js.compact.json")
+  const expectedCompact = JSON.parse(
+    await readFile(join(__dirname, "fixtures", "xml2js.compact.json"), "utf8")
   );
 
   runWithContext(context, () => {
     const result = xmljs.xml2js(xmlString, { compact: true });
     t.same(result, expectedCompact);
     t.same(getContext()?.xml, [expectedCompact]);
+  });
+
+  runWithContext(context, () => {
+    const result = xmljs.xml2js(Buffer.from(xmlString), { compact: true });
+    t.same(result, expectedCompact);
+    t.same(getContext()?.xml, [expectedCompact, expectedCompact]);
   });
 });
 
@@ -69,6 +77,26 @@ t.test("xml2json works", async () => {
     const result = xmljs.xml2json(xmlString, { compact: true });
     t.same(result, '{"root":{"_text":"Hello xml-js!"}}');
     t.same(getContext()?.xml, [{ root: { _text: "Hello xml-js!" } }]);
+  });
+});
+
+t.test("Ignore if the first argument is not a string or Buffer", async () => {
+  const context = {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://localhost:4000",
+    query: {},
+    headers: {},
+    body: "<root>Hello xml-js!</root>",
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/posts/:id",
+  };
+
+  runWithContext(context, () => {
+    xmljs.xml2js(123, { compact: true });
+    t.same(getContext()?.xml, undefined);
   });
 });
 

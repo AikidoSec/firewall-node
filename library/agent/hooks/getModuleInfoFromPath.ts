@@ -19,9 +19,14 @@ export type ModulePathInfo = {
  * Get the module name and dir from a path that is inside a node_modules folder.
  */
 export function getModuleInfoFromPath(
-  path: string
+  filePath: string
 ): ModulePathInfo | undefined {
-  const segments = path.split(sep);
+  let _filePath = filePath;
+  if (_filePath.startsWith("file://")) {
+    _filePath = filePath.slice(7);
+  }
+
+  const segments = _filePath.split(sep);
   const i = segments.lastIndexOf("node_modules");
 
   if (i === -1 || i + 1 >= segments.length) {

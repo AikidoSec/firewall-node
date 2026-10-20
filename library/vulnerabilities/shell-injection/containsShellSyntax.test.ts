@@ -66,6 +66,30 @@ t.test("it treats colon as a command", async () => {
   );
 });
 
+t.test("it detects newline as separator", async () => {
+  t.same(containsShellSyntax("ls\nrm", "rm"), true);
+  t.same(containsShellSyntax("echo test\nrm -rf /", "rm"), true);
+  t.same(containsShellSyntax("rm\nls", "rm"), true);
+});
+
+t.test("it detects tab as separator", async () => {
+  t.same(containsShellSyntax("ls\trm", "rm"), true);
+  t.same(containsShellSyntax("echo test\trm -rf /", "rm"), true);
+  t.same(containsShellSyntax("rm\tls", "rm"), true);
+});
+
+t.test("it detects carriage return as separator", async () => {
+  t.same(containsShellSyntax("ls\rrm", "rm"), true);
+  t.same(containsShellSyntax("echo test\rrm -rf /", "rm"), true);
+  t.same(containsShellSyntax("rm\rls", "rm"), true);
+});
+
+t.test("it detects form feed as separator", async () => {
+  t.same(containsShellSyntax("ls\frm", "rm"), true);
+  t.same(containsShellSyntax("echo test\frm -rf /", "rm"), true);
+  t.same(containsShellSyntax("rm\fls", "rm"), true);
+});
+
 t.test("it flags input as shell injection", async () => {
   t.same(
     containsShellSyntax(

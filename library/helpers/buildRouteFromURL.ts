@@ -13,6 +13,7 @@ const EMAIL =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 const HASH = /^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64}|[a-f0-9]{128})$/i;
 const HASH_LENGTHS = [32, 40, 64, 128];
+const NUMBER_ARRAY = /^\d+(?:,\d+)*$/;
 
 export function buildRouteFromURL(url: string) {
   let path = tryParseURLPath(url);
@@ -75,6 +76,10 @@ function replaceURLSegmentWithParam(segment: string) {
 
   if (HASH_LENGTHS.includes(segment.length) && HASH.test(segment)) {
     return ":hash";
+  }
+
+  if (startsWithNumber && NUMBER_ARRAY.test(segment)) {
+    return ":array(number)";
   }
 
   if (looksLikeASecret(segment)) {

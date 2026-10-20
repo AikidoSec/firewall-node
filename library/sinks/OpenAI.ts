@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
@@ -97,16 +96,18 @@ export class OpenAI implements Wrapper {
     });
   }
 
-  // The _client property is used to determine if the OpenAI client is an Azure OpenAI client or not.
-  // See https://github.com/openai/openai-node/blob/master/src/core/resource.ts
-  getProvider(exports: unknown, subject: unknown): Provider {
+  // The AzureOpenAI client always sets a non-empty `apiVersion`
+  // string on the client instance in its constructor (it throws if none is
+  // given), while plain OpenAI clients never set this property.
+  // See https://github.com/openai/openai-node/blob/master/src/azure.ts
+  getProvider(subject: unknown): Provider {
     if (
-      // @ts-expect-error We don't know the type of exports
-      exports.AzureOpenAI &&
       // @ts-expect-error We don't know the type of subject
       subject._client &&
       // @ts-expect-error We don't know the type of subject
-      subject._client instanceof exports.AzureOpenAI
+      typeof subject._client.apiVersion === "string" &&
+      // @ts-expect-error We don't know the type of subject
+      subject._client.apiVersion.length > 0
     ) {
       return "azure";
     }
@@ -136,38 +137,68 @@ export class OpenAI implements Wrapper {
     }
   }
 
+  private onResponseCreated(
+    returnValue: unknown,
+    agent: Agent,
+    subject: unknown
+  ) {
+    if (returnValue instanceof Promise) {
+      // Inspect the response after the promise resolves, it won't change the original promise
+      returnValue
+        .then((response) => {
+          this.inspectResponse(agent, response, this.getProvider(subject));
+        })
+        .catch((error) => {
+          agent.onErrorThrownByInterceptor({
+            error: error,
+            method: "create.<promise>",
+            module: "openai",
+          });
+        });
+    }
+
+    return returnValue;
+  }
+
+  private onCompletionsCreated(
+    returnValue: unknown,
+    agent: Agent,
+    subject: unknown
+  ) {
+    if (returnValue instanceof Promise) {
+      // Inspect the response after the promise resolves, it won't change the original promise
+      returnValue
+        .then((response) => {
+          this.inspectCompletionResponse(
+            agent,
+            response,
+            this.getProvider(subject)
+          );
+        })
+        .catch((error) => {
+          agent.onErrorThrownByInterceptor({
+            error: error,
+            method: "create.<promise>",
+            module: "openai",
+          });
+        });
+    }
+
+    return returnValue;
+  }
+
   wrap(hooks: Hooks) {
     // Note: Streaming is not supported yet
     hooks
       .addPackage("openai")
-      .withVersion("^5.0.0 || ^4.0.0")
+      .withVersion("^5.0.0 || ^4.0.0 || ^6.0.0 || ^7.0.0")
       .onRequire((exports, pkgInfo) => {
         const responsesClass = this.getResponsesClass(exports);
         if (responsesClass) {
           wrapExport(responsesClass.prototype, "create", pkgInfo, {
             kind: "ai_op",
-            modifyReturnValue: (_, returnValue, agent, subject) => {
-              if (returnValue instanceof Promise) {
-                // Inspect the response after the promise resolves, it won't change the original promise
-                returnValue
-                  .then((response) => {
-                    this.inspectResponse(
-                      agent,
-                      response,
-                      this.getProvider(exports, subject)
-                    );
-                  })
-                  .catch((error) => {
-                    agent.onErrorThrownByInterceptor({
-                      error: error,
-                      method: "create.<promise>",
-                      module: "openai",
-                    });
-                  });
-              }
-
-              return returnValue;
-            },
+            modifyReturnValue: (_args, returnValue, agent, subject) =>
+              this.onResponseCreated(returnValue, agent, subject),
           });
         }
 
@@ -175,30 +206,40 @@ export class OpenAI implements Wrapper {
         if (completionsClass) {
           wrapExport(completionsClass.prototype, "create", pkgInfo, {
             kind: "ai_op",
-            modifyReturnValue: (_, returnValue, agent, subject) => {
-              if (returnValue instanceof Promise) {
-                // Inspect the response after the promise resolves, it won't change the original promise
-                returnValue
-                  .then((response) => {
-                    this.inspectCompletionResponse(
-                      agent,
-                      response,
-                      this.getProvider(exports, subject)
-                    );
-                  })
-                  .catch((error) => {
-                    agent.onErrorThrownByInterceptor({
-                      error: error,
-                      method: "create.<promise>",
-                      module: "openai",
-                    });
-                  });
-              }
-
-              return returnValue;
-            },
+            modifyReturnValue: (_args, returnValue, agent, subject) =>
+              this.onCompletionsCreated(returnValue, agent, subject),
           });
         }
-      });
+      })
+      .addMultiFileInstrumentation(
+        [
+          "resources/responses/responses.js",
+          "resources/responses/responses.mjs",
+        ],
+        [
+          {
+            name: "create",
+            nodeType: "MethodDefinition",
+            operationKind: "ai_op",
+            modifyReturnValue: (_args, returnValue, agent, subject) =>
+              this.onResponseCreated(returnValue, agent, subject),
+          },
+        ]
+      )
+      .addMultiFileInstrumentation(
+        [
+          "resources/chat/completions/completions.js",
+          "resources/chat/completions/completions.mjs",
+        ],
+        [
+          {
+            name: "create",
+            nodeType: "MethodDefinition",
+            operationKind: "ai_op",
+            modifyReturnValue: (_args, returnValue, agent, subject) =>
+              this.onCompletionsCreated(returnValue, agent, subject),
+          },
+        ]
+      );
   }
 }

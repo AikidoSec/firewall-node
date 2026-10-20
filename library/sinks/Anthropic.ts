@@ -62,6 +62,23 @@ export class Anthropic implements Wrapper {
     });
   }
 
+  private inspectReturnValue(agent: Agent, returnValue: any) {
+    if (returnValue instanceof Promise) {
+      // Inspect the response after the promise resolves
+      returnValue
+        .then((response) => {
+          this.inspectResponse(agent, response);
+        })
+        .catch((error) => {
+          agent.onErrorThrownByInterceptor({
+            error: error,
+            method: "create.<promise>",
+            module: "@anthropic-ai/sdk",
+          });
+        });
+    }
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@anthropic-ai/sdk")
@@ -75,25 +92,25 @@ export class Anthropic implements Wrapper {
           wrapExport(exports.Messages.prototype, "create", pkgInfo, {
             kind: "ai_op",
             modifyReturnValue: (_, returnValue, agent) => {
-              if (returnValue instanceof Promise) {
-                // Inspect the response after the promise resolves
-                returnValue
-                  .then((response) => {
-                    this.inspectResponse(agent, response);
-                  })
-                  .catch((error) => {
-                    agent.onErrorThrownByInterceptor({
-                      error: error,
-                      method: "create.<promise>",
-                      module: "@anthropic-ai/sdk",
-                    });
-                  });
-              }
-
+              this.inspectReturnValue(agent, returnValue);
               return returnValue;
             },
           });
         }
-      });
+      })
+      .addMultiFileInstrumentation(
+        ["resources/messages/messages.js", "resources/messages/messages.mjs"],
+        [
+          {
+            name: "create",
+            nodeType: "MethodDefinition",
+            operationKind: "ai_op",
+            modifyReturnValue: (args, returnValue, agent) => {
+              this.inspectReturnValue(agent, returnValue);
+              return returnValue;
+            },
+          },
+        ]
+      );
   }
 }
