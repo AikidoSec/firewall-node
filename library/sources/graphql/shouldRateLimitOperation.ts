@@ -60,17 +60,28 @@ export function shouldRateLimitOperation(
     ? isLocalhostIP(context.remoteAddress) && isProduction
     : false;
 
+  if (isFromLocalhostInProduction) {
+    return { block: false };
+  }
+
   // Allow requests from allowed IPs, e.g. never rate limit office IPs
-  const isBypassedRequest = agent.getConfig().isBypassedRequest(context);
+  if (agent.getConfig().isBypassedRequest(context)) {
+    return { block: false };
+  }
+
+  if (
+    context.user &&
+    agent.getConfig().isUserExcludedFromRateLimiting(context.user.id)
+  ) {
+    return { block: false };
+  }
 
   for (const field of topLevelFields.fields) {
     const result = shouldRateLimitField(
       agent,
       context,
       field,
-      topLevelFields.type,
-      isFromLocalhostInProduction,
-      isBypassedRequest
+      topLevelFields.type
     );
 
     if (result.block) {
@@ -85,9 +96,7 @@ function shouldRateLimitField(
   agent: Agent,
   context: Context,
   field: FieldNode,
-  operationType: "query" | "mutation",
-  isFromLocalhostInProduction: boolean,
-  isBypassedRequest: boolean
+  operationType: "query" | "mutation"
 ): Result {
   const match = agent
     .getConfig()
@@ -107,11 +116,7 @@ function shouldRateLimitField(
     return { block: false };
   }
 
-  if (
-    context.remoteAddress &&
-    !isFromLocalhostInProduction &&
-    !isBypassedRequest
-  ) {
+  if (context.remoteAddress) {
     const result = agent
       .getRateLimiter()
       .isAllowed(
