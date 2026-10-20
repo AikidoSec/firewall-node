@@ -9,6 +9,8 @@ import { getBodyDataType } from "../../agent/api-discovery/getBodyDataType";
 import { tryParseJSON } from "../../helpers/tryParseJSON";
 import { getInstance } from "../../agent/AgentSingleton";
 
+const MAX_FORM_FIELDS = 1000;
+
 type BodyReadResult =
   | {
       success: true;
@@ -37,6 +39,11 @@ export async function readBodyStream(
       try {
         busboy = new Busboy({
           headers: req.headers as BusboyHeaders,
+          limits: {
+            fields: MAX_FORM_FIELDS,
+            parts: MAX_FORM_FIELDS,
+            files: MAX_FORM_FIELDS,
+          },
         });
       } catch (err) {
         // e.g. multipart/form-data without a boundary
