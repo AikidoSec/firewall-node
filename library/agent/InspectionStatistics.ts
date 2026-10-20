@@ -25,7 +25,6 @@ type IPAddressStats = {
 export class InspectionStatistics {
   private startedAt = Date.now();
   private operations: Record<string, OperationStats> = {};
-  private sqlTokenizationFailures: number = 0;
   private requests: {
     total: number;
     aborted: number;
@@ -231,9 +230,5 @@ export class InspectionStatistics {
         this.operations[operation].attacksDetected.blocked += 1;
       }
     }
-  }
-
-  onSqlTokenizationFailure() {
-    this.sqlTokenizationFailures += 1;
   }
 }
