@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "astring": "^1.9.0",
-    "follow-redirects": "^1.15.11",
+    "follow-redirects": "^1.16.1",
     "oxc-parser": "^0.140.0",
     "oxc-transform": "^0.140.0",
     "oxc-walker": "^1.0.0",
