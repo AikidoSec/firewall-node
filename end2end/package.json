@@ -8,5 +8,16 @@
   "scripts": {
     "test": "AIKIDO_CI=true tap tests/*.js --allow-empty-coverage -j 1 --bail",
     "test:new": "node --test --test-concurrency 4 --test-force-exit tests-new/**/*.test.mjs"
+  },
+  "overrides": {
+    "cacache": {
+      "tar": "7.5.21"
+    },
+    "node-gyp": {
+      "tar": "7.5.21"
+    },
+    "pacote": {
+      "tar": "7.5.21"
+    }
   }
 }
