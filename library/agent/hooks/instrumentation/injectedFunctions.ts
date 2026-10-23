@@ -133,6 +133,45 @@ export function __instrumentModifyReturnValue(
   return returnValue;
 }
 
+export function __instrumentShortCircuit(
+  id: string,
+  args: IArguments | unknown[],
+  subject: unknown // "This" of the method being called
+): { returnValue: unknown } | undefined {
+  const agent = getInstance();
+  if (!agent) {
+    return;
+  }
+
+  const cbInfo = getFunctionCallbackInfo(id);
+
+  if (
+    !cbInfo ||
+    !cbInfo.funcs ||
+    typeof cbInfo.funcs.shortCircuit !== "function"
+  ) {
+    return;
+  }
+
+  try {
+    const result = cbInfo.funcs.shortCircuit(Array.from(args), agent, subject);
+
+    if (result.shortCircuit) {
+      return { returnValue: result.returnValue };
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      getInstance()?.onFailedToWrapMethod(
+        cbInfo.pkgName,
+        cbInfo.methodName,
+        error
+      );
+    }
+  }
+
+  return;
+}
+
 export function __instrumentAccessLocalVariables(
   id: string,
   vars: unknown[]

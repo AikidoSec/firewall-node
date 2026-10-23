@@ -11,6 +11,7 @@ const {
   __instrumentInspectArgs,
   __instrumentModifyArgs,
   __instrumentModifyReturnValue,
+  __instrumentShortCircuit,
   __instrumentAccessLocalVariables,
 } = require(join(import.meta.dirname, "injectedFunctions.ts"));
 
@@ -18,5 +19,6 @@ export {
   __instrumentInspectArgs,
   __instrumentModifyArgs,
   __instrumentModifyReturnValue,
+  __instrumentShortCircuit,
   __instrumentAccessLocalVariables,
 };
