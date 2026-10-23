@@ -9,7 +9,7 @@ use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 use super::helpers::{
     get_arg_names::get_function_or_method_arg_names,
     get_name_str_for_member_expr::get_name_str_for_member_expr,
-    insert_instrument_method_calls::insert_instrument_method_calls,
+    insert_instrument_method_calls::{FunctionTarget, insert_instrument_method_calls},
 };
 use super::instructions::FileInstructions;
 
@@ -94,11 +94,13 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             self.allocator,
             self.ast_builder,
             instruction,
-            &arg_names,
             self.pkg_version,
             body,
-            false,
-            function_scope_id,
+            FunctionTarget {
+                arg_names: &arg_names,
+                is_constructor: false,
+                function_scope_id,
+            },
             ctx,
         );
     }
@@ -152,11 +154,13 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             self.allocator,
             self.ast_builder,
             instruction,
-            &arg_names,
             self.pkg_version,
             body,
-            false,
-            function_scope_id,
+            FunctionTarget {
+                arg_names: &arg_names,
+                is_constructor: false,
+                function_scope_id,
+            },
             ctx,
         );
     }
@@ -225,11 +229,13 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             self.allocator,
             self.ast_builder,
             instruction,
-            &arg_names,
             self.pkg_version,
             body,
-            false,
-            function_scope_id,
+            FunctionTarget {
+                arg_names: &arg_names,
+                is_constructor: false,
+                function_scope_id,
+            },
             ctx,
         );
     }
@@ -302,11 +308,13 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
                 self.allocator,
                 self.ast_builder,
                 instruction,
-                &arg_names,
                 self.pkg_version,
                 body,
-                is_constructor,
-                function_scope_id,
+                FunctionTarget {
+                    arg_names: &arg_names,
+                    is_constructor,
+                    function_scope_id,
+                },
                 ctx,
             );
         }
