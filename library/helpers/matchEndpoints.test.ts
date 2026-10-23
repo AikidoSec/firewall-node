@@ -398,3 +398,54 @@ t.test("it prefers specific method over wildcard", async () => {
     ]
   );
 });
+
+t.test("it skips wildcard routes that do not compile", async () => {
+  for (const route of ["/api/[/*", "/api/(/*", "/api/v1+?+/*"]) {
+    const valid = {
+      method: "POST",
+      route: "/api/*",
+      forceProtectionOff: false,
+      allowedIPAddresses: undefined,
+      rateLimiting: { enabled: false, maxRequests: 100, windowSizeInMS: 60000 },
+    };
+    const invalid = { ...valid, route, forceProtectionOff: true };
+
+    t.same(
+      matchEndpoints(
+        { ...context, route: undefined, url: "http://localhost:4000/api/[/x" },
+        [invalid, valid]
+      ),
+      [valid]
+    );
+  }
+});
+
+t.test("it still matches valid wildcard routes", async () => {
+  const endpoint = {
+    method: "POST",
+    route: "/v1/*/details/*",
+    forceProtectionOff: false,
+    allowedIPAddresses: undefined,
+    rateLimiting: { enabled: false, maxRequests: 100, windowSizeInMS: 60000 },
+  };
+
+  t.same(
+    matchEndpoints(
+      {
+        ...context,
+        route: undefined,
+        url: "http://localhost:4000/v1/abc/details/def",
+      },
+      [endpoint]
+    ),
+    [endpoint]
+  );
+
+  t.same(
+    matchEndpoints(
+      { ...context, route: undefined, url: "http://localhost:4000/v2/abc" },
+      [endpoint]
+    ),
+    []
+  );
+});
