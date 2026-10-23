@@ -49,6 +49,7 @@ function createContext({
     routeParams: {},
     cookies: {},
     remoteAddress: "127.0.0.1",
+    isBehindTrustedProxy: true,
     subdomains: [],
     body: body,
   };
