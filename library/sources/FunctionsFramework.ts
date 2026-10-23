@@ -62,7 +62,7 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
       {
         method: req.method,
         remoteAddress: req.ip,
-        isBehindTrustedProxy: isTrustedProxyRequest(req.ip),
+        isBehindTrustedProxy: isTrustedProxyRequest(req.socket?.remoteAddress),
         body: req.body ? req.body : undefined,
         url: url,
         headers: req.headers,
