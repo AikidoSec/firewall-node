@@ -104,6 +104,30 @@ t.test("it works without url and only options", async (t) => {
   );
 });
 
+t.test("it uses node's defaults for empty or missing options", async (t) => {
+  t.same(
+    getURL([{ protocol: "", hostname: "127.0.0.1", path: "/" }], "http")?.href,
+    "http://127.0.0.1/"
+  );
+  t.same(
+    getURL([{ protocol: "", hostname: "127.0.0.1", path: "/" }], "https")?.href,
+    "https://127.0.0.1/"
+  );
+  t.same(
+    getURL([{ hostname: "", host: "127.0.0.1", path: "/" }], "http")?.href,
+    "http://127.0.0.1/"
+  );
+  t.same(
+    getURL([{ port: 2375, path: "/" }], "http")?.href,
+    "http://localhost:2375/"
+  );
+  t.same(
+    getURL([{ hostname: "", host: "", port: 2375, path: "/" }], "http")?.href,
+    "http://localhost:2375/"
+  );
+  t.same(getURL([{ path: "/" }], "https")?.href, "https://localhost/");
+});
+
 t.test("Do not get port 0 from request options", async (t) => {
   t.same(
     getURL([{ protocol: "https:", hostname: "localhost", port: 0 }], "http"),
@@ -154,6 +178,44 @@ t.test("it works with node:url object as first argument", async (t) => {
   t.same(
     getURL([oldUrl.parse("http://localhost:4000")], "http"),
     new URL("http://localhost:4000")
+  );
+});
+
+t.test("it uses defaultPort when port is not set", async (t) => {
+  t.same(
+    getURL([{ defaultPort: 2375 }], "http"),
+    new URL("http://localhost:2375")
+  );
+  t.same(
+    getURL([{ hostname: "localhost", defaultPort: "2375" }], "http"),
+    new URL("http://localhost:2375")
+  );
+  t.same(
+    getURL([{ defaultPort: 2375, path: "/containers/json" }], "http"),
+    new URL("http://localhost:2375/containers/json")
+  );
+  // port takes precedence over defaultPort
+  t.same(
+    getURL([{ port: 3000, defaultPort: 2375 }], "http"),
+    new URL("http://localhost:3000")
+  );
+  // Merged with a url argument
+  t.same(
+    getURL(["http://example.com", { defaultPort: 2375 }], "http"),
+    new URL("http://example.com:2375")
+  );
+  // Explicit port in the url takes precedence over defaultPort
+  t.same(
+    getURL(["http://example.com:3000", { defaultPort: 2375 }], "http"),
+    new URL("http://example.com:3000")
+  );
+  // options.port still takes precedence over the url port
+  t.same(
+    getURL(
+      ["http://example.com:3000", { port: 4000, defaultPort: 2375 }],
+      "http"
+    ),
+    new URL("http://example.com:4000")
   );
 });
 
