@@ -67,8 +67,11 @@ export function createGraphQLTests(pkgName: string) {
         }
     `);
 
+    let getFileCalls = 0;
+
     const root = {
       getFile: ({ path }: { path: string }) => {
+        getFileCalls++;
         return "file content";
       },
       anotherQuery: () => {
@@ -162,6 +165,18 @@ export function createGraphQLTests(pkgName: string) {
         graphQLSchema: undefined,
       },
     ]);
+
+    await runWithContext(getTestContext(), async () => {
+      const callsBefore = getFileCalls;
+
+      const result = await query("/etc/bashrc");
+      t.same(result.data, undefined);
+      t.same(result.errors!.length, 1);
+      t.same(result.errors![0].message, "You are rate limited by Zen.");
+      t.same(getContext()?.rateLimitedEndpoint?.route, "/graphql");
+
+      t.same(getFileCalls, callsBefore, "resolver should not be called");
+    });
 
     // Empty context
     await runWithContext({} as Context, async () => {
