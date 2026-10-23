@@ -646,6 +646,7 @@ export class Agent {
       "micro",
       "nuxt",
       "@trpc/server",
+      "h3",
     ];
 
     return webFrameworks.some(

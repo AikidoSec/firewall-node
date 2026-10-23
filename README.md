@@ -55,6 +55,7 @@ Zen for Node.js 16+ is compatible with:
 - ✅ [Restify](docs/restify.md) 11.x, 10.x, 9.x and 8.x
 - ✅ [ElysiaJS](docs/elysiajs.md) 1.x (minimum 1.4.0)
 - ✅ [tRPC](docs/trpc.md) 11.x
+- ✅ [H3](docs/h3.md) 1.8.x and newer 1.x versions
 
 ### Database drivers
 
