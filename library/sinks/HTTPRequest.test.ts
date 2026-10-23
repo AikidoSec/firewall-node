@@ -478,6 +478,8 @@ t.test("it works", (t) => {
 });
 
 t.test("node.js applies defaults for empty or missing options", async (t) => {
+  agent.getConfig().setBlockNewOutgoingRequests(false);
+
   function createRequest(module: "http" | "https", options: any) {
     const req = (module === "http" ? http : https).request(options);
     req.on("error", () => {});
@@ -573,6 +575,8 @@ t.test(
 );
 
 t.test("node.js prefers the url port over defaultPort", async (t) => {
+  agent.getConfig().setBlockNewOutgoingRequests(false);
+
   function getHost(args: [string, any]) {
     const req = http.request(...args);
     req.on("error", () => {});
