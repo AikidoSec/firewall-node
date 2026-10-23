@@ -11,18 +11,28 @@ use crate::js_transformer::{
     instructions::FunctionInstructions,
 };
 
+pub struct FunctionTarget<'b> {
+    pub arg_names: &'b Vec<String>,
+    pub is_constructor: bool,
+    /// Scope of the function, used as parent for the scopes of the injected blocks
+    pub function_scope_id: Option<ScopeId>,
+}
+
 pub fn insert_instrument_method_calls<'a, S>(
     allocator: &'a Allocator,
     builder: &'a AstBuilder,
     instruction: &FunctionInstructions,
-    arg_names: &Vec<String>,
     pkg_version: &'a str,
     body: &mut FunctionBody<'a>,
-    is_constructor: bool,
-    // Scope of the instrumented function, used as parent for the scopes of the injected blocks
-    function_scope_id: Option<ScopeId>,
+    target: FunctionTarget,
     ctx: &mut TraverseCtx<'a, S>,
 ) {
+    let FunctionTarget {
+        arg_names,
+        is_constructor,
+        function_scope_id,
+    } = target;
+
     // Must run before the other insertions, so the early return of shortCircuit is not wrapped
     if instruction.modify_return_value && !is_constructor {
         transform_return_statements(
