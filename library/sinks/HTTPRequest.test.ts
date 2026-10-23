@@ -1,9 +1,13 @@
 import * as dns from "dns";
+import { mkdtempSync, rmSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
+import { getUrlFromHTTPRequestArgs as getURL } from "./http-request/getUrlFromHTTPRequestArgs";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
@@ -471,4 +475,125 @@ t.test("it works", (t) => {
   setTimeout(() => {
     t.end();
   }, 3000);
+});
+
+t.test("node.js applies defaults for empty or missing options", async (t) => {
+  function createRequest(
+    module: "http" | "https",
+    options: http.RequestOptions
+  ) {
+    const req = (module === "http" ? http : https).request(options);
+    req.on("error", () => {});
+    req.destroy();
+    return req;
+  }
+
+  for (const module of ["http", "https"] as const) {
+    const protocol = `${module}:`;
+
+    t.same(
+      createRequest(module, { protocol: "", hostname: "127.0.0.1" }).protocol,
+      protocol
+    );
+    t.same(
+      createRequest(module, { hostname: "", host: "127.0.0.1" }).host,
+      "127.0.0.1"
+    );
+    t.same(createRequest(module, { port: 2375 }).host, "localhost");
+    t.same(createRequest(module, { hostname: "", host: "" }).host, "localhost");
+    t.same(
+      createRequest(module, { hostname: "127.0.0.1", port: "" }).getHeader(
+        "host"
+      ),
+      "127.0.0.1"
+    );
+    t.same(
+      createRequest(module, { hostname: "127.0.0.1", path: "" }).path,
+      "/"
+    );
+  }
+});
+
+t.test(
+  "node.js uses socketPath instead of host and port",
+  { skip: process.platform === "win32" ? "unix sockets" : false },
+  async (t) => {
+    const dir = mkdtempSync(join(tmpdir(), "zen-socketpath-"));
+    const socketPath = join(dir, "test.sock");
+    let tcpHits = 0;
+    let socketHits = 0;
+
+    const tcpServer = http.createServer((req, res) => {
+      tcpHits++;
+      res.end("tcp");
+    });
+    const socketServer = http.createServer((req, res) => {
+      socketHits++;
+      res.end("socket");
+    });
+
+    t.teardown(() => {
+      tcpServer.close();
+      socketServer.close();
+      rmSync(dir, { recursive: true, force: true });
+    });
+
+    await new Promise<void>((resolve) =>
+      tcpServer.listen(0, "127.0.0.1", resolve)
+    );
+    await new Promise<void>((resolve) =>
+      socketServer.listen(socketPath, resolve)
+    );
+    const address = tcpServer.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Expected TCP address");
+    }
+
+    const body = await new Promise<string>((resolve, reject) => {
+      http
+        .request(
+          {
+            socketPath,
+            host: "127.0.0.1",
+            hostname: "127.0.0.1",
+            port: address.port,
+            path: "/",
+          },
+          (res) => {
+            let data = "";
+            res.on("data", (chunk) => (data += chunk));
+            res.on("end", () => resolve(data));
+          }
+        )
+        .on("error", reject)
+        .end();
+    });
+
+    t.same(body, "socket");
+    t.same(socketHits, 1);
+    t.same(tcpHits, 0);
+  }
+);
+
+t.test("node.js prefers the url port over defaultPort", async (t) => {
+  function getHost(args: [string, http.RequestOptions]) {
+    const req = http.request(...args);
+    req.on("error", () => {});
+    req.destroy();
+    return req.getHeader("host");
+  }
+
+  const cases: [string, http.RequestOptions, string][] = [
+    ["http://127.0.0.1:3000/", { defaultPort: 2375 }, "127.0.0.1:3000"],
+    [
+      "http://127.0.0.1:3000/",
+      { port: 4000, defaultPort: 2375 },
+      "127.0.0.1:4000",
+    ],
+  ];
+
+  for (const [url, options, host] of cases) {
+    t.same(getHost([url, options]), host);
+    t.same(getURL([url, options], "http")?.host, host);
+  }
 });
