@@ -590,6 +590,12 @@ export class Agent {
     this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
   }
 
+  onInvalidEndpointRoute(route: string) {
+    this.logger.log(
+      `Skipping endpoint route that is not a valid pattern: ${route}`
+    );
+  }
+
   onPackageRequired(name: string, version: string) {
     this.packages.addPackage({
       name,
