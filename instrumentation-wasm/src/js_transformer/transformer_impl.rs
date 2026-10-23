@@ -26,7 +26,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
     fn enter_assignment_expression(
         &mut self,
         node: &mut AssignmentExpression<'a>,
-        _ctx: &mut TraverseCtx<'a, TraverseState>,
+        ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
         if node.operator != AssignmentOperator::Assign {
             // Return if operator is not =
@@ -72,6 +72,12 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             Vec::new()
         };
 
+        let function_scope_id = match &mut node.right {
+            Expression::FunctionExpression(func_expr) => func_expr.scope_id.get(),
+            Expression::ArrowFunctionExpression(arrow_func_expr) => arrow_func_expr.scope_id.get(),
+            _ => return,
+        };
+
         let body: &mut FunctionBody<'_> = match &mut node.right {
             Expression::FunctionExpression(func_expr) => func_expr.body.as_deref_mut().unwrap(),
             Expression::ArrowFunctionExpression(arrow_func_expr) => {
@@ -92,13 +98,15 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             self.pkg_version,
             body,
             false,
+            function_scope_id,
+            ctx,
         );
     }
 
     fn enter_function(
         &mut self,
         node: &mut Function<'a>,
-        _ctx: &mut TraverseCtx<'a, TraverseState>,
+        ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
         let node_type = match node.r#type {
             FunctionType::FunctionDeclaration => "FunctionDeclaration",
@@ -137,6 +145,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             Vec::new()
         };
 
+        let function_scope_id = node.scope_id.get();
         let body = node.body.as_mut().unwrap();
 
         insert_instrument_method_calls(
@@ -147,13 +156,15 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             self.pkg_version,
             body,
             false,
+            function_scope_id,
+            ctx,
         );
     }
 
     fn enter_variable_declarator(
         &mut self,
         node: &mut VariableDeclarator<'a>,
-        _ctx: &mut TraverseCtx<'a, TraverseState>,
+        ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
         if !node.id.is_binding_identifier() || node.init.is_none() {
             return;
@@ -192,6 +203,12 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             Vec::new()
         };
 
+        let function_scope_id = match expr {
+            Expression::FunctionExpression(func_expr) => func_expr.scope_id.get(),
+            Expression::ArrowFunctionExpression(arrow_func_expr) => arrow_func_expr.scope_id.get(),
+            _ => return,
+        };
+
         let body: &mut FunctionBody<'_> = match expr {
             Expression::FunctionExpression(func_expr) => func_expr.body.as_deref_mut().unwrap(),
             Expression::ArrowFunctionExpression(arrow_func_expr) => {
@@ -212,6 +229,8 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             self.pkg_version,
             body,
             false,
+            function_scope_id,
+            ctx,
         );
     }
 
@@ -276,6 +295,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
                 continue;
             }
 
+            let function_scope_id = method_def.value.scope_id.get();
             let body = method_def.value.body.as_mut().unwrap();
 
             insert_instrument_method_calls(
@@ -286,6 +306,8 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
                 self.pkg_version,
                 body,
                 is_constructor,
+                function_scope_id,
+                ctx,
             );
         }
     }

@@ -15,11 +15,12 @@ const INSTRUMENT_IMPORT_SOURCE: &str = "@aikidosec/firewall/instrument/internals
 const INSTRUMENT_INSPECT_ARGS_METHOD_NAME: &str = "__instrumentInspectArgs";
 const INSTRUMENT_MODIFY_ARGS_METHOD_NAME: &str = "__instrumentModifyArgs";
 const INSTRUMENT_MODIFY_RETURN_VALUE_METHOD_NAME: &str = "__instrumentModifyReturnValue";
+const INSTRUMENT_SHORT_CIRCUIT_METHOD_NAME: &str = "__instrumentShortCircuit";
 const INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME: &str = "__instrumentAccessLocalVariables";
 
 type ImportMethodPredicate = fn(&FunctionInstructions) -> bool;
 
-const IMPORT_METHODS: [(&str, ImportMethodPredicate); 3] = [
+const IMPORT_METHODS: [(&str, ImportMethodPredicate); 4] = [
     (
         INSTRUMENT_INSPECT_ARGS_METHOD_NAME,
         |f: &FunctionInstructions| f.inspect_args,
@@ -31,6 +32,10 @@ const IMPORT_METHODS: [(&str, ImportMethodPredicate); 3] = [
     (
         INSTRUMENT_MODIFY_RETURN_VALUE_METHOD_NAME,
         |f: &FunctionInstructions| f.modify_return_value,
+    ),
+    (
+        INSTRUMENT_SHORT_CIRCUIT_METHOD_NAME,
+        |f: &FunctionInstructions| f.short_circuit,
     ),
 ];
 
