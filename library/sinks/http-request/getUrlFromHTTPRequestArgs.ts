@@ -87,10 +87,16 @@ function getUrlFromRequestOptions(
   }
 
   if (typeof options.path === "string") {
-    str += options.path;
+    str += normalizePath(options.path);
   }
 
   return tryParseURL(str);
+}
+
+// A path like "@evil.com/" appended to the host would turn the host into userinfo.
+// Prefixing a slash keeps the path out of the authority.
+function normalizePath(path: string): string {
+  return path.startsWith("/") ? path : `/${path}`;
 }
 
 // Many HTTP clients pass the separate URL parts as properties of the options object, example:
@@ -146,7 +152,7 @@ function mergeURLWithRequestOptions(
 
   if (options.path) {
     // Include the query string and hash
-    urlStr += options.path;
+    urlStr += normalizePath(options.path);
   } else {
     urlStr += url.pathname + url.search;
   }
