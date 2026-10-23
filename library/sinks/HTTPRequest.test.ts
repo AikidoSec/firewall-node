@@ -478,10 +478,7 @@ t.test("it works", (t) => {
 });
 
 t.test("node.js applies defaults for empty or missing options", async (t) => {
-  function createRequest(
-    module: "http" | "https",
-    options: http.RequestOptions
-  ) {
+  function createRequest(module: "http" | "https", options: any) {
     const req = (module === "http" ? http : https).request(options);
     req.on("error", () => {});
     req.destroy();
@@ -576,14 +573,14 @@ t.test(
 );
 
 t.test("node.js prefers the url port over defaultPort", async (t) => {
-  function getHost(args: [string, http.RequestOptions]) {
+  function getHost(args: [string, any]) {
     const req = http.request(...args);
     req.on("error", () => {});
     req.destroy();
     return req.getHeader("host");
   }
 
-  const cases: [string, http.RequestOptions, string][] = [
+  const cases: [string, any, string][] = [
     ["http://127.0.0.1:3000/", { defaultPort: 2375 }, "127.0.0.1:3000"],
     [
       "http://127.0.0.1:3000/",
