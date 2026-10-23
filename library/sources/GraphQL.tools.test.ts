@@ -46,8 +46,11 @@ t.test("it works", async () => {
         }
     `);
 
+  let getFileCalls = 0;
+
   const root = {
     getFile: ({ path }: { path: string }) => {
+      getFileCalls++;
       return "file content";
     },
   };
@@ -108,5 +111,18 @@ t.test("it works", async () => {
         graphQLSchema: undefined,
       },
     ]);
+
+    const callsBefore = getFileCalls;
+
+    const limited = await query("/etc/bashrc");
+    t.same(limited.data, undefined);
+    t.match(limited.errors[0].extensions, {
+      code: "RATE_LIMITED_BY_ZEN",
+      ipAddress: "::1",
+    });
+    t.same(typeof limited.errors[0].extensions.retryAfterSeconds, "number");
+    t.same(getContext()?.rateLimitedEndpoint?.route, "/graphql");
+
+    t.same(getFileCalls, callsBefore, "resolver should not be called");
   });
 });
