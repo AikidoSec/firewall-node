@@ -3,6 +3,7 @@ import type {
   InspectArgsInterceptor,
   ModifyArgsInterceptor,
   ModifyReturnValueInterceptor,
+  ShortCircuitInterceptor,
 } from "../wrapExport";
 import type { PartialWrapPackageInfo } from "../WrapPackageInfo";
 
@@ -59,6 +60,7 @@ export type IntereptorFunctionsObj = {
   inspectArgs?: InspectArgsInterceptor;
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;
+  shortCircuit?: ShortCircuitInterceptor;
   bindContext: boolean;
 };
 
@@ -100,6 +102,7 @@ export type PackageFunctionInstrumentationInstruction = {
   inspectArgs?: InspectArgsInterceptor;
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;
+  shortCircuit?: ShortCircuitInterceptor;
   /**
    * If true, the arguments object will be modified by modifyArgs instead of modifying the named arguments.
    *
@@ -149,6 +152,7 @@ export type PackageFileInstrumentationInstructionJSON = {
     inspectArgs: boolean;
     modifyArgs: boolean;
     modifyReturnValue: boolean;
+    shortCircuit: boolean;
     modifyArgumentsObject: boolean;
     className?: string;
   }[];

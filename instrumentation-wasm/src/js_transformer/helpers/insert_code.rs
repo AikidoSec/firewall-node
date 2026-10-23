@@ -1,10 +1,12 @@
 use oxc_allocator::{Allocator, Vec as OxcVec};
 use oxc_ast::ast::{
     Argument, ArrayAssignmentTarget, ArrayExpression, ArrayExpressionElement, AssignmentOperator,
-    AssignmentTarget, AssignmentTargetMaybeDefault, Expression, FunctionBody, IdentifierName,
-    IdentifierReference, Statement, StringLiteral,
+    AssignmentTarget, AssignmentTargetMaybeDefault, BindingPattern, Expression, FunctionBody,
+    IdentifierName, IdentifierReference, Statement, StringLiteral, VariableDeclarationKind,
+    VariableDeclarator,
 };
 use oxc_ast::builder::AstBuilder;
+use oxc_semantic::ScopeId;
 use oxc_span::SPAN;
 
 // Add a statement to the beginning of the function: __instrumentInspectArgs('function_identifier', arguments, "{pkg_version}", this);
@@ -61,6 +63,98 @@ pub fn insert_inspect_args<'a>(
 
     let insert_pos = get_insert_pos(body, is_constructor);
     body.statements.insert(insert_pos, stmt_expression);
+}
+
+// { const __zenShortCircuit = __instrumentShortCircuit('function_identifier', arguments, this); if (__zenShortCircuit) { return __zenShortCircuit.returnValue; } }
+pub fn insert_short_circuit<'a>(
+    allocator: &'a Allocator,
+    builder: &'a AstBuilder,
+    identifier: &str,
+    block_scope_id: ScopeId,
+    if_scope_id: ScopeId,
+    body: &mut FunctionBody<'a>,
+) {
+    const RESULT_VAR_NAME: &str = "__zenShortCircuit";
+
+    let mut call_args: OxcVec<'a, Argument<'a>> = OxcVec::with_capacity_in(3, &allocator);
+
+    call_args.push(Argument::StringLiteral(StringLiteral::boxed(
+        SPAN,
+        allocator.alloc_str(identifier),
+        None,
+        builder,
+    )));
+
+    call_args.push(
+        Expression::Identifier(IdentifierReference::boxed(SPAN, "arguments", builder)).into(),
+    );
+
+    call_args
+        .push(Expression::Identifier(IdentifierReference::boxed(SPAN, "this", builder)).into());
+
+    let call_expr = Expression::new_call_expression(
+        SPAN,
+        Expression::Identifier(IdentifierReference::boxed(
+            SPAN,
+            "__instrumentShortCircuit",
+            builder,
+        )),
+        None,
+        call_args,
+        false,
+        builder,
+    );
+
+    let mut declarations = OxcVec::with_capacity_in(1, &allocator);
+    declarations.push(VariableDeclarator::new(
+        SPAN,
+        BindingPattern::new_binding_identifier(SPAN, RESULT_VAR_NAME, builder),
+        None,
+        Some(call_expr),
+        false,
+        builder,
+    ));
+
+    let var_declaration = Statement::new_variable_declaration(
+        SPAN,
+        VariableDeclarationKind::Const,
+        declarations,
+        false,
+        builder,
+    );
+
+    let return_stmt = Statement::new_return_statement(
+        SPAN,
+        Some(Expression::new_static_member_expression(
+            SPAN,
+            Expression::Identifier(IdentifierReference::boxed(SPAN, RESULT_VAR_NAME, builder)),
+            IdentifierName::new(SPAN, "returnValue", builder),
+            false,
+            builder,
+        )),
+        builder,
+    );
+
+    // The if body is a block as well, so it needs its own scope
+    let mut if_body = OxcVec::with_capacity_in(1, &allocator);
+    if_body.push(return_stmt);
+
+    let if_stmt = Statement::new_if_statement(
+        SPAN,
+        Expression::Identifier(IdentifierReference::boxed(SPAN, RESULT_VAR_NAME, builder)),
+        Statement::new_block_statement_with_scope_id(SPAN, if_body, if_scope_id, builder),
+        None,
+        builder,
+    );
+
+    let mut block_body = OxcVec::with_capacity_in(2, &allocator);
+    block_body.push(var_declaration);
+    block_body.push(if_stmt);
+
+    body.statements.insert(
+        0,
+        Statement::new_block_statement_with_scope_id(SPAN, block_body, block_scope_id, builder),
+    );
 }
 
 // Modify the arguments by adding a statement to the beginning of the function

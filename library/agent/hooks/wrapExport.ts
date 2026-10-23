@@ -26,10 +26,17 @@ export type ModifyReturnValueInterceptor = (
   subject: unknown
 ) => unknown;
 
+export type ShortCircuitInterceptor = (
+  args: unknown[],
+  agent: Agent,
+  subject: unknown
+) => { shortCircuit: true; returnValue: unknown } | { shortCircuit: false };
+
 export type InterceptorObject = {
   inspectArgs?: InspectArgsInterceptor;
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;
+  shortCircuit?: ShortCircuitInterceptor;
   // Set the kind of operation for the wrapped function/method
   // This will be used to collect stats
   // For sources, this will often be undefined
@@ -80,6 +87,27 @@ export function wrapExport(
               methodName || "",
               interceptors.kind
             );
+          }
+
+          if (typeof interceptors.shortCircuit === "function") {
+            try {
+              const result = interceptors.shortCircuit(
+                args,
+                agent,
+                // @ts-expect-error We don't now the type of this
+                this
+              );
+
+              if (result.shortCircuit) {
+                return result.returnValue;
+              }
+            } catch (error: any) {
+              agent.onErrorThrownByInterceptor({
+                error: error,
+                method: methodName || "default export",
+                module: pkgInfo.name,
+              });
+            }
           }
 
           // Run modifyArgs interceptor if provided
