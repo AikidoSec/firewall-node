@@ -1041,3 +1041,80 @@ t.test("not a valid injection attempt", async (t) => {
     }
   );
 });
+
+t.test(
+  "object with many $-prefixed keys does not block the event loop",
+  async (t) => {
+    const body: Record<string, unknown> = {};
+    for (let i = 0; i < 10000; i++) {
+      body[`$key${i}`] = 1;
+    }
+
+    const start = performance.now();
+    const result = detectNoSQLInjection(createContext({ body }), {
+      title: { $ne: null },
+    });
+    const duration = performance.now() - start;
+
+    t.same(result, { injection: false });
+    t.ok(duration < 500, `took too long: ${Math.round(duration)}ms`);
+  }
+);
+
+t.test("__proto__ keys in user input do not pollute prototypes", async (t) => {
+  const body = JSON.parse(
+    '{"__proto__": {"$polluted": 1}, "$__proto__": {"x": 1}, "$ne": null}'
+  );
+
+  t.same(
+    detectNoSQLInjection(createContext({ body }), { title: { $ne: null } }),
+    { injection: false }
+  );
+
+  const body2 = JSON.parse('{"__proto__": {"$polluted": 1}, "$ne": null}');
+  t.same(
+    detectNoSQLInjection(createContext({ body: body2 }), {
+      title: { $ne: null },
+    }),
+    {
+      injection: true,
+      source: "body",
+      pathsToPayload: ["."],
+      payload: { $ne: null },
+    }
+  );
+
+  t.equal(({} as Record<string, unknown>)["$polluted"], undefined);
+  t.equal(Object.getPrototypeOf({}), Object.prototype);
+  t.same(Object.keys(Object.prototype), []);
+});
+
+t.test(
+  "deeply nested filter does not throw a stack overflow",
+  { timeout: 30 * 1000 },
+  async (t) => {
+    let filter: Record<string, unknown> = { a: 1 };
+    for (let i = 0; i < 20000; i++) {
+      filter = { a: filter };
+    }
+
+    t.doesNotThrow(() => {
+      detectNoSQLInjection(createContext({ body: { a: "b" } }), filter);
+    });
+  }
+);
+
+t.test(
+  "deeply nested array filter does not throw a stack overflow",
+  { timeout: 30 * 1000 },
+  async (t) => {
+    let filter: unknown[] = [1];
+    for (let i = 0; i < 20000; i++) {
+      filter = [filter];
+    }
+
+    t.doesNotThrow(() => {
+      detectNoSQLInjection(createContext({ body: { a: "b" } }), filter);
+    });
+  }
+);

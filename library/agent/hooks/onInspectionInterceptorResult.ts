@@ -26,7 +26,6 @@ export function onInspectionInterceptorResult(
   agent: Agent,
   result: InterceptorResult,
   pkgInfo: PartialWrapPackageInfo,
-  start: number,
   operation: string,
   kind: OperationKind | undefined
 ) {
@@ -37,8 +36,6 @@ export function onInspectionInterceptorResult(
     return;
   }
 
-  const end = performance.now();
-
   const isBypassedRequest = agent.getConfig().isBypassedRequest(context);
 
   if (kind) {
@@ -47,7 +44,6 @@ export function onInspectionInterceptorResult(
       kind: kind,
       attackDetected: !isBypassedRequest && !!result,
       blocked: agent.shouldBlock(),
-      durationInMs: end - start,
       withoutContext: !context,
     });
   }

@@ -344,3 +344,21 @@ t.test("node.js prefers the url port over defaultPort", async (t) => {
     t.same(getURL([url, options], "http")?.host, host);
   }
 });
+
+t.test("a path cannot inject a URL authority", async (t) => {
+  t.same(
+    getURL([{ hostname: "127.0.0.1", path: "@public.example/" }], "http")
+      ?.hostname,
+    "127.0.0.1"
+  );
+  t.same(
+    getURL(
+      [
+        "http://example.com/",
+        { hostname: "127.0.0.1", path: "@public.example/" },
+      ],
+      "http"
+    )?.hostname,
+    "127.0.0.1"
+  );
+});
