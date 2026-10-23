@@ -6,10 +6,11 @@ import { HTTPServer } from "./HTTPServer";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
-import { getContext } from "../agent/Context";
+import { getContext, runWithContext } from "../agent/Context";
 import type { IncomingMessage, ServerResponse } from "http";
 import { addH3Middleware } from "../middleware/h3";
 import { setUser } from "../agent/context/user";
+import { wrapReadBody } from "./h3/wrapReadBody";
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -58,6 +59,43 @@ t.test(
     t.equal((h3Instance as any).h3Exports, undefined);
 
     t.end();
+  }
+);
+
+t.test(
+  "multipart files with empty or missing filenames are ignored",
+  async (t) => {
+    const body = [
+      { name: "text", data: Buffer.from("Hello world") },
+      { name: "file", filename: "", data: Buffer.from("file content") },
+      ...[
+        "application/octet-stream",
+        "Application/Octet-Stream; charset=utf-8",
+      ].map((type) => ({
+        name: "binary",
+        type,
+        data: Buffer.from("binary content"),
+      })),
+    ];
+
+    await runWithContext(
+      {
+        url: undefined,
+        method: "POST",
+        query: {},
+        headers: {},
+        routeParams: {},
+        remoteAddress: undefined,
+        body: undefined,
+        cookies: {},
+        source: "h3",
+        route: undefined,
+      },
+      async () => {
+        t.equal(await wrapReadBody([], body), body);
+        t.same(getContext()?.body, { text: "Hello world" });
+      }
+    );
   }
 );
 
@@ -174,8 +212,11 @@ t.test(
     router.post(
       "/post-raw-body-buffer",
       defineEventHandler(async (event) => {
-        await readRawBody(event, false);
-        return getContext();
+        const body = await readRawBody(event, false);
+        return {
+          context: getContext(),
+          body,
+        };
       })
     );
 
@@ -437,7 +478,11 @@ t.test(
       formData.append("arr", "1");
       formData.append("arr", "2");
       formData.append("arr", "3");
-      formData.append("file", new Blob(["a; ls"]), "file.txt");
+      formData.append(
+        "file",
+        new Blob(["a; ls"], { type: "text/plain" }),
+        "file.txt"
+      );
       const response = await fetch(
         "http://localhost:4125/post-multipart-form-data",
         {
@@ -454,7 +499,6 @@ t.test(
           body: {
             abc: "123",
             arr: ["1", "2", "3"],
-            file: "a; ls",
           },
         },
         body: [
@@ -471,6 +515,12 @@ t.test(
             },
           },
         ],
+      });
+      t.same(body.context.body, { abc: "123", arr: ["1", "2", "3"] });
+      t.match(body.body[4], {
+        name: "file",
+        filename: "file.txt",
+        data: Buffer.from("a; ls").toJSON(),
       });
     }
 
@@ -508,7 +558,9 @@ t.test(
         }
       );
       const body = await response.json();
-      t.match(body, { body: "Hello world" });
+      const expectedBody = Buffer.from("Hello world").toJSON();
+      t.same(body.context.body, expectedBody);
+      t.same(body.body, expectedBody);
     }
 
     {
