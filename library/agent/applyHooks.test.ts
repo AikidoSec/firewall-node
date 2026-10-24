@@ -120,7 +120,7 @@ t.test("it ignores route if force protection off is on", async (t) => {
     heartbeatIntervalInMS: 10 * 60 * 1000,
     blockedUserIds: [],
     allowedIPAddresses: [],
-    configUpdatedAt: 0,
+    configUpdatedAt: Date.now(),
     excludedUserIdsFromRateLimiting: [],
   });
 
@@ -181,7 +181,7 @@ t.test("it does not report attack if IP is allowed", async (t) => {
   reportingAPI.setResult({
     success: true,
     endpoints: [],
-    configUpdatedAt: 0,
+    configUpdatedAt: Date.now(),
     heartbeatIntervalInMS: 10 * 60 * 1000,
     blockedUserIds: [],
     allowedIPAddresses: ["::1"],
