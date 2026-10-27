@@ -121,6 +121,8 @@ type Heartbeat = {
       input: number;
       output: number;
       total: number;
+      cacheRead: number;
+      cacheWrite: number;
     };
   }[];
   packages: {
