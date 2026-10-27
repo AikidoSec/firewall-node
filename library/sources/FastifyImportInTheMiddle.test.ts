@@ -7,6 +7,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Fastify } from "./Fastify";
 import { registerNodeHooks } from "../agent/hooks/instrumentation/index";
 import { Token } from "../agent/api/Token";
+import { getContext } from "../agent/Context";
 import { wrap } from "../helpers/wrap";
 import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
@@ -64,9 +65,19 @@ t.test(
     t.equal(typeof fastifyModule.fastify, "function");
 
     const app = (
-      fastifyModule.default as () => { close: () => Promise<void> }
+      fastifyModule.default as () => {
+        get: (path: string, handler: () => unknown) => void;
+        inject: (opts: { method: string; url: string }) => Promise<{
+          json: () => unknown;
+        }>;
+        close: () => Promise<void>;
+      }
     )();
-    t.ok(app);
+
+    app.get("/", () => ({ hasContext: !!getContext() }));
+    const response = await app.inject({ method: "GET", url: "/" });
+    t.same(response.json(), { hasContext: true });
+
     await app.close();
   }
 );
