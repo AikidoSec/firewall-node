@@ -16,6 +16,11 @@ import { SQLDialect } from "../sql-injection/dialects/SQLDialect";
 import type { SqlQueryResult } from "./IdorAnalysisResult";
 import { IdorProtectionConfig } from "../../agent/IdorProtectionConfig";
 
+export type ResolvePlaceholder = (
+  placeholder: string,
+  placeholderNumber: number | undefined
+) => unknown;
+
 export function checkContextForIdor({
   sql,
   dialect,
@@ -23,10 +28,7 @@ export function checkContextForIdor({
 }: {
   sql: string;
   dialect: SQLDialect;
-  resolvePlaceholder: (
-    placeholder: string,
-    placeholderNumber: number | undefined
-  ) => unknown;
+  resolvePlaceholder: ResolvePlaceholder;
 }): IdorViolationResult | undefined {
   const agent = getInstance();
   if (!agent) {
@@ -118,10 +120,7 @@ function checkWhereFilters(
   queryResult: SqlQueryResult,
   config: IdorProtectionConfig,
   context: TenantContext,
-  resolvePlaceholder: (
-    placeholder: string,
-    placeholderNumber: number | undefined
-  ) => unknown
+  resolvePlaceholder: ResolvePlaceholder
 ): IdorViolationResult | undefined {
   for (const table of queryResult.tables) {
     if (config.excludedTables.includes(table.name)) {
@@ -183,10 +182,7 @@ function checkInsert(
   queryResult: SqlQueryResult,
   config: IdorProtectionConfig,
   context: TenantContext,
-  resolvePlaceholder: (
-    placeholder: string,
-    placeholderNumber: number | undefined
-  ) => unknown
+  resolvePlaceholder: ResolvePlaceholder
 ): IdorViolationResult | undefined {
   for (const table of queryResult.tables) {
     if (config.excludedTables.includes(table.name)) {

@@ -6,9 +6,8 @@ import { wrapExport } from "../agent/hooks/wrapExport";
 import type { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
-import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
+import { checkContextForSqlInjectionAndIdor } from "../vulnerabilities/checkContextForSqlInjectionAndIdor";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
-import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectSQLite } from "../vulnerabilities/sql-injection/dialects/SQLDialectSQLite";
 
@@ -63,21 +62,10 @@ export class BetterSQLite3 implements Wrapper {
     operation: string,
     params?: unknown[]
   ) {
-    if (context) {
-      const sqlResult = checkContextForSqlInjection({
-        operation: operation,
-        sql: sql,
-        context: context,
-        dialect: this.dialect,
-      });
-
-      if (sqlResult) {
-        return sqlResult;
-      }
-    }
-
-    return checkContextForIdor({
+    return checkContextForSqlInjectionAndIdor({
       sql,
+      operation,
+      context,
       dialect: this.dialect,
       resolvePlaceholder: (placeholder, placeholderNumber) =>
         this.resolvePlaceholder(placeholder, placeholderNumber, params),
