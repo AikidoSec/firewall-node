@@ -19,4 +19,3 @@ app.post("/file", (request) => {
 await app.listen({ port: Number(process.argv[2] ?? 4000), host: "0.0.0.0" });
 const { port } = app.server.address();
 console.log(`Listening on port ${port}`);
-process.send?.({ port });

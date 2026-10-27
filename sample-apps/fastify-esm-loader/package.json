@@ -9,6 +9,7 @@
     "@aikidosec/firewall": "file:../../build",
     "@sentry/node": "10.48.0",
     "fastify": "5.8.5",
-    "newrelic": "13.20.0"
+    "newrelic": "14.8.0",
+    "newrelic-old": "npm:newrelic@13.20.0"
   }
 }
