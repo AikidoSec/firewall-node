@@ -12,6 +12,8 @@ import {
 import { removeNodePrefix } from "../../../helpers/removeNodePrefix";
 import { getInstance } from "../../AgentSingleton";
 import { syncBuiltinESMExports } from "module";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { getBuiltinModuleWithoutPatching } from "./processGetBuiltin";
 import { wrapBuiltinExports } from "./wrapBuiltinExports";
 
@@ -118,10 +120,11 @@ function patchPackage(
     (previousLoadResult.format as "commonjs" | "module" | undefined) ??
     "unambiguous";
 
-  const sourceString =
-    typeof previousLoadResult.source === "string"
-      ? previousLoadResult.source
-      : new TextDecoder("utf-8").decode(previousLoadResult.source);
+  const sourceString = getSourceString(path, previousLoadResult);
+  if (sourceString === undefined) {
+    // Do not transform an empty source, it would break the module exports
+    return previousLoadResult;
+  }
 
   const newSource = transformCode(
     moduleInfo.name,
@@ -142,6 +145,30 @@ function patchPackage(
     shortCircuit: previousLoadResult.shortCircuit,
     source: newSource,
   };
+}
+
+function getSourceString(
+  path: string,
+  loadResult: ReturnType<LoadFunction>
+): string | undefined {
+  if (typeof loadResult.source === "string") {
+    return loadResult.source;
+  }
+
+  if (loadResult.source) {
+    return new TextDecoder("utf-8").decode(loadResult.source);
+  }
+
+  // Async loader hooks (module.register), e.g. import-in-the-middle,
+  // can cause Node.js to not provide the source of CommonJS files
+  try {
+    return readFileSync(fileURLToPath(path), "utf-8");
+  } catch (error) {
+    if (error instanceof Error) {
+      getInstance()?.onFailedToWrapModule(path, error);
+    }
+    return undefined;
+  }
 }
 
 function patchBuiltin(
