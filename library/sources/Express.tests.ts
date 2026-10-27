@@ -595,6 +595,27 @@ export async function createExpressTests(expressPackageName: string) {
     t.same(res3.statusCode, 200);
   });
 
+  t.test(
+    "it rate limits even if Host header contains URI delimiters",
+    async () => {
+      for (const _ of Array.from({ length: 3 })) {
+        const res = await request(getApp(false))
+          .get("/rate-limited")
+          .set("Host", "example.test?x=")
+          .set("x-forwarded-for", "5.6.7.8");
+        t.same(res.statusCode, 200);
+      }
+
+      const res = await request(getApp(false))
+        .get("/rate-limited")
+        .set("Host", "example.test?x=")
+        .set("x-forwarded-for", "5.6.7.8");
+      t.same(res.statusCode, 429);
+
+      await sleep(2000);
+    }
+  );
+
   t.test("it rate limits by user", async () => {
     for (const _ of Array.from({ length: 3 })) {
       const res = await request(getApp()).get("/user-rate-limited");

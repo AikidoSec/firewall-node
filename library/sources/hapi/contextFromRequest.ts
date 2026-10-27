@@ -18,6 +18,6 @@ export function contextFromRequest(req: Request): Context {
     /* c8 ignore next */
     cookies: req.state || {},
     source: "hapi",
-    route: buildRouteFromURL(req.url.toString()),
+    route: buildRouteFromURL(req.raw.req.url || req.url.pathname),
   };
 }
