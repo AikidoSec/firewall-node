@@ -4,8 +4,9 @@ import { escapeHTML } from "../../helpers/escapeHTML";
 import type { Agent } from "../Agent";
 import { OperationKind } from "../api/Event";
 import { attackKindHumanName } from "../Attack";
-import { getContext, updateContext } from "../Context";
+import { type Context, getContext, updateContext } from "../Context";
 import {
+  AttackResult,
   InterceptorResult,
   isAttackResult,
   isBlockOutboundConnectionResult,
@@ -29,8 +30,10 @@ export function onInspectionInterceptorResult(
   operation: string,
   kind: OperationKind | undefined
 ) {
+  const attack = getAttack(result);
+
   // Only read when an attack was detected, so the normal path is not affected
-  const stack = isAttackResult(result) && context ? captureStack() : undefined;
+  const stack = attack && context ? captureStack() : undefined;
   if (stack && isStackFromSourceMapLookup(stack)) {
     // Node internals building a stack trace, not an attack by the app
     return;
@@ -53,6 +56,11 @@ export function onInspectionInterceptorResult(
   }
 
   if (isIdorViolationResult(result)) {
+    // The IDOR violation always throws, so report the attack detected in the same query first
+    if (result.attack && context) {
+      reportAttack(context, agent, result.attack, pkgInfo, stack!);
+    }
+
     throw cleanError(new Error(result.message));
   }
 
@@ -65,21 +73,7 @@ export function onInspectionInterceptorResult(
   }
 
   if (isAttackResult(result) && context) {
-    // Flag request as having an attack detected
-    updateContext(context, "attackDetected", true);
-
-    agent.onDetectedAttack({
-      module: pkgInfo.name,
-      operation: result.operation,
-      kind: result.kind,
-      source: result.source,
-      blocked: agent.shouldBlock(),
-      stack: cleanupStackTrace(stack!, libraryRoot),
-      paths: result.pathsToPayload,
-      metadata: result.metadata,
-      request: context,
-      payload: result.payload,
-    });
+    reportAttack(context, agent, result, pkgInfo, stack!);
 
     if (agent.shouldBlock()) {
       throw cleanError(
@@ -89,4 +83,40 @@ export function onInspectionInterceptorResult(
       );
     }
   }
+}
+
+function getAttack(result: InterceptorResult): AttackResult | undefined {
+  if (isIdorViolationResult(result)) {
+    return result.attack;
+  }
+
+  if (isAttackResult(result)) {
+    return result;
+  }
+
+  return undefined;
+}
+
+function reportAttack(
+  context: Context,
+  agent: Agent,
+  attack: AttackResult,
+  pkgInfo: PartialWrapPackageInfo,
+  stack: string
+) {
+  // Flag request as having an attack detected
+  updateContext(context, "attackDetected", true);
+
+  agent.onDetectedAttack({
+    module: pkgInfo.name,
+    operation: attack.operation,
+    kind: attack.kind,
+    source: attack.source,
+    blocked: agent.shouldBlock(),
+    stack: cleanupStackTrace(stack, libraryRoot),
+    paths: attack.pathsToPayload,
+    metadata: attack.metadata,
+    request: context,
+    payload: attack.payload,
+  });
 }

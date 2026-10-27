@@ -103,7 +103,10 @@ t.test("detection-only mode", async (t) => {
     "returns the IDOR violation even if SQL injection was detected",
     async (t) => {
       const result = check(sqlInjectionWithoutTenantFilter, context);
-      t.match(result, { idorViolation: true });
+      t.match(result, {
+        idorViolation: true,
+        attack: { kind: "sql_injection", operation: "pg.query" },
+      });
       t.match(
         (result as { message: string }).message,
         "missing a filter on column 'tenant_id'"
