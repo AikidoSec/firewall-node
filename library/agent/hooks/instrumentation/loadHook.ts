@@ -12,12 +12,14 @@ import {
 import { removeNodePrefix } from "../../../helpers/removeNodePrefix";
 import { getInstance } from "../../AgentSingleton";
 import { syncBuiltinESMExports } from "module";
-import { readFileSync } from "node:fs";
+import { readFileSync as readFileSyncMaybeWrapped } from "fs";
 import { fileURLToPath } from "node:url";
 import { getBuiltinModuleWithoutPatching } from "./processGetBuiltin";
 import { wrapBuiltinExports } from "./wrapBuiltinExports";
+import { getOriginal } from "../../../helpers/wrap";
 
 const builtinPatchedSymbol = Symbol("zen.instrumentation.builtin.patched");
+const readFileSync = getOriginal(readFileSyncMaybeWrapped);
 
 export function onModuleLoad(
   path: string,
