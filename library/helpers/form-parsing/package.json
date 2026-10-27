@@ -1,7 +1,6 @@
 {
   "name": "@fastify/busboy",
-  "version": "3.2.0",
-  "private": false,
+  "version": "3.2.2",
   "author": "Brian White <mscdex@mscdex.net>",
   "contributors": [
     {
@@ -18,29 +17,29 @@
   "description": "A streaming parser for HTML form data for node.js",
   "main": "index.js",
   "type": "commonjs",
-  "types": "index.d.ts",
+  "types": "types/index.d.ts",
   "scripts": {
     "bench:busboy": "cd benchmarks && npm install && npm run benchmark-fastify",
     "bench:dicer": "node bench/dicer/dicer-bench-multipart-parser.js",
     "coveralls": "nyc report --reporter=lcov",
-    "lint": "npm run lint:standard",
-    "lint:fix": "standard --fix",
-    "lint:standard": "standard --verbose | snazzy",
-    "test:unit": "c8 --statements 98 --branches 97 --functions 96 --lines 98 node --test",
-    "test:types": "tsd",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "test:unit": "c8 --check-coverage --statements 100 --branches 100 --functions 100 --lines 100 node --test",
+    "test:types": "tstyche",
     "test": "npm run test:unit && npm run test:types"
   },
   "devDependencies": {
-    "@types/node": "^24.0.8",
+    "@types/node": "^26.0.1",
     "busboy": "^1.6.0",
-    "c8": "^10.1.2",
+    "c8": "^12.0.0",
     "photofinish": "^1.8.0",
     "snazzy": "^9.0.0",
-    "standard": "^17.1.0",
-    "tinybench": "^4.0.1",
-    "tsd": "^0.32.0",
+    "eslint": "^9.39.0",
+    "neostandard": "^0.12.0",
+    "tinybench": "^6.0.0",
+    "tstyche": "^7.0.0",
     "tslib": "^2.8.1",
-    "typescript": "~5.9.2"
+    "typescript": "~6.0.2"
   },
   "keywords": [
     "uploads",
@@ -57,9 +56,6 @@
     "url": "https://github.com/fastify/busboy/issues"
   },
   "homepage": "https://github.com/fastify/busboy#readme",
-  "tsd": {
-    "directory": "test-types"
-  },
   "standard": {
     "globals": [
       "describe",
@@ -72,7 +68,9 @@
   "files": [
     "README.md",
     "LICENSE",
+    "index.js",
     "lib/*",
+    "types/*",
     "deps/encoding/*",
     "deps/dicer/lib",
     "deps/streamsearch/",
