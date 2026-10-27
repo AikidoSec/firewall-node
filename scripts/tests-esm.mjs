@@ -55,7 +55,7 @@ await execAsyncWithPipe("./node_modules/.bin/tsc -p tsconfig.test.esm.json", {
 await writeFile(join(outDir, "package.json"), "{}");
 
 const testFiles = glob(
-  "**/*.{test.ts,tests.ts,txt,pem,json,xml,js,prisma,toml,sql,zip}",
+  "**/*.{test.ts,tests.ts,txt,pem,json,xml,js,mjs,prisma,toml,sql,zip}",
   {
     cwd: libDir,
     exclude: ["**/node_modules/**"],
