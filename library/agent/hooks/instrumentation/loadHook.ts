@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { getBuiltinModuleWithoutPatching } from "./processGetBuiltin";
 import { wrapBuiltinExports } from "./wrapBuiltinExports";
 import { getOriginal } from "../../../helpers/wrap";
+import { warnIfUsingOldImportInTheMiddle } from "../../../helpers/warnIfUsingOldImportInTheMiddle";
 
 const builtinPatchedSymbol = Symbol("zen.instrumentation.builtin.patched");
 const readFileSync = getOriginal(readFileSyncMaybeWrapped);
@@ -88,6 +89,10 @@ function patchPackage(
   }
 
   getInstance()?.onPackageRequired(moduleInfo.name, pkgVersion);
+
+  if (moduleInfo.name === "import-in-the-middle") {
+    warnIfUsingOldImportInTheMiddle(pkgVersion);
+  }
 
   if (!shouldPatchPackage(moduleInfo.name)) {
     // We don't want to modify this module
