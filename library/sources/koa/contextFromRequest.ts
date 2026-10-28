@@ -24,7 +24,7 @@ export function contextFromRequest(ctx: KoaContext): Context {
     query: ctx.request.query,
     cookies: ctx.req.headers.cookie ? parseCookies(ctx.req.headers.cookie) : {},
     source: "koa",
-    route: buildRouteFromURL(ctx.request.href),
+    route: buildRouteFromURL(ctx.request.originalUrl),
     subdomains: ctx.request.subdomains,
   };
 }

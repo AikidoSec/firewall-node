@@ -23,7 +23,7 @@ export function contextFromRequest(req: Request): Context {
     /* c8 ignore next */
     cookies: req.cookies ? req.cookies : {},
     source: "express",
-    route: buildRouteFromURL(url),
+    route: buildRouteFromURL(req.originalUrl),
     subdomains: req.subdomains,
   };
 }
