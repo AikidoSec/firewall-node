@@ -1,3 +1,4 @@
+import { isAINetworkCaptureActive } from "./ai-provider-traffic/isAINetworkCaptureActive";
 import { Agent } from "../agent/Agent";
 import type { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorObject, wrapExport } from "../agent/hooks/wrapExport";
@@ -25,7 +26,7 @@ export class AiSDK implements Wrapper {
     }
 
     const provider = this.getProviderFromArgs(args);
-    if (!provider) {
+    if (!provider || (isAINetworkCaptureActive() && provider !== "bedrock")) {
       return;
     }
 
@@ -144,6 +145,12 @@ export class AiSDK implements Wrapper {
     return {
       kind: "ai_op",
       modifyReturnValue: (args, returnValue, agent) => {
+        if (
+          isAINetworkCaptureActive() &&
+          this.getProviderFromArgs(args) !== "bedrock"
+        ) {
+          return returnValue;
+        }
         if (returnValue instanceof Promise) {
           // Inspect the response after the promise resolves, it won't change the original promise
           returnValue
@@ -177,6 +184,12 @@ export class AiSDK implements Wrapper {
     return {
       kind: "ai_op",
       modifyReturnValue: (args, returnValue, agent) => {
+        if (
+          isAINetworkCaptureActive() &&
+          this.getProviderFromArgs(args) !== "bedrock"
+        ) {
+          return returnValue;
+        }
         if (
           !returnValue ||
           typeof returnValue !== "object" ||

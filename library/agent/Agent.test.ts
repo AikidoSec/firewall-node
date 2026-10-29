@@ -861,6 +861,8 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
   agent.start([]);
 
   agent.onConnectHostname("aikido.dev", 443);
+  agent.getAIStatistics().onAIToolCall({ name: "weather", blocked: false });
+  agent.getAIStatistics().onAIToolCall({ name: "weather", blocked: false });
   agent.onConnectHostname("aikido.dev", 80);
   agent.onConnectHostname("google.com", 443);
   agent.onRouteExecute(getRouteContext("POST", "/posts/:id"));
@@ -884,6 +886,7 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
     {
       type: "heartbeat",
       middlewareInstalled: false,
+      aiToolCalls: [{ name: "weather", calls: 2, blocked: 0 }],
       hostnames: [
         {
           hostname: "aikido.dev",
@@ -952,6 +955,7 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
     },
   ]);
 
+  t.same(agent.getAIStatistics().getToolCallStats(), []);
   clock.uninstall();
 });
 

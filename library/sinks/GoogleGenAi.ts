@@ -1,3 +1,4 @@
+import { isAINetworkCaptureActive } from "./ai-provider-traffic/isAINetworkCaptureActive";
 import { Agent } from "../agent/Agent";
 import type { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
@@ -68,6 +69,7 @@ export class GoogleGenAi implements Wrapper {
   }
 
   private inspectReturnValue(agent: Agent, returnValue: any) {
+    if (isAINetworkCaptureActive()) return;
     if (returnValue instanceof Promise) {
       // Inspect the response after the promise resolves, it won't change the original promise
       returnValue
@@ -162,7 +164,7 @@ export class GoogleGenAi implements Wrapper {
   }
 
   private inspectResponse(agent: Agent, response: any) {
-    if (!this.isResponse(response)) {
+    if (isAINetworkCaptureActive() || !this.isResponse(response)) {
       return;
     }
 

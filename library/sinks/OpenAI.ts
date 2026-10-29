@@ -1,3 +1,4 @@
+import { isAINetworkCaptureActive } from "./ai-provider-traffic/isAINetworkCaptureActive";
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
@@ -43,7 +44,7 @@ type Provider = "openai" | "azure";
 
 export class OpenAI implements Wrapper {
   private inspectResponse(agent: Agent, response: unknown, provider: Provider) {
-    if (!isResponse(response)) {
+    if (isAINetworkCaptureActive() || !isResponse(response)) {
       return;
     }
 
@@ -72,7 +73,7 @@ export class OpenAI implements Wrapper {
     response: unknown,
     provider: Provider
   ) {
-    if (!isCompletionResponse(response)) {
+    if (isAINetworkCaptureActive() || !isCompletionResponse(response)) {
       return;
     }
 
@@ -142,6 +143,7 @@ export class OpenAI implements Wrapper {
     agent: Agent,
     subject: unknown
   ) {
+    if (isAINetworkCaptureActive()) return returnValue;
     if (returnValue instanceof Promise) {
       // Inspect the response after the promise resolves, it won't change the original promise
       returnValue
@@ -165,6 +167,7 @@ export class OpenAI implements Wrapper {
     agent: Agent,
     subject: unknown
   ) {
+    if (isAINetworkCaptureActive()) return returnValue;
     if (returnValue instanceof Promise) {
       // Inspect the response after the promise resolves, it won't change the original promise
       returnValue

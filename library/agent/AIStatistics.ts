@@ -9,8 +9,11 @@ type AIProviderStats = {
   };
 };
 
+type AIToolCallStats = { name: string; calls: number; blocked: number };
+
 export class AIStatistics {
   private calls: Map<string, AIProviderStats> = new Map();
+  private toolCalls = new Map<string, AIToolCallStats>();
 
   private getProviderKey(provider: string, model: string): string {
     return `${provider}:${model}`;
@@ -79,11 +82,28 @@ export class AIStatistics {
     });
   }
 
+  onAIToolCall({ name, blocked }: { name: string; blocked: boolean }) {
+    if (!name || name.length > 1024) return;
+    let stats = this.toolCalls.get(name);
+    if (!stats) {
+      if (this.toolCalls.size >= 1024) return;
+      stats = { name, calls: 0, blocked: 0 };
+      this.toolCalls.set(name, stats);
+    }
+    stats.calls++;
+    if (blocked) stats.blocked++;
+  }
+
+  getToolCallStats() {
+    return Array.from(this.toolCalls.values()).map((stats) => ({ ...stats }));
+  }
+
   reset() {
     this.calls.clear();
+    this.toolCalls.clear();
   }
 
   isEmpty(): boolean {
-    return this.calls.size === 0;
+    return this.calls.size === 0 && this.toolCalls.size === 0;
   }
 }

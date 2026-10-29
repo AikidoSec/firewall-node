@@ -160,6 +160,23 @@ t.test("it resets all statistics", async () => {
   t.same(stats.getStats(), []);
 });
 
+t.test(
+  "tool calls use heartbeat counters and reset with statistics",
+  async (t) => {
+    const stats = new AIStatistics();
+    stats.onAIToolCall({ name: "weather", blocked: false });
+    stats.onAIToolCall({ name: "weather", blocked: true });
+    stats.onAIToolCall({ name: "", blocked: false });
+    t.equal(stats.isEmpty(), false);
+    t.same(stats.getToolCallStats(), [
+      { name: "weather", calls: 2, blocked: 1 },
+    ]);
+    stats.reset();
+    t.equal(stats.isEmpty(), true);
+    t.same(stats.getToolCallStats(), []);
+  }
+);
+
 t.test("it handles zero token inputs", async () => {
   const stats = new AIStatistics();
 

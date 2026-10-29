@@ -68,6 +68,7 @@ import { Mongoose } from "../sinks/Mongoose";
 import { NodeVm } from "../sinks/NodeVm";
 import { Zlib } from "../sinks/Zlib";
 import { WorkerThreads } from "../sinks/WorkerThreads";
+import { AIProviderTraffic } from "../sinks/AIProviderTraffic";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -161,6 +162,7 @@ export function getWrappers() {
     new Elysia(),
     new GraphQL(),
     new Trpc(),
+    new AIProviderTraffic(),
     new OpenAI(),
     new Mistral(),
     new Anthropic(),

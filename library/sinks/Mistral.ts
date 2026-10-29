@@ -1,3 +1,4 @@
+import { isAINetworkCaptureActive } from "./ai-provider-traffic/isAINetworkCaptureActive";
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
@@ -26,7 +27,10 @@ function isMistralChatCompletionResponse(
 
 export class Mistral implements Wrapper {
   private inspectResponse(agent: Agent, response: unknown) {
-    if (!isMistralChatCompletionResponse(response)) {
+    if (
+      isAINetworkCaptureActive() ||
+      !isMistralChatCompletionResponse(response)
+    ) {
       return;
     }
 
@@ -51,6 +55,7 @@ export class Mistral implements Wrapper {
   }
 
   private inspectPromise(returnValue: unknown, agent: Agent) {
+    if (isAINetworkCaptureActive()) return;
     if (returnValue instanceof Promise) {
       // Inspect the response after the promise resolves
       returnValue

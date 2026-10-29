@@ -1,3 +1,4 @@
+import { isAINetworkCaptureActive } from "./ai-provider-traffic/isAINetworkCaptureActive";
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
@@ -42,7 +43,7 @@ function isAnthropicMessageResponse(
 
 export class Anthropic implements Wrapper {
   private inspectResponse(agent: Agent, response: unknown) {
-    if (!isAnthropicMessageResponse(response)) {
+    if (isAINetworkCaptureActive() || !isAnthropicMessageResponse(response)) {
       return;
     }
 
@@ -63,6 +64,7 @@ export class Anthropic implements Wrapper {
   }
 
   private inspectReturnValue(agent: Agent, returnValue: any) {
+    if (isAINetworkCaptureActive()) return;
     if (returnValue instanceof Promise) {
       // Inspect the response after the promise resolves
       returnValue
