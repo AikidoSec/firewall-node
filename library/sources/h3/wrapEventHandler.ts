@@ -1,14 +1,14 @@
 import type { EventHandler, H3Event } from "h3";
 import { runWithContext } from "../../agent/Context";
 import { contextFromEvent } from "./contextFromEvent";
-import { createWrappedFunction } from "../../helpers/wrap";
+import { createWrappedFunction, isWrapped } from "../../helpers/wrap";
 import type { PartialH3Exports } from "../H3";
 
 export function wrapEventHandler(
   handler: EventHandler,
   h3: PartialH3Exports | undefined
 ): EventHandler {
-  if (!h3) {
+  if (!h3 || isWrapped(handler)) {
     return handler;
   }
 

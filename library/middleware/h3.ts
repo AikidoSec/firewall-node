@@ -20,6 +20,10 @@ export function addH3Middleware(app: App) {
         }
 
         event.node.res.statusCode = 429;
+        event.node.res.setHeader(
+          "Retry-After",
+          result.retryAfterSeconds.toString()
+        );
         event.node.res.setHeader("content-type", "text/plain");
         return message;
       }

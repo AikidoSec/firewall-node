@@ -11,6 +11,7 @@ import type { IncomingMessage, ServerResponse } from "http";
 import { addH3Middleware } from "../middleware/h3";
 import { setUser } from "../agent/context/user";
 import { wrapReadBody } from "./h3/wrapReadBody";
+import { getOriginal, isWrapped } from "../helpers/wrap";
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -36,6 +37,9 @@ const agent = createTestAgent({
   }),
 });
 agent.start([new H3(), new HTTPServer()]);
+
+const skip =
+  getMajorNodeVersion() < 20 ? "h3 does not work on node < 20" : undefined;
 
 t.test(
   "setH3Exports falls back to undefined if one var is not a function",
@@ -102,8 +106,7 @@ t.test(
 t.test(
   "it works ",
   {
-    skip:
-      getMajorNodeVersion() < 20 ? "h3 does not work on node < 20" : undefined,
+    skip,
   },
   async (t) => {
     const {
@@ -685,6 +688,7 @@ t.test(
 
       const response3 = await fetch("http://localhost:4125/rate-limited");
       t.equal(response3.status, 429);
+      t.ok(Number(response3.headers.get("retry-after")) > 0);
       const text = await response3.text();
       t.match(text, /You are rate limited by Zen./);
     }
@@ -750,5 +754,84 @@ t.test(
 
     server.close();
     server2.close();
+  }
+);
+
+t.test(
+  "handlers and middleware are not wrapped twice",
+  {
+    skip,
+  },
+  async (t) => {
+    const { defineEventHandler, createApp } =
+      require("h3") as typeof import("h3");
+
+    const handler = () => "ok";
+    const config = { handler, onRequest: () => {} };
+
+    const first = defineEventHandler(config);
+    const wrappedHandler = config.handler;
+    const wrappedOnRequest = config.onRequest;
+    t.not(wrappedHandler, handler);
+    t.ok(isWrapped(wrappedHandler));
+
+    const second = defineEventHandler(config);
+    t.equal(config.handler, wrappedHandler);
+    t.equal(config.onRequest, wrappedOnRequest);
+    t.ok(first);
+    t.ok(second);
+
+    const onRequest = () => {};
+    const appConfig = { onRequest };
+    createApp(appConfig);
+    const wrappedAppOnRequest = appConfig.onRequest;
+    t.ok(isWrapped(wrappedAppOnRequest));
+    createApp(appConfig);
+    t.equal(appConfig.onRequest, wrappedAppOnRequest);
+    t.equal(getOriginal(appConfig.onRequest), onRequest);
+  }
+);
+
+t.test(
+  "a malformed host header does not break the request",
+  {
+    skip,
+  },
+  async (t) => {
+    const { createApp, defineEventHandler, toNodeListener } =
+      require("h3") as typeof import("h3");
+    const http = require("http") as typeof import("http");
+
+    const app = createApp();
+    app.use(
+      defineEventHandler(() => {
+        const context = getContext();
+        return { source: context?.source, url: context?.url };
+      })
+    );
+
+    const server = http.createServer(toNodeListener(app));
+    await new Promise<void>((resolve) => server.listen(4127, resolve));
+
+    const { status, body } = await new Promise<{
+      status: number | undefined;
+      body: string;
+    }>((resolve, reject) => {
+      const req = http.request(
+        { port: 4127, path: "/some/path?a=1", headers: { host: "a b" } },
+        (res) => {
+          let data = "";
+          res.on("data", (chunk) => (data += chunk));
+          res.on("end", () => resolve({ status: res.statusCode, body: data }));
+        }
+      );
+      req.on("error", reject);
+      req.end();
+    });
+
+    t.equal(status, 200);
+    t.same(JSON.parse(body), { source: "h3", url: "/some/path?a=1" });
+
+    server.close();
   }
 );
