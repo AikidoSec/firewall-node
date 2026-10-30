@@ -9,8 +9,15 @@ type AIProviderStats = {
   };
 };
 
+type AIToolCallStats = {
+  name: string;
+  calls: number;
+  blocked: number;
+};
+
 export class AIStatistics {
   private calls: Map<string, AIProviderStats> = new Map();
+  private toolCalls: Map<string, AIToolCallStats> = new Map();
 
   private getProviderKey(provider: string, model: string): string {
     return `${provider}:${model}`;
@@ -79,11 +86,32 @@ export class AIStatistics {
     });
   }
 
+  onAIToolCall({ name, blocked }: { name: string; blocked: boolean }) {
+    if (!name) {
+      return;
+    }
+
+    if (!this.toolCalls.has(name)) {
+      this.toolCalls.set(name, { name, calls: 0, blocked: 0 });
+    }
+
+    const toolStats = this.toolCalls.get(name)!;
+    toolStats.calls += 1;
+    if (blocked) {
+      toolStats.blocked += 1;
+    }
+  }
+
+  getToolCallStats() {
+    return Array.from(this.toolCalls.values());
+  }
+
   reset() {
     this.calls.clear();
+    this.toolCalls.clear();
   }
 
   isEmpty(): boolean {
-    return this.calls.size === 0;
+    return this.calls.size === 0 && this.toolCalls.size === 0;
   }
 }
