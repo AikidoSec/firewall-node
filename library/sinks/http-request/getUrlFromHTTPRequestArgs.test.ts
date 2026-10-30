@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { Agent } from "http";
 import { getUrlFromHTTPRequestArgs as getURL } from "./getUrlFromHTTPRequestArgs";
 
 t.test("it works with strings", async (t) => {
@@ -216,6 +217,34 @@ t.test("it uses defaultPort when port is not set", async (t) => {
       "http"
     ),
     new URL("http://example.com:4000")
+  );
+});
+
+t.test("it uses agent.defaultPort when no port is set", async (t) => {
+  const agent = new Agent({ defaultPort: 8080 } as any);
+  t.same(
+    getURL([{ hostname: "example.com", agent }], "http"),
+    new URL("http://example.com:8080")
+  );
+  t.same(
+    getURL(["http://example.com", { agent }], "http"),
+    new URL("http://example.com:8080")
+  );
+  t.same(
+    getURL([{ hostname: "example.com", port: 3000, agent }], "http"),
+    new URL("http://example.com:3000")
+  );
+  t.same(
+    getURL([{ hostname: "example.com", defaultPort: 2375, agent }], "http"),
+    new URL("http://example.com:2375")
+  );
+  t.same(
+    getURL(["http://example.com:3000", { agent }], "http"),
+    new URL("http://example.com:3000")
+  );
+  t.same(
+    getURL([{ hostname: "example.com", agent: false }], "http"),
+    new URL("http://example.com")
   );
 });
 
