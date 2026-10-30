@@ -62,10 +62,7 @@ export class Agent {
   private serviceConfig = new ServiceConfig([], Date.now(), [], []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
-  private statistics = new InspectionStatistics({
-    maxPerfSamplesInMemory: 5000,
-    maxCompressedStatsInMemory: 20, // per operation
-  });
+  private statistics = new InspectionStatistics();
   private aiStatistics = new AIStatistics();
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
@@ -593,6 +590,12 @@ export class Agent {
     this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
   }
 
+  onInvalidEndpointRoute(route: string) {
+    this.logger.log(
+      `Skipping endpoint route that is not a valid pattern: ${route}`
+    );
+  }
+
   onPackageRequired(name: string, version: string) {
     this.packages.addPackage({
       name,
@@ -697,7 +700,6 @@ export class Agent {
   }
 
   async flushStats(timeoutInMS: number) {
-    this.statistics.forceCompress();
     await this.sendHeartbeat(timeoutInMS);
   }
 

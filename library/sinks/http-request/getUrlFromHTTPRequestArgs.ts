@@ -64,33 +64,49 @@ function getUrlFromRequestOptions(
   module: "http" | "https"
 ): URL | undefined {
   let str = "";
-  if (typeof options.protocol === "string") {
+  if (typeof options.protocol === "string" && options.protocol.length > 0) {
     str += options.protocol;
   } else if (module) {
     str += `${module}:`;
   }
 
   str += "//";
-  if (typeof options.hostname === "string") {
+  if (typeof options.hostname === "string" && options.hostname.length > 0) {
     str += wrapWithSquareBracketsIfNeeded(options.hostname);
-  } else if (typeof options.host === "string") {
+  } else if (typeof options.host === "string" && options.host.length > 0) {
     str += wrapWithSquareBracketsIfNeeded(options.host);
+  } else {
+    // Node.js default value, see https://github.com/nodejs/node/blob/a3bb551ea70c7e0b1377c5b97d5d186cd66095cd/lib/_http_client.js#L406-L407
+    str += "localhost";
   }
 
-  if (options.port) {
-    if (typeof options.port === "number" && options.port > 0) {
-      str += `:${options.port}`;
-    }
-    if (typeof options.port === "string" && options.port.length > 0) {
-      str += `:${options.port}`;
-    }
+  // Node.js uses `options.port || options.defaultPort || agent.defaultPort`
+  const port = getValidPort(options.port) ?? getValidPort(options.defaultPort);
+  if (port !== undefined) {
+    str += `:${port}`;
   }
 
   if (typeof options.path === "string") {
-    str += options.path;
+    str += normalizePath(options.path);
   }
 
   return tryParseURL(str);
+}
+
+function getValidPort(port: unknown): string | number | undefined {
+  if (typeof port === "number" && port > 0) {
+    return port;
+  }
+  if (typeof port === "string" && port.length > 0) {
+    return port;
+  }
+  return undefined;
+}
+
+// A path like "@evil.com/" appended to the host would turn the host into userinfo.
+// Prefixing a slash keeps the path out of the authority.
+function normalizePath(path: string): string {
+  return path.startsWith("/") ? path : `/${path}`;
 }
 
 // Many HTTP clients pass the separate URL parts as properties of the options object, example:
@@ -138,15 +154,16 @@ function mergeURLWithRequestOptions(
     urlStr += wrapWithSquareBracketsIfNeeded(url.hostname);
   }
 
-  if (options.port) {
-    urlStr += `:${options.port}`;
-  } else if (url.port) {
-    urlStr += `:${url.port}`;
+  const port =
+    getValidPort(options.port) ??
+    (url.port || getValidPort(options.defaultPort));
+  if (port !== undefined && port !== "") {
+    urlStr += `:${port}`;
   }
 
   if (options.path) {
     // Include the query string and hash
-    urlStr += options.path;
+    urlStr += normalizePath(options.path);
   } else {
     urlStr += url.pathname + url.search;
   }

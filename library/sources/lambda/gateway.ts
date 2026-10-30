@@ -4,6 +4,7 @@ import { isJsonContentType } from "../../helpers/isJsonContentType";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { tryParseJSON } from "../../helpers/tryParseJSON";
 import { parse as parseCookies } from "../../helpers/parseCookies";
+import { isTrustedProxyRequest } from "../../helpers/trustProxy";
 
 // Based on https://docs.aws.amazon.com/powertools/typescript/2.30.1/api/variables/_aws-lambda-powertools_parser.schemas.APIGatewayProxyEventSchema.html
 export type APIGatewayProxyEventV1 = {
@@ -126,10 +127,12 @@ export function getContextForGatewayEvent(
   event: APIGatewayProxyEvent
 ): Context | undefined {
   if (isGatewayEventV1(event)) {
+    const rawIp = event.requestContext?.identity?.sourceIp;
     return {
       url: getUrlFromGatewayEvent(event),
       method: event.httpMethod,
-      remoteAddress: event.requestContext?.identity?.sourceIp,
+      remoteAddress: rawIp,
+      isBehindTrustedProxy: isTrustedProxyRequest(rawIp),
       body: parseBody(event),
       headers: event.headers,
       routeParams: event.pathParameters ? event.pathParameters : {},
@@ -142,11 +145,13 @@ export function getContextForGatewayEvent(
 
   if (isGatewayEventV2(event)) {
     const url = getUrlFromGatewayEvent(event);
+    const rawIp = event.requestContext?.http?.sourceIp;
 
     return {
       url: url,
       method: event.requestContext?.http?.method,
-      remoteAddress: event.requestContext?.http?.sourceIp,
+      remoteAddress: rawIp,
+      isBehindTrustedProxy: isTrustedProxyRequest(rawIp),
       body: parseBody(event),
       headers: event.headers,
       routeParams: event.pathParameters ? event.pathParameters : {},

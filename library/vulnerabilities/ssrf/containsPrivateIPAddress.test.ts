@@ -30,7 +30,6 @@ const publicIPs = [
   "2001:db9::",
   "fb00::",
   "fbff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-  "fec0::",
   "::ffff:1.2.3.4",
   "::ffff:172.1.2.3",
   "::ffff:192.145.0.0",
@@ -154,6 +153,8 @@ const privateIPs = [
   "fc00::1",
   "fc00::abc:1",
   "fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+  "fec0::",
+  "feff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
   "2130706433",
   "0x7f000001",
 

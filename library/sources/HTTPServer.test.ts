@@ -121,6 +121,7 @@ t.test("it wraps the createServer function of http module", async () => {
           source: "http.createServer",
           routeParams: {},
           cookies: {},
+          isBehindTrustedProxy: true,
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
         });
@@ -168,6 +169,7 @@ t.test("it wraps the createServer function of https module", async () => {
           source: "https.createServer",
           routeParams: {},
           cookies: {},
+          isBehindTrustedProxy: true,
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
         });
@@ -554,6 +556,7 @@ t.test("it wraps on request event of http", async () => {
           source: "http.createServer",
           routeParams: {},
           cookies: {},
+          isBehindTrustedProxy: true,
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
         });
@@ -599,6 +602,7 @@ t.test("it wraps on request event of https", async () => {
           cookies: {},
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
+          isBehindTrustedProxy: true,
         });
         server.close();
         resolve();
@@ -1314,6 +1318,74 @@ t.test("Invalid multipart form data is ignored", async (t) => {
         t.same(statusCode, 200);
         const context = JSON.parse(body);
         t.same(context.body, undefined);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("It limits the number of parsed urlencoded fields", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "1";
+
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  const body = Array.from({ length: 5000 }, (_, i) => `a${i}=b`).join("&");
+
+  await new Promise<void>((resolve) => {
+    server.listen(3236, () => {
+      fetch({
+        url: new URL("http://localhost:3236"),
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+        timeoutInMS: 2000,
+      }).then(({ statusCode, body }) => {
+        t.same(statusCode, 200);
+        const context = JSON.parse(body);
+        t.same(context.body.fields.length, 1000);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("It limits the number of parsed multipart parts", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "1";
+
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  const boundary = "----TestBoundary";
+  const body =
+    Array.from(
+      { length: 5000 },
+      (_, i) =>
+        `--${boundary}\r\nContent-Disposition: form-data; name="a${i}"\r\n\r\nb\r\n`
+    ).join("") + `--${boundary}--`;
+
+  await new Promise<void>((resolve) => {
+    server.listen(3237, () => {
+      fetch({
+        url: new URL("http://localhost:3237"),
+        method: "POST",
+        headers: {
+          "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        },
+        body,
+        timeoutInMS: 2000,
+      }).then(({ statusCode, body }) => {
+        t.same(statusCode, 200);
+        const context = JSON.parse(body);
+        t.same(context.body.fields.length, 1000);
         server.close();
         resolve();
       });
