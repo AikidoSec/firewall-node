@@ -81,7 +81,10 @@ function getUrlFromRequestOptions(
   }
 
   // Node.js uses `options.port || options.defaultPort || agent.defaultPort`
-  const port = getValidPort(options.port) ?? getValidPort(options.defaultPort);
+  const port =
+    getValidPort(options.port) ??
+    getValidPort(options.defaultPort) ??
+    getAgentDefaultPort(options);
   if (port !== undefined) {
     str += `:${port}`;
   }
@@ -99,6 +102,16 @@ function getValidPort(port: unknown): string | number | undefined {
   }
   if (typeof port === "string" && port.length > 0) {
     return port;
+  }
+  return undefined;
+}
+
+function getAgentDefaultPort(
+  options: HTTPRequestOptions | HTTPSRequestOptions
+): string | number | undefined {
+  const agent = options.agent;
+  if (typeof agent === "object" && agent !== null && "defaultPort" in agent) {
+    return getValidPort(agent.defaultPort);
   }
   return undefined;
 }
@@ -156,7 +169,9 @@ function mergeURLWithRequestOptions(
 
   const port =
     getValidPort(options.port) ??
-    (url.port || getValidPort(options.defaultPort));
+    (url.port ||
+      getValidPort(options.defaultPort) ||
+      getAgentDefaultPort(options));
   if (port !== undefined && port !== "") {
     urlStr += `:${port}`;
   }
