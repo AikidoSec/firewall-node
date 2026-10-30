@@ -21,7 +21,7 @@ const context: Context = {
 
 const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 
-t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
+t.test("it works", async (t) => {
   const agent = createTestAgent({
     token: new Token("123"),
   });

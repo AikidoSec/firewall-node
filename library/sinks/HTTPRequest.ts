@@ -1,5 +1,9 @@
 import { lookup } from "dns";
-import { type RequestOptions } from "http";
+import {
+  type ClientRequest,
+  type IncomingMessage,
+  type RequestOptions,
+} from "http";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -14,7 +18,9 @@ import {
   getRequestOptions,
   getUrlFromHTTPRequestArgs,
 } from "./http-request/getUrlFromHTTPRequestArgs";
-import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
+import { onHTTPResponse } from "./http-request/onHTTPResponse";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
+import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isOptionsObject } from "./http-request/isOptionsObject";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
@@ -194,23 +200,58 @@ export class HTTPRequest implements Wrapper {
     return args;
   }
 
-  wrapResponseHandler(args: unknown[], module: "http" | "https") {
-    if (args.find((arg) => typeof arg === "function")) {
-      return args.map((arg) => {
-        if (typeof arg === "function") {
-          return wrapResponseHandler(args, module, arg);
-        }
+  private handleResponseFinish({
+    request,
+    response,
+  }: {
+    request: ClientRequest;
+    response: IncomingMessage;
+  }) {
+    const context = getContext();
 
-        return arg;
-      });
+    if (!context) {
+      return;
     }
 
-    return args.concat([wrapResponseHandler(args, module, () => {})]);
+    try {
+      const host = request.getHeader("host");
+      if (typeof host !== "string") {
+        return;
+      }
+
+      // The path is not guaranteed to start with a slash
+      const path = request.path.startsWith("/")
+        ? request.path
+        : `/${request.path}`;
+
+      const source = new URL(`${request.protocol}//${host}${path}`);
+      onHTTPResponse(source, response, context);
+    } catch {
+      //
+    }
+  }
+
+  private subscribeToResponses() {
+    // The channel was added in Node.js 16.17.0 and 18.7.0
+    if (!isVersionGreaterOrEqual("16.17.0", getSemverNodeVersion())) {
+      return;
+    }
+
+    const { subscribe } =
+      require("diagnostics_channel") as typeof import("diagnostics_channel");
+
+    subscribe("http.client.response.finish", (message) =>
+      this.handleResponseFinish(
+        message as { request: ClientRequest; response: IncomingMessage }
+      )
+    );
   }
 
   wrap(hooks: Hooks) {
     const modules = ["http", "https"] as const;
     const methods = ["request", "get"] as const;
+
+    this.subscribeToResponses();
 
     for (const module of modules) {
       hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
