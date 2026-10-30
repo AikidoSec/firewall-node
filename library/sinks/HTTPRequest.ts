@@ -19,13 +19,13 @@ import {
   getUrlFromHTTPRequestArgs,
 } from "./http-request/getUrlFromHTTPRequestArgs";
 import { onHTTPResponse } from "./http-request/onHTTPResponse";
-import { getSemverNodeVersion } from "../helpers/getNodeVersion";
-import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isOptionsObject } from "./http-request/isOptionsObject";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 
 export class HTTPRequest implements Wrapper {
+  private readonly requestUrls = new WeakMap<object, URL>();
+
   private inspectHostname(
     agent: Agent,
     url: URL,
@@ -213,38 +213,50 @@ export class HTTPRequest implements Wrapper {
       return;
     }
 
+    const url = this.requestUrls.get(request);
+    if (!url) {
+      return;
+    }
+
     try {
-      const host = request.getHeader("host");
-      if (typeof host !== "string") {
-        return;
-      }
-
-      // The path is not guaranteed to start with a slash
-      const path = request.path.startsWith("/")
-        ? request.path
-        : `/${request.path}`;
-
-      const source = new URL(`${request.protocol}//${host}${path}`);
-      onHTTPResponse(source, response, context);
+      // Copy the URL because the hostname gets normalized
+      onHTTPResponse(new URL(url.href), response, context);
     } catch {
-      //
+      // Ignore errors
     }
   }
 
   private subscribeToResponses() {
-    // The channel was added in Node.js 16.17.0 and 18.7.0
-    if (!isVersionGreaterOrEqual("16.17.0", getSemverNodeVersion())) {
-      return;
-    }
-
     const { subscribe } =
       require("diagnostics_channel") as typeof import("diagnostics_channel");
+
+    // diagnostics_channel.subscribe(...) was added in Node.js 16.17.0 and 18.7.0 (not available in 17.x),
+    if (typeof subscribe !== "function") {
+      return;
+    }
 
     subscribe("http.client.response.finish", (message) =>
       this.handleResponseFinish(
         message as { request: ClientRequest; response: IncomingMessage }
       )
     );
+  }
+
+  private rememberRequestUrl(
+    args: unknown[],
+    request: unknown,
+    module: "http" | "https"
+  ) {
+    if (typeof request !== "object" || request === null) {
+      return request;
+    }
+
+    const url = getUrlFromHTTPRequestArgs(args, module);
+    if (url) {
+      this.requestUrls.set(request, url);
+    }
+
+    return request;
   }
 
   wrap(hooks: Hooks) {
@@ -265,6 +277,9 @@ export class HTTPRequest implements Wrapper {
             // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
             modifyArgs: (args, agent) =>
               this.monitorDNSLookups(args, agent, module),
+            // Remember where the request is going to, used to detect redirects
+            modifyReturnValue: (args, returnValue) =>
+              this.rememberRequestUrl(args, returnValue, module),
           });
         }
       });

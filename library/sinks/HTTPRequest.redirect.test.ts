@@ -1,4 +1,4 @@
-import { type IncomingMessage } from "http";
+import { type IncomingMessage, type RequestOptions } from "http";
 import * as t from "tap";
 import type { Test } from "tap";
 import { Token } from "../agent/api/Token";
@@ -64,11 +64,11 @@ function getModule(url: string): "http" | "https" {
   return new URL(url).protocol === "https:" ? "https" : "http";
 }
 
-function getResponse(url: string) {
+function getResponse(url: string, requestOptions: RequestOptions = {}) {
   const module = getModule(url);
   return new Promise<IncomingMessage>((resolve, reject) => {
     require(module)
-      .request(url, (res: IncomingMessage) => {
+      .request(url, requestOptions, (res: IncomingMessage) => {
         consumeBody(res);
         resolve(res);
       })
@@ -100,11 +100,13 @@ async function testRedirectIsBlocked(
     userInput,
     inputKey = "image",
     redirectRequests,
+    requestOptions,
     blockedUrl,
   }: {
     userInput: string;
     inputKey?: string;
     redirectRequests: string[];
+    requestOptions?: RequestOptions;
     blockedUrl: string;
   }
 ) {
@@ -112,7 +114,7 @@ async function testRedirectIsBlocked(
     createContext({ body: { [inputKey]: userInput } }),
     async () => {
       for (const url of redirectRequests) {
-        const res = await getResponse(url);
+        const res = await getResponse(url, requestOptions);
         t.same(res.statusCode, 302);
       }
 
@@ -282,3 +284,31 @@ t.test(
     });
   }
 );
+
+t.test("it blocks redirects if the Host header is changed", async (t) => {
+  await testRedirectIsBlocked(t, {
+    userInput: redirectUrl.ip,
+    redirectRequests: [redirectUrl.ip],
+    requestOptions: { headers: { host: "example.com" } },
+    blockedUrl: "http://127.0.0.1/test",
+  });
+});
+
+t.test("it uses the port of the request to detect redirects", async (t) => {
+  await runWithContext(
+    createContext({
+      body: { image: "http://ssrf-redirects.testssandbox.com:8080/ssrf-test" },
+    }),
+    async () => {
+      const res = await getResponse(redirectUrl.ip);
+      t.same(res.statusCode, 302);
+
+      // The redirect is not stored, so the request is not blocked (it fails to connect)
+      const error = await getBlockError("http://127.0.0.1/test");
+      t.notMatch(
+        error?.message,
+        /Zen has blocked a server-side request forgery/
+      );
+    }
+  );
+});
