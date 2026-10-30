@@ -26,6 +26,8 @@ jobs:
             mode: "new"
           - node-version: 26.x
             mode: "new"
+          - node-version: 27.0.0-alpha.0.0.0
+            mode: "new"
 
     steps:
       - name: Checkout repository

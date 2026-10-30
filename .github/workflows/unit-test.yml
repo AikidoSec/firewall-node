@@ -57,6 +57,15 @@ jobs:
           - node-version: 26.x
             instrumentation: "new"
             mode: "esm"
+          - node-version: 27.0.0-alpha.0.0.0
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 27.0.0-alpha.0.0.0
+            instrumentation: "new"
+            mode: "cjs"
+          - node-version: 27.0.0-alpha.0.0.0
+            instrumentation: "new"
+            mode: "esm"
 
     steps:
       - name: Checkout repository
