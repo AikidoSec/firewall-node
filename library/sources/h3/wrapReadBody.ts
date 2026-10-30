@@ -26,7 +26,7 @@ export async function wrapReadBody(_args: unknown[], returnValue: unknown) {
 
 // Zen only extracts strings, it ignores Buffers
 function toInspectableBody(body: unknown): unknown {
-  if (body instanceof FormData) {
+  if (globalThis.FormData && body instanceof globalThis.FormData) {
     return formDataToPlainObject(body);
   }
 

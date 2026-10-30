@@ -68,6 +68,11 @@ t.test(
 
 t.test(
   "multipart files with empty or missing filenames are ignored",
+  {
+    skip: !globalThis.FormData
+      ? "This Node.js version does not support FormData yet"
+      : false,
+  },
   async (t) => {
     const body = [
       { name: "text", data: Buffer.from("Hello world") },
