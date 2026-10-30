@@ -6,7 +6,7 @@ import type { EventHandler } from "h3";
 import { wrapReadBody } from "./h3/wrapReadBody";
 import { type H3Middleware, wrapMiddleware } from "./h3/wrapMiddleware";
 import { isPlainObject } from "../helpers/isPlainObject";
-import {
+import type {
   LocalVariableAccessConfig,
   PackageFunctionInstrumentationInstruction,
 } from "../agent/hooks/instrumentation/types";
@@ -206,6 +206,9 @@ export class H3 implements Wrapper {
         });
 
         for (const func of bodyFuncs) {
+          if (typeof exports[func] !== "function") {
+            continue;
+          }
           wrapExport(exports, func, pkgInfo, {
             kind: undefined,
             modifyReturnValue: wrapReadBody,
