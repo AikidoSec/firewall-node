@@ -49,6 +49,16 @@ function createContext({
   };
 }
 
+function consumeBody(res: IncomingMessage) {
+  // We need to consume the body
+  // From Node.19+ this would otherwise hang the test
+  res.on("readable", () => {
+    while (res.read() !== null) {
+      // Keep reading until the stream is empty
+    }
+  });
+}
+
 const agent = createTestAgent({
   token: new Token("123"),
 });
@@ -89,8 +99,8 @@ t.test("it does not block request to localhost with same port", (t) => {
         // The server should respond with a 200
         // Because we'll allow requests to localhost if it's the same port
         t.same(response.statusCode, 200);
-        response.on("data", () => {});
-        response.on("end", () => {});
+
+        consumeBody(response);
         t.end();
       });
       request.on("error", (error: Error) => {
@@ -123,10 +133,10 @@ t.test("it blocks requests to other ports", (t) => {
         t.end();
       });
       request.on("response", (response: IncomingMessage) => {
-        t.fail();
         // This should not be called
-        response.on("data", () => {});
-        response.on("end", () => {});
+        t.fail();
+
+        consumeBody(response);
         t.end();
       });
       request.end();

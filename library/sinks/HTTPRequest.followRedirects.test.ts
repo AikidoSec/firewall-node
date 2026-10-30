@@ -1,8 +1,10 @@
+import type { IncomingMessage } from "http";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -21,6 +23,16 @@ const context: Context = {
 
 let server: import("http").Server;
 const port = 3000;
+
+function consumeBody(res: IncomingMessage) {
+  // We need to consume the body
+  // From Node.19+ this would otherwise hang the test
+  res.on("readable", () => {
+    while (res.read() !== null) {
+      // Keep reading until the stream is empty
+    }
+  });
+}
 
 t.before(async () => {
   const { createServer } = require("http") as typeof import("http");
@@ -44,10 +56,15 @@ const agent = createTestAgent({
 });
 agent.start([new HTTPRequest()]);
 
-const { http } =
+let followRedirects =
   require("follow-redirects") as typeof import("follow-redirects");
+if (isEsmUnitTest()) {
+  // @ts-expect-error in ESM the default export is the module
+  followRedirects = followRedirects.default;
+}
+const { http } = followRedirects;
 
-t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
+t.test("it works", (t) => {
   runWithContext(
     {
       ...context,
@@ -120,9 +137,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
     },
     () => {
       const response = http.request(`http://[::]:${port}`, (res) => {
-        while (res.read()) {
-          // consume body
-        }
+        consumeBody(res);
 
         t.same(res.statusCode, 200);
       });
