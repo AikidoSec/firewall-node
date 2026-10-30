@@ -22,7 +22,7 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-t.test("it adds redirects to the context", (t) => {
+t.test("it adds redirects to the context", async (t) => {
   const agent = createTestAgent({
     token: new Token("123"),
   });
@@ -30,32 +30,31 @@ t.test("it adds redirects to the context", (t) => {
 
   const http = require("http") as typeof import("http");
 
-  runWithContext(context, () => {
-    const request = http.request(source, (res) => {
-      res.on("data", () => {});
-    });
+  await runWithContext(context, async () => {
+    await new Promise<void>((resolve, reject) => {
+      const request = http.request(source, (res) => {
+        res.on("data", () => {});
+      });
 
-    request.on("response", () => {
-      t.same(
-        getContext()!.outgoingRequestRedirects!.map((r) => ({
-          source: r.source.toString(),
-          destination: r.destination.toString(),
-        })),
-        [
-          {
-            source: source,
-            destination: destination,
-          },
-        ]
-      );
-      t.end();
-    });
+      request.on("response", () => {
+        t.same(
+          getContext()!.outgoingRequestRedirects!.map((r) => ({
+            source: r.source.toString(),
+            destination: r.destination.toString(),
+          })),
+          [
+            {
+              source: source,
+              destination: destination,
+            },
+          ]
+        );
+        resolve();
+      });
 
-    request.on("error", (e) => {
-      t.fail(e);
-      t.end();
-    });
+      request.on("error", reject);
 
-    request.end();
+      request.end();
+    });
   });
 });

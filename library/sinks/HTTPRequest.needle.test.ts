@@ -4,6 +4,7 @@ import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -21,21 +22,23 @@ const context: Context = {
 };
 
 t.test("it works", async (t) => {
-  const agent = createTestAgent({
-    token: new Token("123"),
-  });
+  const agent = createTestAgent();
   agent.start([new HTTPRequest()]);
 
   t.same(agent.getHostnames().asArray(), []);
 
-  const needle = require("needle") as typeof import("needle");
+  let needle = require("needle") as typeof import("needle");
+  if (isEsmUnitTest()) {
+    // @ts-expect-error in ESM the default export is the needle function
+    needle = needle.default;
+  }
 
   await runWithContext(context, async () => {
-    await needle("get", "https://www.aikido.dev");
+    await needle("get", "https://app.aikido.dev");
   });
 
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "www.aikido.dev", port: 443, hits: 1 },
+    { hostname: "app.aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 
@@ -62,7 +65,11 @@ t.test("it detects SSRF attacks with redirects", async (t) => {
   });
   agent.start([new HTTPRequest()]);
 
-  const needle = require("needle") as typeof import("needle");
+  let needle = require("needle") as typeof import("needle");
+  if (isEsmUnitTest()) {
+    // @ts-expect-error in ESM the default export is the needle function
+    needle = needle.default;
+  }
 
   await runWithContext(
     {

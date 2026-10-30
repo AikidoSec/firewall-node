@@ -1,8 +1,8 @@
 import * as t from "tap";
-import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -22,21 +22,22 @@ const context: Context = {
 const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 
 t.test("it works", async (t) => {
-  const agent = createTestAgent({
-    token: new Token("123"),
-  });
+  const agent = createTestAgent();
   agent.start([new HTTPRequest()]);
 
   t.same(agent.getHostnames().asArray(), []);
 
-  const fetch = require("node-fetch");
+  let fetch = require("node-fetch");
+  if (isEsmUnitTest()) {
+    fetch = fetch.default;
+  }
 
   await runWithContext(context, async () => {
-    await fetch("https://www.aikido.dev");
+    await fetch("https://app.aikido.dev");
   });
 
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "www.aikido.dev", port: 443, hits: 1 },
+    { hostname: "app.aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 

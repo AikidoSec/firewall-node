@@ -60,14 +60,20 @@ const agent = createTestAgent({
 });
 agent.start([new HTTPRequest()]);
 
-function getModule(url: string): "http" | "https" {
+const http = require("http") as typeof import("http");
+const https = require("https") as typeof import("https");
+
+function getModuleName(url: string) {
   return new URL(url).protocol === "https:" ? "https" : "http";
 }
 
+function getModule(url: string) {
+  return getModuleName(url) === "https" ? https : http;
+}
+
 function getResponse(url: string, requestOptions: RequestOptions = {}) {
-  const module = getModule(url);
   return new Promise<IncomingMessage>((resolve, reject) => {
-    require(module)
+    getModule(url)
       .request(url, requestOptions, (res: IncomingMessage) => {
         consumeBody(res);
         resolve(res);
@@ -78,10 +84,9 @@ function getResponse(url: string, requestOptions: RequestOptions = {}) {
 }
 
 function getBlockError(url: string) {
-  const module = getModule(url);
   return new Promise<Error | undefined>((resolve) => {
     try {
-      const request = require(module).request(url);
+      const request = getModule(url).request(url);
       request.on("error", resolve);
       request.on("response", (res: IncomingMessage) => {
         consumeBody(res);
@@ -123,7 +128,7 @@ async function testRedirectIsBlocked(
       if (error instanceof Error) {
         t.same(
           error.message,
-          `Zen has blocked a server-side request forgery: ${getModule(blockedUrl)}.request(...) originating from body.${inputKey}`
+          `Zen has blocked a server-side request forgery: ${getModuleName(blockedUrl)}.request(...) originating from body.${inputKey}`
         );
       }
     }

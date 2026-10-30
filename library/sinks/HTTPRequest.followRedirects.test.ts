@@ -4,6 +4,7 @@ import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -55,8 +56,13 @@ const agent = createTestAgent({
 });
 agent.start([new HTTPRequest()]);
 
-const { http } =
+let followRedirects =
   require("follow-redirects") as typeof import("follow-redirects");
+if (isEsmUnitTest()) {
+  // @ts-expect-error in ESM the default export is the module
+  followRedirects = followRedirects.default;
+}
+const { http } = followRedirects;
 
 t.test("it works", (t) => {
   runWithContext(
