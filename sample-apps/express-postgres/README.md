@@ -8,4 +8,4 @@ Try the following URLs:
 
 - http://localhost:4000/ : List all cats
 - http://localhost:4000/?petname=Kitty : This will add a new cat named "Kitty"
-- http://localhost:4000/?petname=Kitty'); DELETE FROM cats;-- H : This will delete all cats
+- http://localhost:4000/?petname=Kitty'); DELETE FROM cats_3;-- H : This will delete all cats

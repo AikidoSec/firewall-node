@@ -116,6 +116,7 @@
     "graphql-v15": "npm:graphql@^15.10.1",
     "graphql-v16": "npm:graphql@^16.8.2",
     "graphql-v17": "npm:graphql@^17.0.1",
+    "h3": "^1.15.11",
     "hono": "^4.13.0",
     "import-in-the-middle": "^3.5.2",
     "koa-router": "^13.0.1",
