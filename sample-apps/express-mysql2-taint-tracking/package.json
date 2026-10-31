@@ -1,0 +1,9 @@
+{
+  "name": "express-mysql2-taint-tracking",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "express": "^5.0.0",
+    "mysql2": "^3.10.0"
+  }
+}
