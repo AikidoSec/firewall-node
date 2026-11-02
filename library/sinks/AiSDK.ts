@@ -1,4 +1,5 @@
 import { Agent } from "../agent/Agent";
+import { isAIProviderTrafficCaptureEnabled } from "../ai-governance/isAIProviderTrafficCaptureEnabled";
 import type { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorObject, wrapExport } from "../agent/hooks/wrapExport";
 import type { Wrapper } from "../agent/Wrapper";
@@ -226,6 +227,10 @@ export class AiSDK implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
+    if (isAIProviderTrafficCaptureEnabled()) {
+      return;
+    }
+
     hooks
       .addPackage("ai")
       .withVersion("^7.0.0 || ^6.0.0 || ^5.0.0 || ^4.0.0")

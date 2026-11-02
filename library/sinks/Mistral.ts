@@ -1,4 +1,5 @@
 import { Agent } from "../agent/Agent";
+import { isAIProviderTrafficCaptureEnabled } from "../ai-governance/isAIProviderTrafficCaptureEnabled";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
@@ -68,6 +69,10 @@ export class Mistral implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
+    if (isAIProviderTrafficCaptureEnabled()) {
+      return;
+    }
+
     const pkg = hooks.addPackage("@mistralai/mistralai");
 
     pkg

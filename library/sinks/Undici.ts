@@ -1,4 +1,6 @@
+import * as dc from "diagnostics_channel";
 import { lookup } from "dns";
+import type { DiagnosticsChannel } from "undici-v7";
 import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
@@ -13,6 +15,14 @@ import { wrapDispatch } from "./undici/wrapDispatch";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { getHostnameAndPortFromArgs } from "./undici/getHostnameAndPortFromArgs";
 import type { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
+import {
+  type AIResponseParser,
+  createAIResponseParser,
+} from "../ai-governance/AIResponseParser";
+import { isAIProviderTrafficCaptureEnabled } from "../ai-governance/isAIProviderTrafficCaptureEnabled";
+import { recordAICall } from "../ai-governance/recordAICall";
+import { parseHeaders } from "./undici/parseHeaders";
+import { isAIRequestPath } from "../ai-governance/parseAIResponse";
 
 const methods = [
   "request",
@@ -24,6 +34,90 @@ const methods = [
 ];
 
 export class Undici implements Wrapper {
+  private subscribedToResponses = false;
+  private readonly aiResponseParsers = new WeakMap<object, AIResponseParser>();
+
+  private subscribeToResponses() {
+    if (!isAIProviderTrafficCaptureEnabled() || this.subscribedToResponses) {
+      return;
+    }
+
+    this.subscribedToResponses = true;
+    dc.subscribe("undici:request:headers", this.onAIResponseHeaders);
+    dc.subscribe("undici:request:bodyChunkReceived", this.onAIResponseChunk);
+    dc.subscribe("undici:request:trailers", this.onAIResponseEnd);
+    dc.subscribe("undici:request:error", this.onAIResponseError);
+  }
+
+  private readonly onAIResponseHeaders = (message: unknown) => {
+    try {
+      const { request, response } =
+        message as DiagnosticsChannel.RequestHeadersMessage;
+      if (
+        request.method !== "POST" ||
+        response.statusCode < 200 ||
+        response.statusCode >= 300 ||
+        !isAIRequestPath(request.path.split(/[?#]/, 1)[0])
+      ) {
+        return;
+      }
+
+      const url = new URL(request.path, request.origin);
+      const headers = parseHeaders(response.headers);
+      let contentType: string | undefined;
+      if (typeof headers["content-type"] === "string") {
+        contentType = headers["content-type"];
+      }
+      let contentEncoding: string | undefined;
+      if (typeof headers["content-encoding"] === "string") {
+        contentEncoding = headers["content-encoding"];
+      }
+      const parser = createAIResponseParser({
+        url,
+        contentType,
+        contentEncoding,
+        onCall: (call) => recordAICall(url, call),
+      });
+      if (parser) {
+        this.aiResponseParsers.set(request, parser);
+      }
+    } catch {
+      return;
+    }
+  };
+
+  private readonly onAIResponseChunk = (message: unknown) => {
+    try {
+      const { request, chunk } =
+        message as DiagnosticsChannel.RequestBodyChunkReceivedMessage;
+      if (Buffer.isBuffer(chunk)) {
+        this.aiResponseParsers.get(request)?.write(chunk);
+      }
+    } catch {
+      return;
+    }
+  };
+
+  private readonly onAIResponseEnd = (message: unknown) => {
+    try {
+      const { request } = message as DiagnosticsChannel.RequestTrailersMessage;
+      this.aiResponseParsers.get(request)?.end();
+      this.aiResponseParsers.delete(request);
+    } catch {
+      return;
+    }
+  };
+
+  private readonly onAIResponseError = (message: unknown) => {
+    try {
+      const { request } = message as DiagnosticsChannel.RequestErrorMessage;
+      this.aiResponseParsers.get(request)?.destroy();
+      this.aiResponseParsers.delete(request);
+    } catch {
+      return;
+    }
+  };
+
   private inspectHostname(
     agent: Agent,
     hostname: string,
@@ -144,6 +238,8 @@ export class Undici implements Wrapper {
       // Undici requires Node.js 16.8+ (due to web streams)
       return;
     }
+
+    this.subscribeToResponses();
 
     hooks
       .addPackage("undici")
