@@ -1,4 +1,5 @@
 import { Agent } from "../agent/Agent";
+import { isAIProviderTrafficCaptureEnabled } from "../ai-governance/isAIProviderTrafficCaptureEnabled";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
@@ -188,6 +189,10 @@ export class OpenAI implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
+    if (isAIProviderTrafficCaptureEnabled()) {
+      return;
+    }
+
     // Note: Streaming is not supported yet
     hooks
       .addPackage("openai")

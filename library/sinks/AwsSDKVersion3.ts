@@ -1,4 +1,5 @@
 import { Agent } from "../agent/Agent";
+import { isAIProviderTrafficCaptureEnabled } from "../ai-governance/isAIProviderTrafficCaptureEnabled";
 import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
@@ -182,6 +183,10 @@ export class AwsSDKVersion3 implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
+    if (isAIProviderTrafficCaptureEnabled()) {
+      return;
+    }
+
     hooks
       .addPackage("@aws-sdk/client-bedrock-runtime")
       .withVersion("^3.0.0")
