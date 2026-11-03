@@ -42,6 +42,25 @@ export class Restify implements Wrapper {
           kind: undefined,
           modifyArgs: (args) => this.wrapArgs(args),
         });
+      })
+      .addFileInstrumentation({
+        path: "lib/server.js",
+        functions: [
+          {
+            nodeType: "FunctionExpression",
+            name: "serverMethod",
+            modifyArgumentsObject: true,
+            operationKind: undefined,
+            modifyArgs: (args) => this.wrapArgs(args),
+          },
+          {
+            nodeType: "FunctionAssignment",
+            name: "Server.prototype.use",
+            modifyArgumentsObject: true,
+            operationKind: undefined,
+            modifyArgs: (args) => this.wrapArgs(args),
+          },
+        ],
       });
   }
 }
