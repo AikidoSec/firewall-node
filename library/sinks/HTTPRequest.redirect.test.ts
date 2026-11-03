@@ -352,3 +352,37 @@ t.test("it uses the port of a custom agent to detect redirects", async (t) => {
     }
   );
 });
+
+t.test(
+  "it blocks user input without a port when a custom agent has a default port",
+  async (t) => {
+    class DefaultPortAgent extends http.Agent {
+      constructor() {
+        super();
+        // Node < 22 ignores the defaultPort constructor option
+        (this as any).defaultPort = 8080;
+      }
+    }
+
+    await runWithContext(
+      createContext({ body: { image: "http://127.0.0.1" } }),
+      async () => {
+        const error = await new Promise<Error | undefined>((resolve) => {
+          try {
+            http
+              .request("http://127.0.0.1/", { agent: new DefaultPortAgent() })
+              .on("error", resolve)
+              .end();
+          } catch (error) {
+            resolve(error as Error);
+          }
+        });
+        t.ok(error instanceof Error);
+        t.match(
+          error?.message,
+          "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
+        );
+      }
+    );
+  }
+);

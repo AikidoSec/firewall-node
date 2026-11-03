@@ -9,7 +9,8 @@ import { isOptionsObject } from "./isOptionsObject";
  */
 export function getUrlFromHTTPRequestArgs(
   args: unknown[],
-  module: "http" | "https"
+  module: "http" | "https",
+  ignoreAgentDefaultPort = false
 ): URL | undefined {
   if (!args || !args.length) {
     return undefined;
@@ -30,10 +31,18 @@ export function getUrlFromHTTPRequestArgs(
   const requestOptions = getRequestOptions(args);
   if (requestOptions) {
     if (!url) {
-      return getUrlFromRequestOptions(requestOptions, module);
+      return getUrlFromRequestOptions(
+        requestOptions,
+        module,
+        ignoreAgentDefaultPort
+      );
     }
 
-    return mergeURLWithRequestOptions(requestOptions, url);
+    return mergeURLWithRequestOptions(
+      requestOptions,
+      url,
+      ignoreAgentDefaultPort
+    );
   }
 
   return url;
@@ -61,7 +70,8 @@ export function getRequestOptions(args: unknown[]) {
  */
 function getUrlFromRequestOptions(
   options: HTTPRequestOptions | HTTPSRequestOptions,
-  module: "http" | "https"
+  module: "http" | "https",
+  ignoreAgentDefaultPort: boolean
 ): URL | undefined {
   let str = "";
   if (typeof options.protocol === "string" && options.protocol.length > 0) {
@@ -84,7 +94,7 @@ function getUrlFromRequestOptions(
   const port =
     getValidPort(options.port) ??
     getValidPort(options.defaultPort) ??
-    getAgentDefaultPort(options);
+    (ignoreAgentDefaultPort ? undefined : getAgentDefaultPort(options));
   if (port !== undefined) {
     str += `:${port}`;
   }
@@ -147,7 +157,8 @@ function wrapWithSquareBracketsIfNeeded(hostname: string): string {
  */
 function mergeURLWithRequestOptions(
   options: HTTPRequestOptions | HTTPSRequestOptions,
-  url: URL
+  url: URL,
+  ignoreAgentDefaultPort: boolean
 ): URL | undefined {
   let urlStr = "";
 
@@ -171,7 +182,7 @@ function mergeURLWithRequestOptions(
     getValidPort(options.port) ??
     (url.port ||
       getValidPort(options.defaultPort) ||
-      getAgentDefaultPort(options));
+      (ignoreAgentDefaultPort ? undefined : getAgentDefaultPort(options)));
   if (port !== undefined && port !== "") {
     urlStr += `:${port}`;
   }

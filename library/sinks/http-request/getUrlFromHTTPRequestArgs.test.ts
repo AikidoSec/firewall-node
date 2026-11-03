@@ -267,3 +267,20 @@ t.test("a path cannot inject a URL authority", async (t) => {
     "127.0.0.1"
   );
 });
+
+t.test("it can ignore agent.defaultPort", async (t) => {
+  const agent = new Agent();
+  (agent as any).defaultPort = 8080;
+  t.same(
+    getURL([{ hostname: "example.com", agent }], "http", true),
+    new URL("http://example.com")
+  );
+  t.same(
+    getURL(["http://example.com", { agent }], "http", true),
+    new URL("http://example.com")
+  );
+  t.same(
+    getURL([{ hostname: "example.com", port: 3000, agent }], "http", true),
+    new URL("http://example.com:3000")
+  );
+});
