@@ -80,6 +80,7 @@ export function setPackagesToInstrument(_packages: Package[]) {
                     inspectArgs: func.inspectArgs,
                     modifyArgs: func.modifyArgs,
                     modifyReturnValue: func.modifyReturnValue,
+                    shortCircuit: func.shortCircuit,
                     bindContext: func.bindContext ?? false,
                   },
                 });
@@ -91,6 +92,7 @@ export function setPackagesToInstrument(_packages: Package[]) {
                   inspectArgs: !!func.inspectArgs,
                   modifyArgs: !!func.modifyArgs,
                   modifyReturnValue: !!func.modifyReturnValue,
+                  shortCircuit: !!func.shortCircuit,
                   modifyArgumentsObject: func.modifyArgumentsObject ?? false,
                   className: func.className,
                 };

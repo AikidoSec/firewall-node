@@ -283,3 +283,112 @@ t.test("Wrap default export", async (t) => {
   t.same(patched("input"), "input");
   t.ok(executedCallback);
 });
+
+t.test("shortCircuit returns the provided value", async (t) => {
+  let called = false;
+  const toWrap = {
+    test() {
+      called = true;
+      return "original";
+    },
+  };
+
+  wrapExport(
+    toWrap,
+    "test",
+    { name: "test", type: "external" },
+    {
+      kind: "outgoing_http_op",
+      shortCircuit: () => ({ shortCircuit: true, returnValue: "short" }),
+    }
+  );
+
+  t.same(toWrap.test(), "short");
+  t.same(called, false);
+});
+
+t.test("shortCircuit runs after inspectArgs and skips the rest", async (t) => {
+  const order: string[] = [];
+  const toWrap = {
+    test() {
+      return "original";
+    },
+  };
+
+  wrapExport(
+    toWrap,
+    "test",
+    { name: "test", type: "external" },
+    {
+      kind: "outgoing_http_op",
+      shortCircuit: () => {
+        order.push("shortCircuit");
+        return { shortCircuit: true, returnValue: "short" };
+      },
+      inspectArgs: () => {
+        order.push("inspectArgs");
+      },
+      modifyArgs: () => {
+        t.fail("modifyArgs should not be called");
+        return [];
+      },
+      modifyReturnValue: () => {
+        t.fail("modifyReturnValue should not be called");
+        return "modified";
+      },
+    }
+  );
+
+  t.same(toWrap.test(), "short");
+  t.same(order, ["inspectArgs", "shortCircuit"]);
+});
+
+t.test("shortCircuit continues normally if not short circuiting", async (t) => {
+  const toWrap = {
+    test(input: string) {
+      return input;
+    },
+  };
+
+  wrapExport(
+    toWrap,
+    "test",
+    { name: "test", type: "external" },
+    {
+      kind: "outgoing_http_op",
+      shortCircuit: (args) => {
+        t.same(args, ["input"]);
+        return { shortCircuit: false };
+      },
+      modifyReturnValue: (args, returnVal) => returnVal + "modReturn",
+    }
+  );
+
+  t.same(toWrap.test("input"), "inputmodReturn");
+});
+
+t.test("Catches error in shortCircuit interceptor", async (t) => {
+  const toWrap = {
+    test() {
+      return "test";
+    },
+  };
+
+  wrapExport(
+    toWrap,
+    "test",
+    { name: "test", type: "external" },
+    {
+      kind: "outgoing_http_op",
+      shortCircuit: () => {
+        throw new Error("Error in interceptor");
+      },
+    }
+  );
+
+  t.same(toWrap.test(), "test");
+  t.match(
+    logger.getMessages(),
+    /Internal error in module "test" in method "test/
+  );
+});
