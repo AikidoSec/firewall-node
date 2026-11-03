@@ -7,6 +7,7 @@ import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect
 import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
+import type { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 
 export class Postgresjs implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectPostgres();
@@ -53,20 +54,39 @@ export class Postgresjs implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
+    const wrapExportsForCjs = (
+      exports: unknown,
+      pkgInfo: PartialWrapPackageInfo
+    ) =>
+      wrapExport(exports, undefined, pkgInfo, {
+        kind: undefined,
+        modifyReturnValue: (args, returnValue) => {
+          wrapExport(returnValue, "unsafe", pkgInfo, {
+            kind: "sql_op",
+            inspectArgs: (args) => this.inspectQuery(args),
+          });
+          return returnValue;
+        },
+      });
+
     hooks
       .addPackage("postgres")
-      .withVersion("^3.0.0")
+      .withVersion("^4.0.0 || ^3.0.0")
       .onRequire((exports, pkgInfo) => {
-        return wrapExport(exports, undefined, pkgInfo, {
-          kind: undefined,
-          modifyReturnValue: (args, returnValue) => {
-            wrapExport(returnValue, "unsafe", pkgInfo, {
-              kind: "sql_op",
-              inspectArgs: (args) => this.inspectQuery(args),
-            });
-            return returnValue;
-          },
-        });
+        // v3 (CJS)
+        if (typeof exports === "function") {
+          return wrapExportsForCjs(exports, pkgInfo);
+        }
+
+        // v4 is ESM only: require() returns a read-only module namespace object
+        if (exports && typeof exports.default === "function") {
+          return {
+            ...exports,
+            default: wrapExportsForCjs(exports.default, pkgInfo),
+          };
+        }
+
+        return exports;
       })
       .addMultiFileInstrumentation(
         [
