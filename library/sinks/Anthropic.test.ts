@@ -17,6 +17,7 @@ t.test(
 
     const client = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
+      baseURL: process.env.ANTHROPIC_BASE_URL || undefined,
     });
 
     const result = await client.messages.create({
@@ -28,7 +29,7 @@ t.test(
             "What is the capital of France? Answer with just the city name, no punctuation.",
         },
       ],
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-haiku-5-5",
     });
 
     t.same(result.content[0].text, "Paris");
@@ -38,9 +39,9 @@ t.test(
         calls: 1,
         model: result.model,
         tokens: {
-          input: 25,
-          output: 4,
-          total: 29,
+          input: 31,
+          output: 5,
+          total: 36,
         },
       },
     ]);
@@ -56,7 +57,7 @@ t.test(
             "What is the capital of France? Answer with just the city name, no punctuation.",
         },
       ],
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-haiku-5-5",
       stream: true,
     });
 
