@@ -221,7 +221,9 @@ t.test("it uses defaultPort when port is not set", async (t) => {
 });
 
 t.test("it uses agent.defaultPort when no port is set", async (t) => {
-  const agent = new Agent({ defaultPort: 8080 } as any);
+  const agent = new Agent();
+  // Node < 22 ignores the defaultPort constructor option
+  (agent as any).defaultPort = 8080;
   t.same(
     getURL([{ hostname: "example.com", agent }], "http"),
     new URL("http://example.com:8080")

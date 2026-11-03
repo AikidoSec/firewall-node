@@ -322,7 +322,9 @@ t.test("it uses the port of the request to detect redirects", async (t) => {
 t.test("it uses the port of a custom agent to detect redirects", async (t) => {
   class PortRemapAgent extends http.Agent {
     constructor() {
-      super({ defaultPort: 8080 });
+      super();
+      // Node < 22 ignores the defaultPort constructor option
+      (this as any).defaultPort = 8080;
     }
 
     createConnection(options: any, callback: any) {
