@@ -1,5 +1,10 @@
+import * as dc from "diagnostics_channel";
 import { lookup } from "dns";
-import { type RequestOptions } from "http";
+import {
+  type ClientRequest,
+  type IncomingMessage,
+  type RequestOptions,
+} from "http";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -18,8 +23,80 @@ import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isOptionsObject } from "./http-request/isOptionsObject";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
+import { createAIResponseParser } from "../ai-governance/AIResponseParser";
+import { isAIRequestPath } from "../ai-governance/parseAIResponse";
+import { isAIProviderTrafficCaptureEnabled } from "../ai-governance/isAIProviderTrafficCaptureEnabled";
+import { recordAICall } from "../ai-governance/recordAICall";
+import { tapResponseBody } from "./http-request/tapResponseBody";
 
 export class HTTPRequest implements Wrapper {
+  private subscribedToResponses = false;
+  private readonly requestURLs = new WeakMap<object, URL>();
+
+  private subscribeToResponses() {
+    if (!isAIProviderTrafficCaptureEnabled() || this.subscribedToResponses) {
+      return;
+    }
+
+    this.subscribedToResponses = true;
+    dc.subscribe("http.client.response.finish", this.onResponse);
+  }
+
+  private rememberRequestURL(
+    args: unknown[],
+    request: unknown,
+    module: "http" | "https"
+  ) {
+    if (!this.subscribedToResponses) {
+      return;
+    }
+
+    if (
+      !request ||
+      typeof request !== "object" ||
+      !("method" in request) ||
+      request.method !== "POST"
+    ) {
+      return;
+    }
+
+    const url = getUrlFromHTTPRequestArgs(args, module);
+    if (url && isAIRequestPath(url.pathname)) {
+      this.requestURLs.set(request, url);
+    }
+  }
+
+  private readonly onResponse = (message: unknown) => {
+    try {
+      const { request, response } = message as {
+        request: ClientRequest;
+        response: IncomingMessage;
+      };
+      const url = this.requestURLs.get(request);
+      this.requestURLs.delete(request);
+      if (
+        !url ||
+        !response.statusCode ||
+        response.statusCode < 200 ||
+        response.statusCode >= 300
+      ) {
+        return;
+      }
+
+      const parser = createAIResponseParser({
+        url,
+        contentType: response.headers["content-type"],
+        contentEncoding: response.headers["content-encoding"],
+        onCall: (call) => recordAICall(url, call),
+      });
+      if (parser) {
+        tapResponseBody(response, parser);
+      }
+    } catch {
+      return;
+    }
+  };
+
   private inspectHostname(
     agent: Agent,
     url: URL,
@@ -212,6 +289,8 @@ export class HTTPRequest implements Wrapper {
     const modules = ["http", "https"] as const;
     const methods = ["request", "get"] as const;
 
+    this.subscribeToResponses();
+
     for (const module of modules) {
       hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
         for (const method of methods) {
@@ -224,6 +303,10 @@ export class HTTPRequest implements Wrapper {
             // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
             modifyArgs: (args, agent) =>
               this.monitorDNSLookups(args, agent, module),
+            modifyReturnValue: (args, returnValue) => {
+              this.rememberRequestURL(args, returnValue, module);
+              return returnValue;
+            },
           });
         }
       });
