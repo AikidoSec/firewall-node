@@ -1,5 +1,4 @@
-import type { ExecutionArgs } from "graphql/execution/execute";
-import { FieldNode } from "graphql";
+import type { ExecutionArgs, FieldNode } from "graphql";
 import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
 import { isLocalhostIP } from "../../helpers/isLocalhostIP";
