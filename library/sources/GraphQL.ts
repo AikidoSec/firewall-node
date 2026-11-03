@@ -118,17 +118,16 @@ export class GraphQL implements Wrapper {
 
   private handleRateLimiting(
     args: unknown[],
-    origReturnVal: unknown,
     agent: Agent
-  ) {
+  ): { shortCircuit: true; returnValue: unknown } | { shortCircuit: false } {
     const context = getContext();
 
     if (!context || !agent || !this.GraphQLError) {
-      return origReturnVal;
+      return { shortCircuit: false };
     }
 
     if (!Array.isArray(args) || !isPlainObject(args[0])) {
-      return origReturnVal;
+      return { shortCircuit: false };
     }
 
     const result = shouldRateLimitOperation(
@@ -142,20 +141,23 @@ export class GraphQL implements Wrapper {
       updateContext(context, "rateLimitedEndpoint", result.endpoint);
 
       return {
-        errors: [
-          new this.GraphQLError("You are rate limited by Zen.", {
-            nodes: [result.field],
-            extensions: {
-              code: "RATE_LIMITED_BY_ZEN",
-              ipAddress: context.remoteAddress,
-              retryAfterSeconds: result.retryAfterSeconds,
-            },
-          }),
-        ],
+        shortCircuit: true,
+        returnValue: {
+          errors: [
+            new this.GraphQLError("You are rate limited by Zen.", {
+              nodes: [result.field],
+              extensions: {
+                code: "RATE_LIMITED_BY_ZEN",
+                ipAddress: context.remoteAddress,
+                retryAfterSeconds: result.retryAfterSeconds,
+              },
+            }),
+          ],
+        },
       };
     }
 
-    return origReturnVal;
+    return { shortCircuit: false };
   }
 
   private wrapExecution(exports: unknown, pkgInfo: WrapPackageInfo) {
@@ -168,8 +170,7 @@ export class GraphQL implements Wrapper {
       }
       wrapExport(exports, method, pkgInfo, {
         kind: "graphql_op",
-        modifyReturnValue: (args, returnValue, agent) =>
-          this.handleRateLimiting(args, returnValue, agent),
+        shortCircuit: (args, agent) => this.handleRateLimiting(args, agent),
         inspectArgs: (args, agent) => this.inspectGraphQLExecute(args, agent),
       });
     }
@@ -204,8 +205,7 @@ export class GraphQL implements Wrapper {
           name: method,
           operationKind: "graphql_op",
           nodeType: "FunctionDeclaration",
-          modifyReturnValue: (args, returnValue, agent) =>
-            this.handleRateLimiting(args, returnValue, agent),
+          shortCircuit: (args, agent) => this.handleRateLimiting(args, agent),
           inspectArgs: (args, agent) => this.inspectGraphQLExecute(args, agent),
         }))
       );
@@ -244,8 +244,7 @@ export class GraphQL implements Wrapper {
           name: method,
           operationKind: "graphql_op",
           nodeType: "FunctionDeclaration",
-          modifyReturnValue: (args, returnValue, agent) =>
-            this.handleRateLimiting(args, returnValue, agent),
+          shortCircuit: (args, agent) => this.handleRateLimiting(args, agent),
           inspectArgs: (args, agent) => this.inspectGraphQLExecute(args, agent),
         }))
       );
