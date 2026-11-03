@@ -234,7 +234,7 @@ export class GraphQL implements Wrapper {
 
     hooks
       .addPackage("@graphql-tools/executor")
-      .withVersion("^1.0.0")
+      .withVersion("^4.0.0 || ^3.0.0 || ^2.0.0 || ^1.0.0")
       .onFileRequire("cjs/execution/execute.js", (exports, pkgInfo) => {
         this.wrapExecution(exports, pkgInfo);
       })
