@@ -3,7 +3,7 @@ import { Context, getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
-import type { ExecutionArgs } from "graphql/execution/execute";
+import type { ExecutionArgs } from "graphql";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { extractInputsFromDocument } from "./graphql/extractInputsFromDocument";
 import { extractTopLevelFieldsFromDocument } from "./graphql/extractTopLevelFieldsFromDocument";
