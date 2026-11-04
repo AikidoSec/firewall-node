@@ -3,7 +3,7 @@
 // TODO:
 //  * support 1 nested multipart level
 //    (see second multipart example here:
-//     http://www.w3.org/TR/html401/interact/forms.html#didx-multipartform-data)
+//     https://www.w3.org/TR/html401/interact/forms.html#didx-multipartform-data)
 //  * support limits.fieldNameSize
 //     -- this will require modifications to utils.parseParams
 
@@ -128,13 +128,23 @@ function Multipart(boy, cfg) {
           let nsize = 0;
 
           if (header["content-type"]) {
-            parsed = parseParams(header["content-type"][0]);
-            if (parsed[0]) {
-              contype = parsed[0].toLowerCase();
-              for (i = 0, len = parsed.length; i < len; ++i) {
-                if (RE_CHARSET.test(parsed[i][0])) {
-                  charset = parsed[i][1].toLowerCase();
-                  break;
+            const contentType = header["content-type"][0];
+            if (
+              contentType.length !== 0 &&
+              contentType.indexOf(";") === -1 &&
+              contentType.indexOf(" ") === -1 &&
+              contentType.indexOf("\t") === -1
+            ) {
+              contype = contentType.toLowerCase();
+            } else {
+              parsed = parseParams(contentType);
+              if (parsed[0]) {
+                contype = parsed[0].toLowerCase();
+                for (i = 0, len = parsed.length; i < len; ++i) {
+                  if (RE_CHARSET.test(parsed[i][0])) {
+                    charset = parsed[i][1].toLowerCase();
+                    break;
+                  }
                 }
               }
             }
@@ -155,8 +165,14 @@ function Multipart(boy, cfg) {
             for (i = 0, len = parsed.length; i < len; ++i) {
               if (RE_NAME.test(parsed[i][0])) {
                 fieldname = parsed[i][1];
+                if (hasBareLineBreak(fieldname)) {
+                  return skipPart(part);
+                }
               } else if (RE_FILENAME.test(parsed[i][0])) {
                 filename = parsed[i][1];
+                if (hasBareLineBreak(filename)) {
+                  return skipPart(part);
+                }
                 if (!preservePath) {
                   filename = basename(filename);
                 }
@@ -335,6 +351,12 @@ Multipart.prototype.end = function () {
 
 function skipPart(part) {
   part.resume();
+}
+
+function hasBareLineBreak(value) {
+  return (
+    typeof value === "string" && (value.includes("\r") || value.includes("\n"))
+  );
 }
 
 function FileStream(opts) {
