@@ -48,14 +48,19 @@ export class RateLimiter {
       return { allowed: true };
     }
 
+    // Blocked requests count too, so wait until fewer than maxRequests remain.
+    // The window includes its boundary, so round strictly past expiry.
+    const blockingTimestamp =
+      filteredTimestamps[filteredTimestamps.length - maxRequests] ??
+      filteredTimestamps[0];
     const retryAfterMs = Math.max(
       0,
-      filteredTimestamps[0] + windowSizeInMS - currentTime
+      blockingTimestamp + windowSizeInMS - currentTime
     );
 
     return {
       allowed: false,
-      retryAfterSeconds: Math.ceil(retryAfterMs / 1000),
+      retryAfterSeconds: Math.floor(retryAfterMs / 1000) + 1,
     };
   }
 }

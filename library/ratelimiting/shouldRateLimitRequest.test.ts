@@ -784,7 +784,7 @@ t.test("it includes retryAfterSeconds when rate limited", async (t) => {
   t.equal(result.block, true);
   if (result.block) {
     t.equal(result.trigger, "ip");
-    t.equal(result.retryAfterSeconds, 50);
+    t.equal(result.retryAfterSeconds, 61);
   }
 
   clock.uninstall();

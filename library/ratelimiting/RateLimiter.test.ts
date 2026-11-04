@@ -284,31 +284,39 @@ t.test("should handle sliding window with burst requests", async (t) => {
 });
 
 t.test("should return retryAfterSeconds when rate limited", async (t) => {
-  const windowSize = 10000;
-  const max = 2;
+  const windowSize = 60000;
+  const max = 3;
   const limiter = new RateLimiter(max, windowSize);
 
   t.same(limiter.isAllowed(key, windowSize, max), { allowed: true });
 
-  clock.tick(3000);
+  clock.tick(20000);
 
   t.same(limiter.isAllowed(key, windowSize, max), { allowed: true });
 
-  clock.tick(2000);
+  clock.tick(20000);
+
+  t.same(limiter.isAllowed(key, windowSize, max), { allowed: true });
+
+  clock.tick(10000);
 
   const result = limiter.isAllowed(key, windowSize, max);
   t.equal(result.allowed, false);
   if (!result.allowed) {
-    t.equal(result.retryAfterSeconds, 5);
+    t.equal(result.retryAfterSeconds, 31);
+
+    clock.tick(result.retryAfterSeconds * 1000);
+
+    t.same(limiter.isAllowed(key, windowSize, max), { allowed: true });
   }
 });
 
 t.test(
-  "retryAfterSeconds decreases as time passes towards window expiry",
+  "retryAfterSeconds includes blocked requests in the sliding window",
   async (t) => {
     const windowSize = 10000;
     const max = 1;
-    const limiter = new RateLimiter(max, windowSize);
+    const limiter = new RateLimiter(max, windowSize * 2);
 
     t.same(limiter.isAllowed(key, windowSize, max), { allowed: true });
 
@@ -317,7 +325,7 @@ t.test(
     const result = limiter.isAllowed(key, windowSize, max);
     t.equal(result.allowed, false);
     if (!result.allowed) {
-      t.equal(result.retryAfterSeconds, 6);
+      t.equal(result.retryAfterSeconds, 11);
     }
 
     clock.tick(3000);
@@ -325,7 +333,17 @@ t.test(
     const result2 = limiter.isAllowed(key, windowSize, max);
     t.equal(result2.allowed, false);
     if (!result2.allowed) {
-      t.equal(result2.retryAfterSeconds, 3);
+      t.equal(result2.retryAfterSeconds, 11);
+    }
+
+    clock.tick(windowSize);
+
+    const result3 = limiter.isAllowed(key, windowSize, max);
+    t.same(result3, { allowed: false, retryAfterSeconds: 11 });
+    if (!result3.allowed) {
+      clock.tick(result3.retryAfterSeconds * 1000);
+
+      t.same(limiter.isAllowed(key, windowSize, max), { allowed: true });
     }
   }
 );
