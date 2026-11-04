@@ -12,6 +12,11 @@ type PartialAiResponse = {
     inputTokens?: number;
     outputTokens?: number;
     reasoningTokens?: number;
+    cachedInputTokens?: number;
+    inputTokenDetails?: {
+      cacheReadTokens?: number;
+      cacheWriteTokens?: number;
+    };
   };
   response: {
     modelId: string;
@@ -42,6 +47,8 @@ export class AiSDK implements Wrapper {
       model: modelName,
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
+      cacheReadTokens: usage.cacheReadTokens,
+      cacheWriteTokens: usage.cacheWriteTokens,
     });
   }
 
@@ -120,6 +127,8 @@ export class AiSDK implements Wrapper {
     | {
         inputTokens: number;
         outputTokens: number;
+        cacheReadTokens: number;
+        cacheWriteTokens: number;
       }
     | undefined {
     const inputTokens =
@@ -137,6 +146,11 @@ export class AiSDK implements Wrapper {
     return {
       inputTokens,
       outputTokens,
+      cacheReadTokens:
+        usage.inputTokenDetails?.cacheReadTokens ??
+        usage.cachedInputTokens ??
+        0,
+      cacheWriteTokens: usage.inputTokenDetails?.cacheWriteTokens ?? 0,
     };
   }
 

@@ -28,6 +28,8 @@ t.test("it tracks basic AI calls", async () => {
       input: 100,
       output: 50,
       total: 150,
+      cacheRead: 0,
+      cacheWrite: 0,
     },
   });
 
@@ -42,6 +44,8 @@ t.test("it tracks multiple calls to the same provider/model", async () => {
     model: "gpt-4",
     inputTokens: 100,
     outputTokens: 50,
+    cacheReadTokens: 10,
+    cacheWriteTokens: 10,
   });
 
   stats.onAICall({
@@ -49,6 +53,8 @@ t.test("it tracks multiple calls to the same provider/model", async () => {
     model: "gpt-4",
     inputTokens: 200,
     outputTokens: 75,
+    cacheReadTokens: 30,
+    cacheWriteTokens: 20,
   });
 
   const result = stats.getStats();
@@ -61,6 +67,8 @@ t.test("it tracks multiple calls to the same provider/model", async () => {
       input: 300,
       output: 125,
       total: 425,
+      cacheRead: 40,
+      cacheWrite: 30,
     },
   });
 });
@@ -107,6 +115,8 @@ t.test(
         input: 120,
         output: 60,
         total: 180,
+        cacheRead: 0,
+        cacheWrite: 0,
       },
     });
 
@@ -118,6 +128,8 @@ t.test(
         input: 80,
         output: 40,
         total: 120,
+        cacheRead: 0,
+        cacheWrite: 0,
       },
     });
 
@@ -129,6 +141,8 @@ t.test(
         input: 100,
         output: 50,
         total: 150,
+        cacheRead: 0,
+        cacheWrite: 0,
       },
     });
   }
@@ -176,6 +190,8 @@ t.test("it handles zero token inputs", async () => {
     input: 0,
     output: 0,
     total: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
   });
 });
 
