@@ -4,10 +4,9 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
-import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import type { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectSQLite } from "../vulnerabilities/sql-injection/dialects/SQLDialectSQLite";
-import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
+import { checkContextForSqlInjectionAndIdor } from "../vulnerabilities/checkContextForSqlInjectionAndIdor";
 import { isPlainObject } from "../helpers/isPlainObject";
 
 const zenRawQuerySymbol = Symbol("zen.node.sqlite.rawQuery");
@@ -83,21 +82,10 @@ export class NodeSQLite implements Wrapper {
 
     const sql = args[0];
 
-    if (context) {
-      const sqlResult = checkContextForSqlInjection({
-        operation: operation,
-        sql: sql,
-        context: context,
-        dialect: this.dialect,
-      });
-
-      if (sqlResult) {
-        return sqlResult;
-      }
-    }
-
-    return checkContextForIdor({
+    return checkContextForSqlInjectionAndIdor({
       sql,
+      operation,
+      context,
       dialect: this.dialect,
       resolvePlaceholder: () =>
         // node:sqlite does not support placeholders in exec
@@ -137,24 +125,13 @@ export class NodeSQLite implements Wrapper {
       return undefined;
     }
 
-    if (context) {
-      const sqlResult = checkContextForSqlInjection({
-        operation: operation,
-        sql: rawQuery,
-        context: context,
-        dialect: this.dialect,
-      });
-
-      if (sqlResult) {
-        return sqlResult;
-      }
-    }
-
     const { namedParameters, anonymousParameters } =
       this.extractStatementParameters(args);
 
-    return checkContextForIdor({
+    return checkContextForSqlInjectionAndIdor({
       sql: rawQuery,
+      operation,
+      context,
       dialect: this.dialect,
       resolvePlaceholder: (placeholder, placeholderNumber) =>
         this.resolvePlaceholder(
@@ -244,21 +221,10 @@ export class NodeSQLite implements Wrapper {
       return undefined;
     }
 
-    if (context) {
-      const sqlResult = checkContextForSqlInjection({
-        operation: operation,
-        sql: sql,
-        context: context,
-        dialect: this.dialect,
-      });
-
-      if (sqlResult) {
-        return sqlResult;
-      }
-    }
-
-    return checkContextForIdor({
-      sql: sql,
+    return checkContextForSqlInjectionAndIdor({
+      sql,
+      operation,
+      context,
       dialect: this.dialect,
       resolvePlaceholder: (placeholder, placeholderNumber) => {
         if (placeholder === "?" && placeholderNumber !== undefined && params) {
