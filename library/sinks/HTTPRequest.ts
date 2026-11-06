@@ -1,5 +1,9 @@
 import { lookup } from "dns";
-import { type RequestOptions } from "http";
+import {
+  type ClientRequest,
+  type IncomingMessage,
+  type RequestOptions,
+} from "http";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -14,12 +18,14 @@ import {
   getRequestOptions,
   getUrlFromHTTPRequestArgs,
 } from "./http-request/getUrlFromHTTPRequestArgs";
-import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
+import { onHTTPResponse } from "./http-request/onHTTPResponse";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isOptionsObject } from "./http-request/isOptionsObject";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 
 export class HTTPRequest implements Wrapper {
+  private readonly requestUrls = new WeakMap<object, URL>();
+
   private inspectHostname(
     agent: Agent,
     url: URL,
@@ -194,23 +200,70 @@ export class HTTPRequest implements Wrapper {
     return args;
   }
 
-  wrapResponseHandler(args: unknown[], module: "http" | "https") {
-    if (args.find((arg) => typeof arg === "function")) {
-      return args.map((arg) => {
-        if (typeof arg === "function") {
-          return wrapResponseHandler(args, module, arg);
-        }
+  private handleResponseFinish({
+    request,
+    response,
+  }: {
+    request: ClientRequest;
+    response: IncomingMessage;
+  }) {
+    const context = getContext();
 
-        return arg;
-      });
+    if (!context) {
+      return;
     }
 
-    return args.concat([wrapResponseHandler(args, module, () => {})]);
+    const url = this.requestUrls.get(request);
+    if (!url) {
+      return;
+    }
+
+    try {
+      // Copy the URL because the hostname gets normalized
+      onHTTPResponse(new URL(url.href), response, context);
+    } catch {
+      // Ignore errors
+    }
+  }
+
+  private subscribeToResponses() {
+    const { subscribe } =
+      require("diagnostics_channel") as typeof import("diagnostics_channel");
+
+    // diagnostics_channel.subscribe(...) was added in Node.js 16.17.0 and 18.7.0 (not available in 17.x),
+    if (typeof subscribe !== "function") {
+      return;
+    }
+
+    subscribe("http.client.response.finish", (message) =>
+      this.handleResponseFinish(
+        message as { request: ClientRequest; response: IncomingMessage }
+      )
+    );
+  }
+
+  private rememberRequestUrl(
+    args: unknown[],
+    request: unknown,
+    module: "http" | "https"
+  ) {
+    if (typeof request !== "object" || request === null) {
+      return request;
+    }
+
+    const url = getUrlFromHTTPRequestArgs(args, module);
+    if (url) {
+      this.requestUrls.set(request, url);
+    }
+
+    return request;
   }
 
   wrap(hooks: Hooks) {
     const modules = ["http", "https"] as const;
     const methods = ["request", "get"] as const;
+
+    this.subscribeToResponses();
 
     for (const module of modules) {
       hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
@@ -224,6 +277,9 @@ export class HTTPRequest implements Wrapper {
             // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
             modifyArgs: (args, agent) =>
               this.monitorDNSLookups(args, agent, module),
+            // Remember where the request is going to, used to detect redirects
+            modifyReturnValue: (args, returnValue) =>
+              this.rememberRequestUrl(args, returnValue, module),
           });
         }
       });
