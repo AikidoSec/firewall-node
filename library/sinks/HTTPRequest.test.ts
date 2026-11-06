@@ -168,7 +168,7 @@ t.test("it works", (t) => {
             type: "detected_attack",
             attack: {
               kind: "ssrf",
-              payload: "thisdomainpointstointernalip.com",
+              payload: '"thisdomainpointstointernalip.com"',
               metadata: {
                 hostname: "thisdomainpointstointernalip.com",
                 port: "443",
