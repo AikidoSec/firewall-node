@@ -3070,3 +3070,182 @@ t.test("Two classes with same name in different block scopes", async (t) => {
         }`
   );
 });
+
+t.test("it does not remove function level use strict", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "test.js",
+    `
+        import { test } from "test";
+        class Test {
+
+            #testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                "use strict";
+                console.log("test");
+            }
+        }
+        `,
+    "module",
+    {
+      path: "test.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "testFunction",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        #testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            "use strict";
+            __instrumentInspectArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+            console.log("test");
+        }
+    }`
+  );
+});
+
+t.test("it does not remove function level use strict in CJS", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "test.js",
+    `
+        const { test } = require("test");
+        class Test {
+
+            #testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                "use strict";
+                console.log("test");
+            }
+        }
+        `,
+    "commonjs",
+    {
+      path: "test.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "testFunction",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+          inspectArgs: false,
+          modifyArgs: true,
+          modifyReturnValue: false,
+          modifyArgumentsObject: true,
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `const { __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+     const { test } = require("test");
+     class Test {
+        #testValue = 42;
+        constructor() {
+                this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+                "use strict";
+                Object.assign(arguments, __instrumentModifyArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", Array.from(arguments), this));
+                console.log("test");
+        }
+    }`
+  );
+});
+
+t.test("it does not remove module level use strict", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "test.js",
+    `
+         "use strict";
+        import { test } from "test";
+        class Test {
+
+            #testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                console.log("test");
+            }
+        }
+        `,
+    "module",
+    {
+      path: "test.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "testFunction",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `"use strict";
+    import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        #testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            __instrumentInspectArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+            console.log("test");
+        }
+    }`
+  );
+});
