@@ -4,6 +4,30 @@ import { inspectArgs, wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForJsInjection } from "../vulnerabilities/js-injection/checkContextForJsInjection";
 import { getInstance } from "../agent/AgentSingleton";
+import {
+  markContextDisabled,
+  isContextDisabled,
+  runWithCodeGenDisabled,
+} from "../helpers/vmContextsWithCodeGenerationDisabled";
+
+type CodeGenerationOptionKey = "codeGeneration" | "contextCodeGeneration";
+
+function hasCodeGenerationFromStringsDisabled(
+  options: unknown,
+  optionKey: CodeGenerationOptionKey
+): boolean {
+  if (!options || typeof options !== "object") {
+    return false;
+  }
+
+  const codeGeneration = (options as Record<string, unknown>)[optionKey];
+
+  return (
+    !!codeGeneration &&
+    typeof codeGeneration === "object" &&
+    (codeGeneration as { strings?: unknown }).strings === false
+  );
+}
 
 export class NodeVm implements Wrapper {
   private inspectCode(args: unknown[], operation: string) {
@@ -51,6 +75,80 @@ export class NodeVm implements Wrapper {
 
   wrap(hooks: Hooks): void {
     hooks.addBuiltinModule("vm").onRequire((exports, pkgInfo) => {
+      const originalCreateContext = exports.createContext;
+      const originalRunInContext = exports.runInContext;
+      const originalRunInNewContext = exports.runInNewContext;
+      const originalScriptRunInContext = exports.Script.prototype.runInContext;
+      const originalScriptRunInNewContext =
+        exports.Script.prototype.runInNewContext;
+
+      if (typeof originalCreateContext === "function") {
+        exports.createContext = function createContext(
+          this: unknown,
+          ...args: unknown[]
+        ) {
+          const result = originalCreateContext.apply(this, args);
+          if (hasCodeGenerationFromStringsDisabled(args[1], "codeGeneration")) {
+            markContextDisabled(result);
+          }
+          return result;
+        };
+      }
+
+      if (typeof originalRunInContext === "function") {
+        exports.runInContext = function runInContext(
+          this: unknown,
+          ...args: unknown[]
+        ) {
+          const disabled = isContextDisabled(args[1]);
+          return runWithCodeGenDisabled(disabled, () =>
+            originalRunInContext.apply(this, args)
+          );
+        };
+      }
+
+      if (typeof originalScriptRunInContext === "function") {
+        exports.Script.prototype.runInContext = function runInContext(
+          this: unknown,
+          ...args: unknown[]
+        ) {
+          const disabled = isContextDisabled(args[0]);
+          return runWithCodeGenDisabled(disabled, () =>
+            originalScriptRunInContext.apply(this, args)
+          );
+        };
+      }
+
+      if (typeof originalRunInNewContext === "function") {
+        exports.runInNewContext = function runInNewContext(
+          this: unknown,
+          ...args: unknown[]
+        ) {
+          const disabled = hasCodeGenerationFromStringsDisabled(
+            args[2],
+            "contextCodeGeneration"
+          );
+          return runWithCodeGenDisabled(disabled, () =>
+            originalRunInNewContext.apply(this, args)
+          );
+        };
+      }
+
+      if (typeof originalScriptRunInNewContext === "function") {
+        exports.Script.prototype.runInNewContext = function runInNewContext(
+          this: unknown,
+          ...args: unknown[]
+        ) {
+          const disabled = hasCodeGenerationFromStringsDisabled(
+            args[1],
+            "contextCodeGeneration"
+          );
+          return runWithCodeGenDisabled(disabled, () =>
+            originalScriptRunInNewContext.apply(this, args)
+          );
+        };
+      }
+
       // We can't use our helper wrapNewInstance because it can not inspect constructor args
       exports.Script = new Proxy(exports.Script, {
         construct: (target, args, newTarget) =>
