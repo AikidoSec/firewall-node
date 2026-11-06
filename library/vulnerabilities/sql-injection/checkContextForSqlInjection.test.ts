@@ -42,6 +42,45 @@ t.test("it returns correct path", async () => {
   );
 });
 
+t.test("it returns correct path if the payload is an object key", async () => {
+  const payload = "1' OR 1=1; --";
+
+  t.same(
+    checkContextForSqlInjection({
+      sql: "SELECT * FROM users WHERE id = '1' OR 1=1; -- '",
+      operation: "mysql.query",
+      dialect: new SQLDialectMySQL(),
+      context: {
+        cookies: {},
+        headers: {},
+        remoteAddress: "ip",
+        method: "POST",
+        url: "url",
+        query: {},
+        body: {
+          nested: {
+            [payload]: "value",
+          },
+        },
+        source: "express",
+        route: "/",
+        routeParams: {},
+      },
+    }),
+    {
+      operation: "mysql.query",
+      kind: "sql_injection",
+      source: "body",
+      pathsToPayload: [`.nested.${payload}`],
+      metadata: {
+        sql: "SELECT * FROM users WHERE id = '1' OR 1=1; -- '",
+        dialect: "MySQL",
+      },
+      payload,
+    }
+  );
+});
+
 // SQL that fails to tokenize: unmatched quote makes the tokenizer fail
 const failingSQL = `SELECT * FROM comments WHERE comment = 'I'm writting you'`;
 const failingInput = "I'm writting you";
