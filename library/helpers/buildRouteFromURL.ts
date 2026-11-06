@@ -15,6 +15,11 @@ const HASH = /^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64}|[a-f0-9]{128})$/i;
 const HASH_LENGTHS = [32, 40, 64, 128];
 const NUMBER_ARRAY = /^\d+(?:,\d+)*$/;
 
+/**
+ * Call this route with the original request path and optional query string.
+ * Do not pass a full URL with a host, as some web frameworks accept malformed host header values
+ * which modify the request path and can lead to rate limiting bypasses.
+ */
 export function buildRouteFromURL(url: string) {
   let path = tryParseURLPath(url);
 
