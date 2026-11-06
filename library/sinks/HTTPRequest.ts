@@ -1,4 +1,6 @@
 import { lookup } from "dns";
+import { isProxyAgent } from "./http-request/isProxyAgent";
+import { warnAboutUsingProxy } from "../helpers/warnAboutUsingProxy";
 import {
   type ClientRequest,
   type IncomingMessage,
@@ -259,6 +261,25 @@ export class HTTPRequest implements Wrapper {
     return request;
   }
 
+  private warnIfUsingProxyAgent(
+    args: unknown[],
+    exports: typeof import("http")
+  ): void {
+    const options = getRequestOptions(args);
+    let requestAgent = options?.agent;
+    // agent: false tells Node not to use the global agent.
+    if (
+      (requestAgent === null || requestAgent === undefined) &&
+      // Node skips the global agent when createConnection is provided.
+      typeof options?.createConnection !== "function"
+    ) {
+      requestAgent = exports.globalAgent;
+    }
+    if (isProxyAgent(requestAgent)) {
+      warnAboutUsingProxy();
+    }
+  }
+
   wrap(hooks: Hooks) {
     const modules = ["http", "https"] as const;
     const methods = ["request", "get"] as const;
@@ -271,8 +292,10 @@ export class HTTPRequest implements Wrapper {
           wrapExport(exports, method, pkgInfo, {
             kind: "outgoing_http_op",
             // Whenever a request is made, we'll check the hostname whether it's a private IP
-            inspectArgs: (args, agent) =>
-              this.inspectHttpRequest(args, agent, module),
+            inspectArgs: (args, agent) => {
+              this.warnIfUsingProxyAgent(args, exports);
+              return this.inspectHttpRequest(args, agent, module);
+            },
             // Whenever a request is made, we'll modify the options to pass a custom lookup function
             // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
             modifyArgs: (args, agent) =>

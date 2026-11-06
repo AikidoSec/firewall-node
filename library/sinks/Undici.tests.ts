@@ -6,6 +6,7 @@ import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
+import { isProxyDispatcher } from "./undici/isProxyDispatcher";
 
 // Undici tests are split up because sockets are re-used for the same hostname
 // See Undici.tests.ts and Undici2.tests.ts
@@ -246,6 +247,26 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
       agent.getHostnames().clear();
     }
   );
+
+  t.test(`recognizes proxy dispatchers from ${undiciPkgName}`, async (t) => {
+    const undici = await import(undiciPkgName);
+    for (const value of [undefined, false, Object.create(null)]) {
+      t.notOk(isProxyDispatcher(value));
+    }
+    const direct = new undici.Agent();
+    const proxy = new undici.ProxyAgent("http://localhost:1234");
+    t.notOk(isProxyDispatcher(direct), "direct agent");
+    t.ok(isProxyDispatcher(proxy), "proxy agent");
+    await direct.close();
+    await proxy.close();
+    if (undici.EnvHttpProxyAgent) {
+      const envProxy = new undici.EnvHttpProxyAgent({
+        httpProxy: "http://localhost:1234",
+      });
+      t.ok(isProxyDispatcher(envProxy), "environment proxy agent");
+      await envProxy.close();
+    }
+  });
 
   t.after(() => {
     server.close();
