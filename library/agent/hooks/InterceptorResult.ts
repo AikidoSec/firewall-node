@@ -19,6 +19,9 @@ export type AttackResult = {
 export type IdorViolationResult = {
   idorViolation: true;
   message: string;
+  // Attack that was detected in the same query, but not blocked (detection-only mode)
+  // It still needs to be reported before throwing the IDOR violation
+  attack?: AttackResult;
 };
 
 export type InterceptorResult =
