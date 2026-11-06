@@ -3293,3 +3293,71 @@ t.test("shortCircuit is not added to constructors", async (t) => {
 
   t.notMatch(result, "__zenShortCircuit");
 });
+
+t.test(
+  "it does not remove function level use strict with shortCircuit turned on",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "test.js",
+      `
+        import { test } from "test";
+        class Test {
+
+            #testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                "use strict";
+                console.log("test");
+            }
+        }
+        `,
+      "module",
+      {
+        path: "test.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "testFunction",
+            identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+            inspectArgs: false,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            shortCircuit: true,
+            modifyArgumentsObject: false,
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `import { __instrumentShortCircuit } from "@aikidosec/firewall/instrument/internals";
+      import { test } from "test";
+      class Test {
+          #testValue = 42;
+          constructor() {
+              this.testFunction(testValue);
+          }
+          testFunction(arg1) {
+            "use strict";
+            {
+                const __zenShortCircuit = __instrumentShortCircuit("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, this);
+                if (__zenShortCircuit) {
+                    return __zenShortCircuit.returnValue;
+                }
+            }
+            console.log("test");
+          }
+      }`
+    );
+  }
+);
