@@ -4,12 +4,18 @@ import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
 
+type ResponseFunctionToolCall = {
+  type?: string;
+  name?: string;
+};
+
 type Response = {
   model: string;
   usage?: {
     input_tokens: number;
     output_tokens: number;
   };
+  output?: ResponseFunctionToolCall[];
 };
 
 function isResponse(response: unknown): response is Response {
@@ -41,7 +47,78 @@ function isCompletionResponse(
 
 type Provider = "openai" | "azure";
 
+type ChatCompletionToolCall = {
+  function?: {
+    name: string;
+  };
+};
+
+type ChatCompletionWithToolCalls = {
+  choices?: Array<{
+    message?: {
+      tool_calls?: ChatCompletionToolCall[];
+    };
+  }>;
+};
+
+function isChatCompletionWithToolCalls(
+  response: unknown
+): response is ChatCompletionWithToolCalls {
+  return isPlainObject(response) && Array.isArray(response.choices);
+}
+
 export class OpenAI implements Wrapper {
+  private stripBlockedToolCalls(agent: Agent, response: unknown) {
+    if (!isChatCompletionWithToolCalls(response)) {
+      return;
+    }
+
+    const config = agent.getConfig();
+
+    for (const choice of response.choices ?? []) {
+      if (!choice.message || !Array.isArray(choice.message.tool_calls)) {
+        continue;
+      }
+
+      choice.message.tool_calls = choice.message.tool_calls.filter(
+        (toolCall) => {
+          if (
+            !toolCall.function ||
+            typeof toolCall.function.name !== "string"
+          ) {
+            return true;
+          }
+
+          const { name } = toolCall.function;
+          const blocked = config.isAIToolBlocked(name);
+          agent.getAIStatistics().onAIToolCall({ name, blocked });
+
+          return !blocked;
+        }
+      );
+    }
+  }
+
+  private stripBlockedResponseToolCalls(agent: Agent, response: unknown) {
+    if (!isResponse(response) || !Array.isArray(response.output)) {
+      return;
+    }
+
+    const config = agent.getConfig();
+
+    response.output = response.output.filter((item) => {
+      if (item.type !== "function_call" || typeof item.name !== "string") {
+        return true;
+      }
+
+      const { name } = item;
+      const blocked = config.isAIToolBlocked(name);
+      agent.getAIStatistics().onAIToolCall({ name, blocked });
+
+      return !blocked;
+    });
+  }
+
   private inspectResponse(agent: Agent, response: unknown, provider: Provider) {
     if (!isResponse(response)) {
       return;
@@ -143,18 +220,20 @@ export class OpenAI implements Wrapper {
     subject: unknown
   ) {
     if (returnValue instanceof Promise) {
-      // Inspect the response after the promise resolves, it won't change the original promise
-      returnValue
-        .then((response) => {
+      return returnValue.then((response) => {
+        try {
           this.inspectResponse(agent, response, this.getProvider(subject));
-        })
-        .catch((error) => {
+          this.stripBlockedResponseToolCalls(agent, response);
+        } catch (error: unknown) {
           agent.onErrorThrownByInterceptor({
-            error: error,
+            error: error instanceof Error ? error : new Error(String(error)),
             method: "create.<promise>",
             module: "openai",
           });
-        });
+        }
+
+        return response;
+      });
     }
 
     return returnValue;
@@ -166,22 +245,24 @@ export class OpenAI implements Wrapper {
     subject: unknown
   ) {
     if (returnValue instanceof Promise) {
-      // Inspect the response after the promise resolves, it won't change the original promise
-      returnValue
-        .then((response) => {
+      return returnValue.then((response) => {
+        try {
           this.inspectCompletionResponse(
             agent,
             response,
             this.getProvider(subject)
           );
-        })
-        .catch((error) => {
+          this.stripBlockedToolCalls(agent, response);
+        } catch (error: unknown) {
           agent.onErrorThrownByInterceptor({
-            error: error,
+            error: error instanceof Error ? error : new Error(String(error)),
             method: "create.<promise>",
             module: "openai",
           });
-        });
+        }
+
+        return response;
+      });
     }
 
     return returnValue;
