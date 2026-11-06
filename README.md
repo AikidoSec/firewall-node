@@ -52,9 +52,10 @@ Zen for Node.js 16+ is compatible with:
 - ✅ [Fastify](docs/fastify.md) 4.x and 5.x
 - ✅ [Koa](docs/koa.md) 3.x and 2.x
 - ✅ [NestJS](docs/nestjs.md) 10.x and 11.x
-- ✅ [Restify](docs/restify.md) 11.x, 10.x, 9.x and 8.x
+- ✅ [Restify](docs/restify.md) 12.x, 11.x, 10.x, 9.x and 8.x
 - ✅ [ElysiaJS](docs/elysiajs.md) 1.x (minimum 1.4.0)
 - ✅ [tRPC](docs/trpc.md) 11.x
+- ✅ [H3](docs/h3.md) 1.8.x and newer 1.x versions
 
 ### Database drivers
 
@@ -67,7 +68,7 @@ Zen for Node.js 16+ is compatible with:
 - ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 6.x and 5.x
 - ✅ [`node:sqlite`](https://nodejs.org/api/sqlite.html)
 - ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 13.x, 12.x, 11.x, 10.x, 9.x and 8.x
-- ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
+- ✅ [`postgres`](https://www.npmjs.com/package/postgres) 4.x, 3.x
 - ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
 - ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 6.x and 5.x
 - ✅ [`@prisma/adapter-pg`](https://www.npmjs.com/package/@prisma/adapter-pg) 7.x
@@ -145,6 +146,9 @@ For framework- and provider- specific instructions, check out our docs:
 - [micro](docs/micro.md)
 - [Next.js](docs/next.md)
 - [Restify](docs/restify.md)
+- [ElysiaJS](docs/elysiajs.md)
+- [tRPC](docs/trpc.md)
+- [H3](docs/h3.md)
 - [AWS Lambda](docs/lambda.md)
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)

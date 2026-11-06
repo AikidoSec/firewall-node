@@ -1,24 +1,56 @@
 import { isIP } from "net";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
-import { trustProxy } from "./trustProxy";
+import {
+  getTrustProxyConfig,
+  isTrustedProxyRequest,
+  TrustProxyConfig,
+} from "./trustProxy";
 
 export function getIPAddressFromRequest(req: {
   headers: Record<string, unknown>;
   remoteAddress: string | undefined;
-}) {
+}): string | undefined {
+  if (!isTrustedProxyRequest(req.remoteAddress)) {
+    return req.remoteAddress;
+  }
+
+  const config = getTrustProxyConfig();
+
   if (req.headers) {
     const ipHeaderName = getIpHeaderName();
-    if (typeof req.headers[ipHeaderName] === "string" && trustProxy()) {
-      const ipHeaderValue = getClientIpFromHeader(req.headers[ipHeaderName]);
+    if (typeof req.headers[ipHeaderName] === "string") {
+      const ips = parseIPsFromHeader(req.headers[ipHeaderName]);
+      const ip = selectClientIP(ips, config);
 
-      if (ipHeaderValue && isIP(ipHeaderValue)) {
-        return ipHeaderValue;
+      if (ip) {
+        return ip;
       }
     }
   }
 
-  if (req.remoteAddress) {
-    return req.remoteAddress;
+  return req.remoteAddress;
+}
+
+function selectClientIP(
+  ips: string[],
+  config: TrustProxyConfig
+): string | undefined {
+  // In count mode, the configured number of rightmost hops are trusted
+  // proxies, so the search starts to their left instead of at the end
+  const startIndex =
+    config.type === "count" ? ips.length - config.value : ips.length - 1;
+
+  // Search right-to-left for the first non-private IP not belonging to a trusted proxy
+  for (let i = startIndex; i >= 0; i--) {
+    const ip = ips[i];
+    if (!isIP(ip) || isPrivateIP(ip)) {
+      continue;
+    }
+    if (config.type === "cidr" && config.matcher.hasWithMappedCheck(ip)) {
+      continue;
+    }
+
+    return ip;
   }
 
   return undefined;
@@ -31,8 +63,8 @@ function getIpHeaderName(): string {
   return "x-forwarded-for";
 }
 
-function getClientIpFromHeader(value: string) {
-  const forwardedIps = value.split(",").map((e) => {
+function parseIPsFromHeader(value: string): string[] {
+  return value.split(",").map((e) => {
     const ip = e.trim();
 
     // We do a first check here to make sure that valid IPv6 addresses don't
@@ -66,14 +98,4 @@ function getClientIpFromHeader(value: string) {
 
     return ip;
   });
-
-  // When selecting an address from the X-Forwarded-For header,
-  // we should select the first valid IP address that is not a private IP address
-  for (let i = 0; i < forwardedIps.length; i++) {
-    if (isIP(forwardedIps[i]) && !isPrivateIP(forwardedIps[i])) {
-      return forwardedIps[i];
-    }
-  }
-
-  return null;
 }

@@ -1,0 +1,15 @@
+{
+  "name": "fastify-esm-loader",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --require @aikidosec/firewall/instrument --import ./sentry.js ./app.js"
+  },
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@sentry/node": "10.48.0",
+    "fastify": "5.8.5",
+    "newrelic": "14.8.0",
+    "newrelic-old": "npm:newrelic@13.20.0"
+  }
+}

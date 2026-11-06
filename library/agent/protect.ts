@@ -53,6 +53,7 @@ import { Koa } from "../sources/Koa";
 import { Restify } from "../sources/Restify";
 import { ClickHouse } from "../sinks/ClickHouse";
 import { Prisma } from "../sinks/Prisma";
+import { H3 } from "../sources/H3";
 import { AwsSDKVersion2 } from "../sinks/AwsSDKVersion2";
 import { OpenAI } from "../sinks/OpenAI";
 import { AwsSDKVersion3 } from "../sinks/AwsSDKVersion3";
@@ -189,6 +190,7 @@ export function getWrappers() {
     new NodeVm(),
     new Zlib(),
     new WorkerThreads(),
+    new H3(),
   ];
 }
 

@@ -18,7 +18,7 @@ export class Restify implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("restify")
-      .withVersion("^11.0.0 || ^10.0.0 || ^9.0.0 || ^8.0.0")
+      .withVersion("^12.0.0 || ^11.0.0 || ^10.0.0 || ^9.0.0 || ^8.0.0")
       .onFileRequire("lib/server.js", (exports, pkgInfo) => {
         // See https://restify.com/docs/server-api/
         // We don't need to wrap `server.param(...)` because it uses `server.use(...)` internally
@@ -42,6 +42,25 @@ export class Restify implements Wrapper {
           kind: undefined,
           modifyArgs: (args) => this.wrapArgs(args),
         });
+      })
+      .addFileInstrumentation({
+        path: "lib/server.js",
+        functions: [
+          {
+            nodeType: "FunctionExpression",
+            name: "serverMethod",
+            modifyArgumentsObject: true,
+            operationKind: undefined,
+            modifyArgs: (args) => this.wrapArgs(args),
+          },
+          {
+            nodeType: "FunctionAssignment",
+            name: "Server.prototype.use",
+            modifyArgumentsObject: true,
+            operationKind: undefined,
+            modifyArgs: (args) => this.wrapArgs(args),
+          },
+        ],
       });
   }
 }
