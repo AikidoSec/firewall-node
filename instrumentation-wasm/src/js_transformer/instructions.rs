@@ -19,6 +19,7 @@ pub struct FunctionInstructions {
     pub inspect_args: bool,
     pub modify_args: bool,
     pub modify_return_value: bool,
+    pub short_circuit: bool,
     pub modify_arguments_object: bool,
     pub class_name: Option<String>,
 }
