@@ -1,4 +1,6 @@
 import { lookup } from "dns";
+import { isProxyDispatcher } from "./undici/isProxyDispatcher";
+import { warnAboutUsingProxy } from "../helpers/warnAboutUsingProxy";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -52,7 +54,27 @@ export class Fetch implements Wrapper {
     });
   }
 
+  private warnIfUsingProxyDispatcher(args: unknown[]): void {
+    const options = args[1];
+    let dispatcher: unknown;
+    if (options && typeof options === "object" && "dispatcher" in options) {
+      dispatcher = options.dispatcher;
+    }
+    if (!dispatcher) {
+      // @ts-expect-error Global dispatcher symbols are not typed.
+      dispatcher = globalThis[Symbol.for("undici.globalDispatcher.2")];
+      if (!dispatcher) {
+        // @ts-expect-error Global dispatcher symbols are not typed.
+        dispatcher = globalThis[Symbol.for("undici.globalDispatcher.1")];
+      }
+    }
+    if (isProxyDispatcher(dispatcher)) {
+      warnAboutUsingProxy();
+    }
+  }
+
   inspectFetch(args: unknown[], agent: Agent): InterceptorResult {
+    this.warnIfUsingProxyDispatcher(args);
     if (args.length > 0) {
       // URL string
       if (typeof args[0] === "string" && args[0].length > 0) {
