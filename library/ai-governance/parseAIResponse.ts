@@ -10,16 +10,104 @@ export type AICall = {
   cacheWriteTokens: number;
 };
 
+type ResponseFormat = {
+  path: RegExp;
+  model: (body: Record<string, unknown>, match: RegExpExecArray) => unknown;
+  inputTokens: readonly string[];
+  outputTokens: readonly string[];
+  cacheReadTokens: readonly string[];
+  cacheWriteTokens: readonly string[];
+};
+
+const modelFromBody: ResponseFormat["model"] = (body) =>
+  getField(body, "model");
+
+const anthropicUsage = {
+  inputTokens: ["usage.input_tokens"],
+  outputTokens: ["usage.output_tokens"],
+  cacheReadTokens: ["usage.cache_read_input_tokens"],
+  cacheWriteTokens: ["usage.cache_creation_input_tokens"],
+} as const;
+
+const FORMATS: readonly ResponseFormat[] = [
+  // OpenAI Chat Completions
+  {
+    path: /\/chat\/completions$/,
+    model: modelFromBody,
+    inputTokens: ["usage.prompt_tokens"],
+    outputTokens: ["usage.completion_tokens"],
+    cacheReadTokens: ["usage.prompt_tokens_details.cached_tokens"],
+    cacheWriteTokens: ["usage.prompt_tokens_details.cache_write_tokens"],
+  },
+  // OpenAI Responses
+  {
+    path: /\/responses$/,
+    model: modelFromBody,
+    inputTokens: ["usage.input_tokens"],
+    outputTokens: ["usage.output_tokens"],
+    cacheReadTokens: ["usage.input_tokens_details.cached_tokens"],
+    cacheWriteTokens: ["usage.input_tokens_details.cache_write_tokens"],
+  },
+  // Anthropic Messages
+  {
+    path: /\/v1\/messages$/,
+    model: modelFromBody,
+    ...anthropicUsage,
+  },
+  // Anthropic on Vertex AI
+  {
+    path: /\/publishers\/anthropic\/models\/[^/]+:rawPredict$/,
+    model: modelFromBody,
+    ...anthropicUsage,
+  },
+  // Anthropic on Bedrock (InvokeModel)
+  {
+    path: /\/model\/([^/]+)\/invoke$/,
+    model: modelFromBedrockPath,
+    ...anthropicUsage,
+  },
+  // Bedrock Converse
+  {
+    path: /\/model\/([^/]+)\/converse$/,
+    model: modelFromBedrockPath,
+    inputTokens: ["usage.inputTokens"],
+    outputTokens: ["usage.outputTokens"],
+    cacheReadTokens: ["usage.cacheReadInputTokens"],
+    cacheWriteTokens: ["usage.cacheWriteInputTokens"],
+  },
+  // Gemini generateContent
+  {
+    path: /\/models\/([^/:]+):generateContent$/,
+    model: (body, match) => {
+      const version = getField(body, "modelVersion");
+      return typeof version === "string" && version ? version : match[1];
+    },
+    inputTokens: [
+      "usageMetadata.promptTokenCount",
+      "usageMetadata.toolUsePromptTokenCount",
+    ],
+    outputTokens: [
+      "usageMetadata.candidatesTokenCount",
+      "usageMetadata.thoughtsTokenCount",
+    ],
+    cacheReadTokens: ["usageMetadata.cachedContentTokenCount"],
+    cacheWriteTokens: [],
+  },
+];
+
+/** Bedrock puts the model in the path, unless it's an ARN (then the body might have it) */
+function modelFromBedrockPath(
+  body: Record<string, unknown>,
+  match: RegExpExecArray
+): unknown {
+  const model = safeDecodeURIComponent(match[1]);
+  return model && !model.startsWith("arn:")
+    ? model
+    : modelFromBody(body, match);
+}
+
 export function isAIRequestPath(pathname: string): boolean {
-  return (
-    pathname.endsWith("/chat/completions") ||
-    pathname.endsWith("/responses") ||
-    pathname.endsWith("/v1/messages") ||
-    pathname.endsWith(":generateContent") ||
-    pathname.endsWith(":rawPredict") ||
-    pathname.endsWith("/converse") ||
-    pathname.endsWith("/invoke")
-  );
+  return FORMATS.some((format) => format.path.test(pathname));
 }
 
 export function parseAIResponse(url: URL, body: unknown): AICall | undefined {
@@ -27,305 +115,49 @@ export function parseAIResponse(url: URL, body: unknown): AICall | undefined {
     return undefined;
   }
 
-  const { pathname } = url;
-  if (pathname.endsWith("/chat/completions")) {
-    return parseOpenAIChatCompletion(body);
-  }
-  if (pathname.endsWith("/responses")) {
-    return parseOpenAIResponse(body);
-  }
-  if (
-    pathname.endsWith("/v1/messages") ||
-    /\/publishers\/anthropic\/models\/[^/]+:rawPredict$/.test(pathname)
-  ) {
-    return parseAnthropic(
-      body,
-      Object.prototype.hasOwnProperty.call(body, "model")
-        ? body.model
-        : undefined
-    );
+  for (const format of FORMATS) {
+    const match = format.path.exec(url.pathname);
+    if (!match) {
+      continue;
+    }
+    const model = format.model(body, match);
+    if (typeof model !== "string" || !model) {
+      return undefined;
+    }
+    return createSafeObject({
+      model,
+      inputTokens: sum(body, format.inputTokens),
+      outputTokens: sum(body, format.outputTokens),
+      cacheReadTokens: sum(body, format.cacheReadTokens),
+      cacheWriteTokens: sum(body, format.cacheWriteTokens),
+    });
   }
 
-  const gemini = /\/models\/([^/:]+):generateContent$/.exec(pathname);
-  if (gemini) {
-    return parseGemini(body, gemini[1]);
-  }
-
-  const bedrock = /\/model\/([^/]+)\/(converse|invoke)$/.exec(pathname);
-  if (bedrock) {
-    const model = safeDecodeURIComponent(bedrock[1]);
-    let modelName = Object.prototype.hasOwnProperty.call(body, "model")
-      ? body.model
-      : undefined;
-    if (model && !model.startsWith("arn:")) {
-      modelName = model;
-    }
-    if (bedrock[2] === "converse") {
-      return parseBedrockConverse(body, modelName);
-    }
-    return parseAnthropic(body, modelName);
-  }
   return undefined;
 }
 
-function parseOpenAIChatCompletion(
-  body: Record<string, unknown>
-): AICall | undefined {
-  if (
-    !Object.prototype.hasOwnProperty.call(body, "model") ||
-    typeof body.model !== "string" ||
-    !body.model
-  ) {
-    return undefined;
-  }
-  let inputTokens = 0;
-  let outputTokens = 0;
-  let cacheReadTokens = 0;
-  let cacheWriteTokens = 0;
-  if (
-    Object.prototype.hasOwnProperty.call(body, "usage") &&
-    isPlainObject(body.usage)
-  ) {
-    if (Object.prototype.hasOwnProperty.call(body.usage, "prompt_tokens")) {
-      inputTokens = tokens(body.usage.prompt_tokens);
-    }
-    if (Object.prototype.hasOwnProperty.call(body.usage, "completion_tokens")) {
-      outputTokens = tokens(body.usage.completion_tokens);
-    }
+/** Reads a nested field, only following own properties (ignores a polluted prototype) */
+function getField(body: Record<string, unknown>, path: string): unknown {
+  let value: unknown = body;
+  for (const key of path.split(".")) {
     if (
-      Object.prototype.hasOwnProperty.call(
-        body.usage,
-        "prompt_tokens_details"
-      ) &&
-      isPlainObject(body.usage.prompt_tokens_details)
+      !isPlainObject(value) ||
+      !Object.prototype.hasOwnProperty.call(value, key)
     ) {
-      const details = body.usage.prompt_tokens_details;
-      if (Object.prototype.hasOwnProperty.call(details, "cached_tokens")) {
-        cacheReadTokens = tokens(details.cached_tokens);
-      }
-      if (Object.prototype.hasOwnProperty.call(details, "cache_write_tokens")) {
-        cacheWriteTokens = tokens(details.cache_write_tokens);
-      }
+      return undefined;
     }
+    value = value[key];
   }
-  return createSafeObject({
-    model: body.model,
-    inputTokens,
-    outputTokens,
-    cacheReadTokens,
-    cacheWriteTokens,
-  });
+  return value;
 }
 
-function parseOpenAIResponse(
-  body: Record<string, unknown>
-): AICall | undefined {
-  if (
-    !Object.prototype.hasOwnProperty.call(body, "model") ||
-    typeof body.model !== "string" ||
-    !body.model
-  ) {
-    return undefined;
-  }
-  let inputTokens = 0;
-  let outputTokens = 0;
-  let cacheReadTokens = 0;
-  let cacheWriteTokens = 0;
-  if (
-    Object.prototype.hasOwnProperty.call(body, "usage") &&
-    isPlainObject(body.usage)
-  ) {
-    if (Object.prototype.hasOwnProperty.call(body.usage, "input_tokens")) {
-      inputTokens = tokens(body.usage.input_tokens);
-    }
-    if (Object.prototype.hasOwnProperty.call(body.usage, "output_tokens")) {
-      outputTokens = tokens(body.usage.output_tokens);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usage,
-        "input_tokens_details"
-      ) &&
-      isPlainObject(body.usage.input_tokens_details)
-    ) {
-      const details = body.usage.input_tokens_details;
-      if (Object.prototype.hasOwnProperty.call(details, "cached_tokens")) {
-        cacheReadTokens = tokens(details.cached_tokens);
-      }
-      if (Object.prototype.hasOwnProperty.call(details, "cache_write_tokens")) {
-        cacheWriteTokens = tokens(details.cache_write_tokens);
-      }
+function sum(body: Record<string, unknown>, paths: readonly string[]) {
+  let total = 0;
+  for (const path of paths) {
+    const value = getField(body, path);
+    if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) {
+      total += value;
     }
   }
-  return createSafeObject({
-    model: body.model,
-    inputTokens,
-    outputTokens,
-    cacheReadTokens,
-    cacheWriteTokens,
-  });
-}
-
-function parseAnthropic(
-  body: Record<string, unknown>,
-  model: unknown
-): AICall | undefined {
-  if (typeof model !== "string" || !model) {
-    return undefined;
-  }
-  let inputTokens = 0;
-  let outputTokens = 0;
-  let cacheReadTokens = 0;
-  let cacheWriteTokens = 0;
-  if (
-    Object.prototype.hasOwnProperty.call(body, "usage") &&
-    isPlainObject(body.usage)
-  ) {
-    if (Object.prototype.hasOwnProperty.call(body.usage, "input_tokens")) {
-      inputTokens = tokens(body.usage.input_tokens);
-    }
-    if (Object.prototype.hasOwnProperty.call(body.usage, "output_tokens")) {
-      outputTokens = tokens(body.usage.output_tokens);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usage,
-        "cache_read_input_tokens"
-      )
-    ) {
-      cacheReadTokens = tokens(body.usage.cache_read_input_tokens);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usage,
-        "cache_creation_input_tokens"
-      )
-    ) {
-      cacheWriteTokens = tokens(body.usage.cache_creation_input_tokens);
-    }
-  }
-  return createSafeObject({
-    model,
-    inputTokens,
-    outputTokens,
-    cacheReadTokens,
-    cacheWriteTokens,
-  });
-}
-
-function parseBedrockConverse(
-  body: Record<string, unknown>,
-  model: unknown
-): AICall | undefined {
-  if (typeof model !== "string" || !model) {
-    return undefined;
-  }
-  let inputTokens = 0;
-  let outputTokens = 0;
-  let cacheReadTokens = 0;
-  let cacheWriteTokens = 0;
-  if (
-    Object.prototype.hasOwnProperty.call(body, "usage") &&
-    isPlainObject(body.usage)
-  ) {
-    if (Object.prototype.hasOwnProperty.call(body.usage, "inputTokens")) {
-      inputTokens = tokens(body.usage.inputTokens);
-    }
-    if (Object.prototype.hasOwnProperty.call(body.usage, "outputTokens")) {
-      outputTokens = tokens(body.usage.outputTokens);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(body.usage, "cacheReadInputTokens")
-    ) {
-      cacheReadTokens = tokens(body.usage.cacheReadInputTokens);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(body.usage, "cacheWriteInputTokens")
-    ) {
-      cacheWriteTokens = tokens(body.usage.cacheWriteInputTokens);
-    }
-  }
-  return createSafeObject({
-    model,
-    inputTokens,
-    outputTokens,
-    cacheReadTokens,
-    cacheWriteTokens,
-  });
-}
-
-function parseGemini(
-  body: Record<string, unknown>,
-  modelFromPath: string
-): AICall {
-  let model = modelFromPath;
-  if (
-    Object.prototype.hasOwnProperty.call(body, "modelVersion") &&
-    typeof body.modelVersion === "string" &&
-    body.modelVersion
-  ) {
-    model = body.modelVersion;
-  }
-  let inputTokens = 0;
-  let outputTokens = 0;
-  let cacheReadTokens = 0;
-  if (
-    Object.prototype.hasOwnProperty.call(body, "usageMetadata") &&
-    isPlainObject(body.usageMetadata)
-  ) {
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usageMetadata,
-        "promptTokenCount"
-      )
-    ) {
-      inputTokens += tokens(body.usageMetadata.promptTokenCount);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usageMetadata,
-        "toolUsePromptTokenCount"
-      )
-    ) {
-      inputTokens += tokens(body.usageMetadata.toolUsePromptTokenCount);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usageMetadata,
-        "candidatesTokenCount"
-      )
-    ) {
-      outputTokens += tokens(body.usageMetadata.candidatesTokenCount);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usageMetadata,
-        "thoughtsTokenCount"
-      )
-    ) {
-      outputTokens += tokens(body.usageMetadata.thoughtsTokenCount);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usageMetadata,
-        "cachedContentTokenCount"
-      )
-    ) {
-      cacheReadTokens = tokens(body.usageMetadata.cachedContentTokenCount);
-    }
-  }
-  return createSafeObject({
-    model,
-    inputTokens,
-    outputTokens,
-    cacheReadTokens,
-    cacheWriteTokens: 0,
-  });
-}
-
-function tokens(value: unknown): number {
-  if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) {
-    return value;
-  }
-  return 0;
+  return total;
 }
