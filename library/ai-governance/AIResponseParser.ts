@@ -144,6 +144,12 @@ function createDecoder(
       return zlib.createInflate();
     case "br":
       return zlib.createBrotliDecompress();
+    case "zstd":
+      // zstd is only available in Node.js 22.15+ / 23.8+
+      // Return null (skip parsing) on older versions
+      return typeof zlib.createZstdDecompress === "function"
+        ? zlib.createZstdDecompress()
+        : null;
     default:
       return null;
   }
