@@ -10,5 +10,5 @@ export function recordAICall(url: URL, call: AICall) {
 
   agent
     .getAIStatistics()
-    .onAICall(createSafeObject({ provider: url.origin + url.pathname }, call));
+    .onAICall(createSafeObject({ provider: url.origin }, call));
 }

@@ -65,12 +65,12 @@ const agent = startTestAgent({
   rewrite: {},
 });
 
-function expected(provider: string, modelName = model) {
+function expected(url: string, modelName = model) {
   return {
-    provider,
+    provider: new URL(url).origin,
     model: modelName,
     calls: 1,
-    tokens: { input: 10, output: 5, total: 15 },
+    tokens: { input: 10, output: 5, total: 15, cacheRead: 0, cacheWrite: 0 },
   };
 }
 

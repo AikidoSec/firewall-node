@@ -6,6 +6,7 @@ export type AICall = {
   model: string;
   inputTokens: number;
   outputTokens: number;
+  cacheReadTokens: number;
 };
 
 export function isAIRequestPath(pathname: string): boolean {
@@ -78,6 +79,7 @@ function parseOpenAIChatCompletion(
   }
   let inputTokens = 0;
   let outputTokens = 0;
+  let cacheReadTokens = 0;
   if (
     Object.prototype.hasOwnProperty.call(body, "usage") &&
     isPlainObject(body.usage)
@@ -88,8 +90,26 @@ function parseOpenAIChatCompletion(
     if (Object.prototype.hasOwnProperty.call(body.usage, "completion_tokens")) {
       outputTokens = tokens(body.usage.completion_tokens);
     }
+    if (
+      Object.prototype.hasOwnProperty.call(
+        body.usage,
+        "prompt_tokens_details"
+      ) &&
+      isPlainObject(body.usage.prompt_tokens_details) &&
+      Object.prototype.hasOwnProperty.call(
+        body.usage.prompt_tokens_details,
+        "cached_tokens"
+      )
+    ) {
+      cacheReadTokens = tokens(body.usage.prompt_tokens_details.cached_tokens);
+    }
   }
-  return createSafeObject({ model: body.model, inputTokens, outputTokens });
+  return createSafeObject({
+    model: body.model,
+    inputTokens,
+    outputTokens,
+    cacheReadTokens,
+  });
 }
 
 function parseOpenAIResponse(
@@ -104,6 +124,7 @@ function parseOpenAIResponse(
   }
   let inputTokens = 0;
   let outputTokens = 0;
+  let cacheReadTokens = 0;
   if (
     Object.prototype.hasOwnProperty.call(body, "usage") &&
     isPlainObject(body.usage)
@@ -114,8 +135,26 @@ function parseOpenAIResponse(
     if (Object.prototype.hasOwnProperty.call(body.usage, "output_tokens")) {
       outputTokens = tokens(body.usage.output_tokens);
     }
+    if (
+      Object.prototype.hasOwnProperty.call(
+        body.usage,
+        "input_tokens_details"
+      ) &&
+      isPlainObject(body.usage.input_tokens_details) &&
+      Object.prototype.hasOwnProperty.call(
+        body.usage.input_tokens_details,
+        "cached_tokens"
+      )
+    ) {
+      cacheReadTokens = tokens(body.usage.input_tokens_details.cached_tokens);
+    }
   }
-  return createSafeObject({ model: body.model, inputTokens, outputTokens });
+  return createSafeObject({
+    model: body.model,
+    inputTokens,
+    outputTokens,
+    cacheReadTokens,
+  });
 }
 
 function parseAnthropic(
@@ -127,6 +166,7 @@ function parseAnthropic(
   }
   let inputTokens = 0;
   let outputTokens = 0;
+  let cacheReadTokens = 0;
   if (
     Object.prototype.hasOwnProperty.call(body, "usage") &&
     isPlainObject(body.usage)
@@ -137,8 +177,21 @@ function parseAnthropic(
     if (Object.prototype.hasOwnProperty.call(body.usage, "output_tokens")) {
       outputTokens = tokens(body.usage.output_tokens);
     }
+    if (
+      Object.prototype.hasOwnProperty.call(
+        body.usage,
+        "cache_read_input_tokens"
+      )
+    ) {
+      cacheReadTokens = tokens(body.usage.cache_read_input_tokens);
+    }
   }
-  return createSafeObject({ model, inputTokens, outputTokens });
+  return createSafeObject({
+    model,
+    inputTokens,
+    outputTokens,
+    cacheReadTokens,
+  });
 }
 
 function parseBedrockConverse(
@@ -150,6 +203,7 @@ function parseBedrockConverse(
   }
   let inputTokens = 0;
   let outputTokens = 0;
+  let cacheReadTokens = 0;
   if (
     Object.prototype.hasOwnProperty.call(body, "usage") &&
     isPlainObject(body.usage)
@@ -160,8 +214,18 @@ function parseBedrockConverse(
     if (Object.prototype.hasOwnProperty.call(body.usage, "outputTokens")) {
       outputTokens = tokens(body.usage.outputTokens);
     }
+    if (
+      Object.prototype.hasOwnProperty.call(body.usage, "cacheReadInputTokens")
+    ) {
+      cacheReadTokens = tokens(body.usage.cacheReadInputTokens);
+    }
   }
-  return createSafeObject({ model, inputTokens, outputTokens });
+  return createSafeObject({
+    model,
+    inputTokens,
+    outputTokens,
+    cacheReadTokens,
+  });
 }
 
 function parseGemini(
@@ -178,6 +242,7 @@ function parseGemini(
   }
   let inputTokens = 0;
   let outputTokens = 0;
+  let cacheReadTokens = 0;
   if (
     Object.prototype.hasOwnProperty.call(body, "usageMetadata") &&
     isPlainObject(body.usageMetadata)
@@ -214,8 +279,21 @@ function parseGemini(
     ) {
       outputTokens += tokens(body.usageMetadata.thoughtsTokenCount);
     }
+    if (
+      Object.prototype.hasOwnProperty.call(
+        body.usageMetadata,
+        "cachedContentTokenCount"
+      )
+    ) {
+      cacheReadTokens = tokens(body.usageMetadata.cachedContentTokenCount);
+    }
   }
-  return createSafeObject({ model, inputTokens, outputTokens });
+  return createSafeObject({
+    model,
+    inputTokens,
+    outputTokens,
+    cacheReadTokens,
+  });
 }
 
 function tokens(value: unknown): number {
