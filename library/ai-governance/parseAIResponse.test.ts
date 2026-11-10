@@ -21,6 +21,7 @@ t.test(
           inputTokens: 100,
           outputTokens: 20,
           cacheReadTokens: 0,
+          cacheWriteTokens: 0,
         },
       },
       {
@@ -35,6 +36,7 @@ t.test(
           inputTokens: 100,
           outputTokens: 20,
           cacheReadTokens: 0,
+          cacheWriteTokens: 0,
         },
       },
       {
@@ -55,6 +57,7 @@ t.test(
           inputTokens: 100,
           outputTokens: 20,
           cacheReadTokens: 0,
+          cacheWriteTokens: 0,
         },
       },
       {
@@ -70,6 +73,7 @@ t.test(
           inputTokens: 100,
           outputTokens: 20,
           cacheReadTokens: 0,
+          cacheWriteTokens: 0,
         },
       },
       {
@@ -84,6 +88,7 @@ t.test(
           inputTokens: 100,
           outputTokens: 20,
           cacheReadTokens: 0,
+          cacheWriteTokens: 0,
         },
       },
       {
@@ -105,6 +110,7 @@ t.test(
           inputTokens: 100,
           outputTokens: 20,
           cacheReadTokens: 0,
+          cacheWriteTokens: 0,
         },
       },
       {
@@ -120,6 +126,7 @@ t.test(
           inputTokens: 100,
           outputTokens: 20,
           cacheReadTokens: 0,
+          cacheWriteTokens: 0,
         },
       },
       {
@@ -135,6 +142,7 @@ t.test(
           inputTokens: 100,
           outputTokens: 20,
           cacheReadTokens: 0,
+          cacheWriteTokens: 0,
         },
       },
       {
@@ -149,6 +157,7 @@ t.test(
           inputTokens: 100,
           outputTokens: 20,
           cacheReadTokens: 0,
+          cacheWriteTokens: 0,
         },
       },
     ];
@@ -206,7 +215,13 @@ t.test("it ignores inherited model and usage fields", async (t) => {
           : "own-model";
       t.same(
         parseAIResponse(url, JSON.parse('{"model":"own-model"}')),
-        { model, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 },
+        {
+          model,
+          inputTokens: 0,
+          outputTokens: 0,
+          cacheReadTokens: 0,
+          cacheWriteTokens: 0,
+        },
         path
       );
       t.same(
@@ -214,7 +229,13 @@ t.test("it ignores inherited model and usage fields", async (t) => {
           url,
           JSON.parse('{"model":"own-model","usage":{},"usageMetadata":{}}')
         ),
-        { model, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 },
+        {
+          model,
+          inputTokens: 0,
+          outputTokens: 0,
+          cacheReadTokens: 0,
+          cacheWriteTokens: 0,
+        },
         path
       );
       if (!path.includes("gemini") && !path.includes("bedrock")) {
@@ -244,6 +265,7 @@ t.test(
       inputTokens: 0,
       outputTokens: 0,
       cacheReadTokens: 0,
+      cacheWriteTokens: 0,
     });
     t.same(
       parseAIResponse(url, {
@@ -255,6 +277,7 @@ t.test(
         inputTokens: 0,
         outputTokens: 0,
         cacheReadTokens: 0,
+        cacheWriteTokens: 0,
       }
     );
     t.equal(
@@ -277,16 +300,33 @@ t.test("it extracts cached tokens", async (t) => {
       usage: {
         input_tokens: 100,
         output_tokens: 20,
-        input_tokens_details: { cached_tokens: 40 },
+        input_tokens_details: { cached_tokens: 40, cache_write_tokens: 7 },
       },
     }),
-    { model: "gpt-4o", inputTokens: 100, outputTokens: 20, cacheReadTokens: 40 }
+    {
+      model: "gpt-4o",
+      inputTokens: 100,
+      outputTokens: 20,
+      cacheReadTokens: 40,
+      cacheWriteTokens: 7,
+    }
   );
   t.same(
     parseAIResponse(new URL("https://api.anthropic.com/v1/messages"), {
       model: "claude",
-      usage: { input_tokens: 1, output_tokens: 2, cache_read_input_tokens: 3 },
+      usage: {
+        input_tokens: 1,
+        output_tokens: 2,
+        cache_read_input_tokens: 3,
+        cache_creation_input_tokens: 4,
+      },
     }),
-    { model: "claude", inputTokens: 1, outputTokens: 2, cacheReadTokens: 3 }
+    {
+      model: "claude",
+      inputTokens: 1,
+      outputTokens: 2,
+      cacheReadTokens: 3,
+      cacheWriteTokens: 4,
+    }
   );
 });
