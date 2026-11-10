@@ -5,11 +5,30 @@
  * https://github.com/nodejs/undici
  */
 
+import { createSafeObject } from "../../helpers/createSafeObject";
+
 export function parseHeaders(
-  headers: (string | Buffer | Buffer[])[],
+  headers:
+    | (string | Buffer | Buffer[])[]
+    | Record<string, string | string[] | Buffer | Buffer[] | undefined>,
   obj?: Record<string, string | string[]>
 ) {
-  if (obj === undefined) obj = {};
+  if (obj === undefined) {
+    obj = createSafeObject({}) as Record<string, string | string[]>;
+  }
+
+  if (!Array.isArray(headers)) {
+    for (const [name, value] of Object.entries(headers ?? {})) {
+      if (value === undefined) {
+        continue;
+      }
+      obj[name.toLowerCase()] = Array.isArray(value)
+        ? value.map((v) => v.toString("utf8"))
+        : value.toString("utf8");
+    }
+    return obj;
+  }
+
   for (let i = 0; i < headers.length; i += 2) {
     const key = headerNameToString(headers[i]);
     let val = obj[key];
