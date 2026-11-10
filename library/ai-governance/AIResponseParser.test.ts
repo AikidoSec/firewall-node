@@ -15,6 +15,7 @@ const expected = {
   inputTokens: 10,
   outputTokens: 5,
   cacheReadTokens: 0,
+  cacheWriteTokens: 0,
 };
 const url = new URL("https://gateway.internal/v1/chat/completions");
 
