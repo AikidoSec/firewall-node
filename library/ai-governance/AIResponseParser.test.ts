@@ -10,7 +10,12 @@ const body = Buffer.from(
     usage: { prompt_tokens: 10, completion_tokens: 5 },
   })
 );
-const expected = { model: "gpt-4o", inputTokens: 10, outputTokens: 5 };
+const expected = {
+  model: "gpt-4o",
+  inputTokens: 10,
+  outputTokens: 5,
+  cacheReadTokens: 0,
+};
 const url = new URL("https://gateway.internal/v1/chat/completions");
 
 function parser(onCall: (call: AICall) => void, contentEncoding?: string) {
