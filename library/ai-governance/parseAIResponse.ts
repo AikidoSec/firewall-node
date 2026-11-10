@@ -7,6 +7,7 @@ export type AICall = {
   inputTokens: number;
   outputTokens: number;
   cacheReadTokens: number;
+  cacheWriteTokens: number;
 };
 
 export function isAIRequestPath(pathname: string): boolean {
@@ -80,6 +81,7 @@ function parseOpenAIChatCompletion(
   let inputTokens = 0;
   let outputTokens = 0;
   let cacheReadTokens = 0;
+  let cacheWriteTokens = 0;
   if (
     Object.prototype.hasOwnProperty.call(body, "usage") &&
     isPlainObject(body.usage)
@@ -95,13 +97,15 @@ function parseOpenAIChatCompletion(
         body.usage,
         "prompt_tokens_details"
       ) &&
-      isPlainObject(body.usage.prompt_tokens_details) &&
-      Object.prototype.hasOwnProperty.call(
-        body.usage.prompt_tokens_details,
-        "cached_tokens"
-      )
+      isPlainObject(body.usage.prompt_tokens_details)
     ) {
-      cacheReadTokens = tokens(body.usage.prompt_tokens_details.cached_tokens);
+      const details = body.usage.prompt_tokens_details;
+      if (Object.prototype.hasOwnProperty.call(details, "cached_tokens")) {
+        cacheReadTokens = tokens(details.cached_tokens);
+      }
+      if (Object.prototype.hasOwnProperty.call(details, "cache_write_tokens")) {
+        cacheWriteTokens = tokens(details.cache_write_tokens);
+      }
     }
   }
   return createSafeObject({
@@ -109,6 +113,7 @@ function parseOpenAIChatCompletion(
     inputTokens,
     outputTokens,
     cacheReadTokens,
+    cacheWriteTokens,
   });
 }
 
@@ -125,6 +130,7 @@ function parseOpenAIResponse(
   let inputTokens = 0;
   let outputTokens = 0;
   let cacheReadTokens = 0;
+  let cacheWriteTokens = 0;
   if (
     Object.prototype.hasOwnProperty.call(body, "usage") &&
     isPlainObject(body.usage)
@@ -140,13 +146,15 @@ function parseOpenAIResponse(
         body.usage,
         "input_tokens_details"
       ) &&
-      isPlainObject(body.usage.input_tokens_details) &&
-      Object.prototype.hasOwnProperty.call(
-        body.usage.input_tokens_details,
-        "cached_tokens"
-      )
+      isPlainObject(body.usage.input_tokens_details)
     ) {
-      cacheReadTokens = tokens(body.usage.input_tokens_details.cached_tokens);
+      const details = body.usage.input_tokens_details;
+      if (Object.prototype.hasOwnProperty.call(details, "cached_tokens")) {
+        cacheReadTokens = tokens(details.cached_tokens);
+      }
+      if (Object.prototype.hasOwnProperty.call(details, "cache_write_tokens")) {
+        cacheWriteTokens = tokens(details.cache_write_tokens);
+      }
     }
   }
   return createSafeObject({
@@ -154,6 +162,7 @@ function parseOpenAIResponse(
     inputTokens,
     outputTokens,
     cacheReadTokens,
+    cacheWriteTokens,
   });
 }
 
@@ -167,6 +176,7 @@ function parseAnthropic(
   let inputTokens = 0;
   let outputTokens = 0;
   let cacheReadTokens = 0;
+  let cacheWriteTokens = 0;
   if (
     Object.prototype.hasOwnProperty.call(body, "usage") &&
     isPlainObject(body.usage)
@@ -185,12 +195,21 @@ function parseAnthropic(
     ) {
       cacheReadTokens = tokens(body.usage.cache_read_input_tokens);
     }
+    if (
+      Object.prototype.hasOwnProperty.call(
+        body.usage,
+        "cache_creation_input_tokens"
+      )
+    ) {
+      cacheWriteTokens = tokens(body.usage.cache_creation_input_tokens);
+    }
   }
   return createSafeObject({
     model,
     inputTokens,
     outputTokens,
     cacheReadTokens,
+    cacheWriteTokens,
   });
 }
 
@@ -204,6 +223,7 @@ function parseBedrockConverse(
   let inputTokens = 0;
   let outputTokens = 0;
   let cacheReadTokens = 0;
+  let cacheWriteTokens = 0;
   if (
     Object.prototype.hasOwnProperty.call(body, "usage") &&
     isPlainObject(body.usage)
@@ -219,12 +239,18 @@ function parseBedrockConverse(
     ) {
       cacheReadTokens = tokens(body.usage.cacheReadInputTokens);
     }
+    if (
+      Object.prototype.hasOwnProperty.call(body.usage, "cacheWriteInputTokens")
+    ) {
+      cacheWriteTokens = tokens(body.usage.cacheWriteInputTokens);
+    }
   }
   return createSafeObject({
     model,
     inputTokens,
     outputTokens,
     cacheReadTokens,
+    cacheWriteTokens,
   });
 }
 
@@ -293,6 +319,7 @@ function parseGemini(
     inputTokens,
     outputTokens,
     cacheReadTokens,
+    cacheWriteTokens: 0,
   });
 }
 
