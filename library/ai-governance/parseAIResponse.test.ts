@@ -16,7 +16,12 @@ t.test(
             total_tokens: 120,
           },
         },
-        expected: { model: "gpt-4o", inputTokens: 100, outputTokens: 20 },
+        expected: {
+          model: "gpt-4o",
+          inputTokens: 100,
+          outputTokens: 20,
+          cacheReadTokens: 0,
+        },
       },
       {
         path: "/openai/deployments/gpt-4o/chat/completions?api-version=2024-10-21",
@@ -29,6 +34,7 @@ t.test(
           model: "gpt-4o-2024-08-06",
           inputTokens: 100,
           outputTokens: 20,
+          cacheReadTokens: 0,
         },
       },
       {
@@ -44,7 +50,12 @@ t.test(
           ],
           usage: { input_tokens: 100, output_tokens: 20 },
         },
-        expected: { model: "gpt-4o", inputTokens: 100, outputTokens: 20 },
+        expected: {
+          model: "gpt-4o",
+          inputTokens: 100,
+          outputTokens: 20,
+          cacheReadTokens: 0,
+        },
       },
       {
         path: "/proxy/v1/messages",
@@ -58,6 +69,7 @@ t.test(
           model: "claude-sonnet-4-20250514",
           inputTokens: 100,
           outputTokens: 20,
+          cacheReadTokens: 0,
         },
       },
       {
@@ -71,6 +83,7 @@ t.test(
           model: "claude-sonnet-4-20250514",
           inputTokens: 100,
           outputTokens: 20,
+          cacheReadTokens: 0,
         },
       },
       {
@@ -91,6 +104,7 @@ t.test(
           model: "gemini-2.5-flash",
           inputTokens: 100,
           outputTokens: 20,
+          cacheReadTokens: 0,
         },
       },
       {
@@ -105,6 +119,7 @@ t.test(
           model: "gemini-2.5-flash",
           inputTokens: 100,
           outputTokens: 20,
+          cacheReadTokens: 0,
         },
       },
       {
@@ -119,6 +134,7 @@ t.test(
           model: "us.anthropic.claude-sonnet-4-20250514-v1:0",
           inputTokens: 100,
           outputTokens: 20,
+          cacheReadTokens: 0,
         },
       },
       {
@@ -132,6 +148,7 @@ t.test(
           model: "anthropic.claude-sonnet-4-20250514-v1:0",
           inputTokens: 100,
           outputTokens: 20,
+          cacheReadTokens: 0,
         },
       },
     ];
@@ -189,7 +206,7 @@ t.test("it ignores inherited model and usage fields", async (t) => {
           : "own-model";
       t.same(
         parseAIResponse(url, JSON.parse('{"model":"own-model"}')),
-        { model, inputTokens: 0, outputTokens: 0 },
+        { model, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 },
         path
       );
       t.same(
@@ -197,7 +214,7 @@ t.test("it ignores inherited model and usage fields", async (t) => {
           url,
           JSON.parse('{"model":"own-model","usage":{},"usageMetadata":{}}')
         ),
-        { model, inputTokens: 0, outputTokens: 0 },
+        { model, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 },
         path
       );
       if (!path.includes("gemini") && !path.includes("bedrock")) {
@@ -226,6 +243,7 @@ t.test(
       model: "gpt-4o",
       inputTokens: 0,
       outputTokens: 0,
+      cacheReadTokens: 0,
     });
     t.same(
       parseAIResponse(url, {
@@ -236,6 +254,7 @@ t.test(
         model: "gpt-4o",
         inputTokens: 0,
         outputTokens: 0,
+        cacheReadTokens: 0,
       }
     );
     t.equal(
@@ -250,3 +269,24 @@ t.test(
     );
   }
 );
+
+t.test("it extracts cached tokens", async (t) => {
+  t.same(
+    parseAIResponse(new URL("https://api.openai.com/v1/responses"), {
+      model: "gpt-4o",
+      usage: {
+        input_tokens: 100,
+        output_tokens: 20,
+        input_tokens_details: { cached_tokens: 40 },
+      },
+    }),
+    { model: "gpt-4o", inputTokens: 100, outputTokens: 20, cacheReadTokens: 40 }
+  );
+  t.same(
+    parseAIResponse(new URL("https://api.anthropic.com/v1/messages"), {
+      model: "claude",
+      usage: { input_tokens: 1, output_tokens: 2, cache_read_input_tokens: 3 },
+    }),
+    { model: "claude", inputTokens: 1, outputTokens: 2, cacheReadTokens: 3 }
+  );
+});
