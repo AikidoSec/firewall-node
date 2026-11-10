@@ -136,3 +136,16 @@ t.test("it checks max matches when iterating over object props", async (t) => {
   t.same(get("test", testObj, 2), [".a.[0]", ".b.[0]"]);
   t.same(get("test", testObj, 3), [".a.[0]", ".b.[0]", ".c.[0]"]);
 });
+
+t.test("it finds the payload when it is an object key", async (t) => {
+  t.same(get("payload", { payload: "value" }), [".payload"]);
+  t.same(get("PAYLOAD", { payload: "value" }), [".payload"]);
+  t.same(get("payload", { a: { b: { payload: 1 } } }), [".a.b.payload"]);
+  t.same(get("payload", { a: [{ payload: 1 }] }), [".a.[0].payload"]);
+  t.same(get("payload", { payload: "payload" }), [".payload"]);
+  t.same(
+    get("payload", { payload: 1, other: { payload: 2 }, c: "payload" }, 3),
+    [".payload", ".other.payload", ".c"]
+  );
+  t.same(get("notfound", { payload: "value" }), []);
+});
