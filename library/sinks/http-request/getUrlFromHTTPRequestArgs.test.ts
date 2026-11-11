@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { Agent } from "http";
 import { getUrlFromHTTPRequestArgs as getURL } from "./getUrlFromHTTPRequestArgs";
 
 t.test("it works with strings", async (t) => {
@@ -219,6 +220,36 @@ t.test("it uses defaultPort when port is not set", async (t) => {
   );
 });
 
+t.test("it uses agent.defaultPort when no port is set", async (t) => {
+  const agent = new Agent();
+  // Node < 22 ignores the defaultPort constructor option
+  (agent as any).defaultPort = 8080;
+  t.same(
+    getURL([{ hostname: "example.com", agent }], "http"),
+    new URL("http://example.com:8080")
+  );
+  t.same(
+    getURL(["http://example.com", { agent }], "http"),
+    new URL("http://example.com:8080")
+  );
+  t.same(
+    getURL([{ hostname: "example.com", port: 3000, agent }], "http"),
+    new URL("http://example.com:3000")
+  );
+  t.same(
+    getURL([{ hostname: "example.com", defaultPort: 2375, agent }], "http"),
+    new URL("http://example.com:2375")
+  );
+  t.same(
+    getURL(["http://example.com:3000", { agent }], "http"),
+    new URL("http://example.com:3000")
+  );
+  t.same(
+    getURL([{ hostname: "example.com", agent: false }], "http"),
+    new URL("http://example.com")
+  );
+});
+
 t.test("a path cannot inject a URL authority", async (t) => {
   t.same(
     getURL([{ hostname: "127.0.0.1", path: "@public.example/" }], "http")
@@ -234,5 +265,22 @@ t.test("a path cannot inject a URL authority", async (t) => {
       "http"
     )?.hostname,
     "127.0.0.1"
+  );
+});
+
+t.test("it can ignore agent.defaultPort", async (t) => {
+  const agent = new Agent();
+  (agent as any).defaultPort = 8080;
+  t.same(
+    getURL([{ hostname: "example.com", agent }], "http", true),
+    new URL("http://example.com")
+  );
+  t.same(
+    getURL(["http://example.com", { agent }], "http", true),
+    new URL("http://example.com")
+  );
+  t.same(
+    getURL([{ hostname: "example.com", port: 3000, agent }], "http", true),
+    new URL("http://example.com:3000")
   );
 });

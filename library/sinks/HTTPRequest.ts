@@ -30,7 +30,8 @@ export class HTTPRequest implements Wrapper {
     agent: Agent,
     url: URL,
     port: number | undefined,
-    module: "http" | "https"
+    module: "http" | "https",
+    portWithoutAgentDefault?: number
   ): InterceptorResult {
     const hostname = normalizeHostname(url.hostname);
 
@@ -54,12 +55,21 @@ export class HTTPRequest implements Wrapper {
     }
 
     // Check if the hostname is inside the context
-    const foundDirectSSRF = checkContextForSSRF({
+    let foundDirectSSRF = checkContextForSSRF({
       hostname: hostname,
       operation: `${module}.request`,
       context: context,
       port: port,
     });
+    if (!foundDirectSSRF && portWithoutAgentDefault !== undefined) {
+      // The port came from `agent.defaultPort`, the user input might not contain that port
+      foundDirectSSRF = checkContextForSSRF({
+        hostname: hostname,
+        operation: `${module}.request`,
+        context: context,
+        port: portWithoutAgentDefault,
+      });
+    }
     if (foundDirectSSRF) {
       return foundDirectSSRF;
     }
@@ -104,11 +114,35 @@ export class HTTPRequest implements Wrapper {
         agent,
         url,
         getPortFromURL(url),
-        module
+        module,
+        this.getPortWithoutAgentDefault(args, module, url)
       );
       if (attack) {
         return attack;
       }
+    }
+
+    return undefined;
+  }
+
+  private getPortWithoutAgentDefault(
+    args: unknown[],
+    module: "http" | "https",
+    url: URL
+  ): number | undefined {
+    const agent = getRequestOptions(args)?.agent;
+    if (typeof agent !== "object" || agent === null) {
+      return undefined;
+    }
+
+    const urlWithoutAgentPort = getUrlFromHTTPRequestArgs(args, module, true);
+    if (!urlWithoutAgentPort) {
+      return undefined;
+    }
+    const port = getPortFromURL(urlWithoutAgentPort);
+
+    if (port !== getPortFromURL(url)) {
+      return port;
     }
 
     return undefined;
@@ -160,6 +194,9 @@ export class HTTPRequest implements Wrapper {
 
     const url = getUrlFromHTTPRequestArgs(args, module);
     const stackTraceCallingLocation = new Error();
+    const portWithoutAgentDefault = url
+      ? this.getPortWithoutAgentDefault(args, module, url)
+      : undefined;
 
     if (!optionObj) {
       const newOpts = {
@@ -169,7 +206,8 @@ export class HTTPRequest implements Wrapper {
           module,
           `${module}.request`,
           url,
-          stackTraceCallingLocation
+          stackTraceCallingLocation,
+          portWithoutAgentDefault
         ),
       };
 
@@ -194,7 +232,8 @@ export class HTTPRequest implements Wrapper {
       module,
       `${module}.request`,
       url,
-      stackTraceCallingLocation
+      stackTraceCallingLocation,
+      portWithoutAgentDefault
     ) as NonNullable<RequestOptions["lookup"]>;
 
     return args;

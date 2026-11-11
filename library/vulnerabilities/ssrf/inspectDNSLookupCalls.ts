@@ -23,7 +23,8 @@ export function inspectDNSLookupCalls(
   module: string,
   operation: string,
   url?: URL,
-  stackTraceCallingLocation?: Error
+  stackTraceCallingLocation?: Error,
+  portWithoutAgentDefault?: number
 ): LookupFunction {
   return function inspectDNSLookup(...args: unknown[]) {
     const hostname =
@@ -53,7 +54,8 @@ export function inspectDNSLookupCalls(
             agent,
             operation,
             url,
-            stackTraceCallingLocation
+            stackTraceCallingLocation,
+            portWithoutAgentDefault
           ),
         ]
       : [
@@ -65,7 +67,8 @@ export function inspectDNSLookupCalls(
             agent,
             operation,
             url,
-            stackTraceCallingLocation
+            stackTraceCallingLocation,
+            portWithoutAgentDefault
           ),
         ];
 
@@ -80,7 +83,8 @@ function wrapDNSLookupCallback(
   agent: Agent,
   operation: string,
   urlArg?: URL,
-  callingLocationStackTrace?: Error
+  callingLocationStackTrace?: Error,
+  portWithoutAgentDefault?: number
 ): Function {
   return function wrappedDNSLookupCallback(
     err: Error,
@@ -154,6 +158,16 @@ function wrapDNSLookupCallback(
     }
 
     let found = findHostnameInContext(hostname, context, port);
+
+    // The port of the request came from `agent.defaultPort`, the user input might not contain that port.
+    // Also check the port we would have used without the agent's default port (e.g. 80 for http://127.0.0.1).
+    if (!found && portWithoutAgentDefault !== undefined) {
+      found = findHostnameInContext(
+        hostname,
+        context,
+        portWithoutAgentDefault
+      );
+    }
 
     // The hostname is not found in the context, check if it's a redirect
     if (!found && context.outgoingRequestRedirects) {
