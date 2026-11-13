@@ -458,6 +458,63 @@ t.test("it does not discover routes with 404 status code", async () => {
   });
 });
 
+t.test(
+  "it only discovers redirects to other hosts or for non-GET methods",
+  async () => {
+    const server = http2.createServer();
+    server.on("stream", (stream, headers) => {
+      const path = headers[":path"];
+      if (path === "/redirect-relative") {
+        stream.respond({ ":status": 302, location: "/login-page" });
+      } else if (path === "/redirect-absolute") {
+        stream.respond({
+          ":status": 301,
+          location: `http://${headers[":authority"]}/target`,
+        });
+      } else if (path === "/redirect-external") {
+        stream.respond({
+          ":status": 302,
+          location: "https://accounts.example.com/auth",
+        });
+      } else if (path === "/redirect-post") {
+        stream.respond({ ":status": 302, location: "/dashboard" });
+      } else {
+        stream.respond({ ":status": 404 });
+      }
+      stream.end();
+    });
+
+    const discovered = (path: string, method = "GET") =>
+      agent
+        .getRoutes()
+        .asArray()
+        .some((route) => route.path === path && route.method === method);
+
+    await new Promise<void>((resolve) => {
+      server.listen(3443, async () => {
+        const request = (path: string, method = "GET") =>
+          http2Request(new URL(`http://localhost:3443${path}`), method, {});
+
+        t.same((await request("/redirect-relative")).headers[":status"], 302);
+        t.same((await request("/redirect-absolute")).headers[":status"], 301);
+        t.same((await request("/redirect-external")).headers[":status"], 302);
+        t.same(
+          (await request("/redirect-post", "POST")).headers[":status"],
+          302
+        );
+
+        t.equal(discovered("/redirect-relative"), false);
+        t.equal(discovered("/redirect-absolute"), false);
+        t.equal(discovered("/redirect-external"), true);
+        t.equal(discovered("/redirect-post", "POST"), true);
+
+        server.close();
+        resolve();
+      });
+    });
+  }
+);
+
 t.test("it wraps the createSecureServer function of http2 module", async () => {
   const server = http2.createSecureServer(
     {
