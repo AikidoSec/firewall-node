@@ -16,6 +16,7 @@ export function isAIRequestPath(pathname: string): boolean {
     pathname.endsWith("/responses") ||
     pathname.endsWith("/v1/messages") ||
     pathname.endsWith(":generateContent") ||
+    pathname.endsWith("/interactions") ||
     pathname.endsWith(":rawPredict") ||
     pathname.endsWith("/converse") ||
     pathname.endsWith("/invoke")
@@ -49,6 +50,10 @@ export function parseAIResponse(url: URL, body: unknown): AICall | undefined {
   const gemini = /\/models\/([^/:]+):generateContent$/.exec(pathname);
   if (gemini) {
     return parseGemini(body, gemini[1]);
+  }
+
+  if (pathname.endsWith("/interactions")) {
+    return parseGeminiInteraction(body);
   }
 
   const bedrock = /\/model\/([^/]+)\/(converse|invoke)$/.exec(pathname);
@@ -319,6 +324,46 @@ function parseGemini(
     inputTokens,
     outputTokens,
     cacheReadTokens,
+    cacheWriteTokens: 0,
+  });
+}
+
+// Gemini Interactions API (POST /v1beta/interactions)
+function parseGeminiInteraction(
+  body: Record<string, unknown>
+): AICall | undefined {
+  if (
+    !Object.prototype.hasOwnProperty.call(body, "usage") ||
+    !isPlainObject(body.usage)
+  ) {
+    return undefined;
+  }
+  const model =
+    Object.prototype.hasOwnProperty.call(body, "model") &&
+    typeof body.model === "string" &&
+    body.model
+      ? body.model
+      : "unknown";
+  return createSafeObject({
+    model,
+    inputTokens: Object.prototype.hasOwnProperty.call(
+      body.usage,
+      "total_input_tokens"
+    )
+      ? tokens(body.usage.total_input_tokens)
+      : 0,
+    outputTokens: Object.prototype.hasOwnProperty.call(
+      body.usage,
+      "total_output_tokens"
+    )
+      ? tokens(body.usage.total_output_tokens)
+      : 0,
+    cacheReadTokens: Object.prototype.hasOwnProperty.call(
+      body.usage,
+      "total_cached_tokens"
+    )
+      ? tokens(body.usage.total_cached_tokens)
+      : 0,
     cacheWriteTokens: 0,
   });
 }
