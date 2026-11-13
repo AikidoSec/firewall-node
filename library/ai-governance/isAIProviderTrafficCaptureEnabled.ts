@@ -3,7 +3,9 @@ import { envToBool } from "../helpers/envToBool";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
 
-export function isAIProviderTrafficCaptureEnabled(): boolean {
+let enabled: boolean | undefined;
+
+function compute(): boolean {
   if (!envToBool(process.env.AIKIDO_FEATURE_AI_NETWORK_CAPTURE)) {
     return false;
   }
@@ -20,4 +22,11 @@ export function isAIProviderTrafficCaptureEnabled(): boolean {
   }
 
   return isVersionGreaterOrEqual("7.11.0", process.versions.undici);
+}
+
+export function isAIProviderTrafficCaptureEnabled(): boolean {
+  if (enabled === undefined) {
+    enabled = compute();
+  }
+  return enabled;
 }
