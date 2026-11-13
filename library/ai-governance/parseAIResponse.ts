@@ -41,9 +41,7 @@ export function parseAIResponse(url: URL, body: unknown): AICall | undefined {
   ) {
     return parseAnthropic(
       body,
-      Object.prototype.hasOwnProperty.call(body, "model")
-        ? body.model
-        : undefined
+      Object.hasOwn(body, "model") ? body.model : undefined
     );
   }
 
@@ -59,9 +57,7 @@ export function parseAIResponse(url: URL, body: unknown): AICall | undefined {
   const bedrock = /\/model\/([^/]+)\/(converse|invoke)$/.exec(pathname);
   if (bedrock) {
     const model = safeDecodeURIComponent(bedrock[1]);
-    let modelName = Object.prototype.hasOwnProperty.call(body, "model")
-      ? body.model
-      : undefined;
+    let modelName = Object.hasOwn(body, "model") ? body.model : undefined;
     if (model && !model.startsWith("arn:")) {
       modelName = model;
     }
@@ -77,7 +73,7 @@ function parseOpenAIChatCompletion(
   body: Record<string, unknown>
 ): AICall | undefined {
   if (
-    !Object.prototype.hasOwnProperty.call(body, "model") ||
+    !Object.hasOwn(body, "model") ||
     typeof body.model !== "string" ||
     !body.model
   ) {
@@ -87,30 +83,16 @@ function parseOpenAIChatCompletion(
   let outputTokens = 0;
   let cacheReadTokens = 0;
   let cacheWriteTokens = 0;
-  if (
-    Object.prototype.hasOwnProperty.call(body, "usage") &&
-    isPlainObject(body.usage)
-  ) {
-    if (Object.prototype.hasOwnProperty.call(body.usage, "prompt_tokens")) {
-      inputTokens = tokens(body.usage.prompt_tokens);
-    }
-    if (Object.prototype.hasOwnProperty.call(body.usage, "completion_tokens")) {
-      outputTokens = tokens(body.usage.completion_tokens);
-    }
+  if (Object.hasOwn(body, "usage") && isPlainObject(body.usage)) {
+    inputTokens = tokens(body.usage, "prompt_tokens");
+    outputTokens = tokens(body.usage, "completion_tokens");
     if (
-      Object.prototype.hasOwnProperty.call(
-        body.usage,
-        "prompt_tokens_details"
-      ) &&
+      Object.hasOwn(body.usage, "prompt_tokens_details") &&
       isPlainObject(body.usage.prompt_tokens_details)
     ) {
       const details = body.usage.prompt_tokens_details;
-      if (Object.prototype.hasOwnProperty.call(details, "cached_tokens")) {
-        cacheReadTokens = tokens(details.cached_tokens);
-      }
-      if (Object.prototype.hasOwnProperty.call(details, "cache_write_tokens")) {
-        cacheWriteTokens = tokens(details.cache_write_tokens);
-      }
+      cacheReadTokens = tokens(details, "cached_tokens");
+      cacheWriteTokens = tokens(details, "cache_write_tokens");
     }
   }
   return createSafeObject({
@@ -126,7 +108,7 @@ function parseOpenAIResponse(
   body: Record<string, unknown>
 ): AICall | undefined {
   if (
-    !Object.prototype.hasOwnProperty.call(body, "model") ||
+    !Object.hasOwn(body, "model") ||
     typeof body.model !== "string" ||
     !body.model
   ) {
@@ -136,30 +118,16 @@ function parseOpenAIResponse(
   let outputTokens = 0;
   let cacheReadTokens = 0;
   let cacheWriteTokens = 0;
-  if (
-    Object.prototype.hasOwnProperty.call(body, "usage") &&
-    isPlainObject(body.usage)
-  ) {
-    if (Object.prototype.hasOwnProperty.call(body.usage, "input_tokens")) {
-      inputTokens = tokens(body.usage.input_tokens);
-    }
-    if (Object.prototype.hasOwnProperty.call(body.usage, "output_tokens")) {
-      outputTokens = tokens(body.usage.output_tokens);
-    }
+  if (Object.hasOwn(body, "usage") && isPlainObject(body.usage)) {
+    inputTokens = tokens(body.usage, "input_tokens");
+    outputTokens = tokens(body.usage, "output_tokens");
     if (
-      Object.prototype.hasOwnProperty.call(
-        body.usage,
-        "input_tokens_details"
-      ) &&
+      Object.hasOwn(body.usage, "input_tokens_details") &&
       isPlainObject(body.usage.input_tokens_details)
     ) {
       const details = body.usage.input_tokens_details;
-      if (Object.prototype.hasOwnProperty.call(details, "cached_tokens")) {
-        cacheReadTokens = tokens(details.cached_tokens);
-      }
-      if (Object.prototype.hasOwnProperty.call(details, "cache_write_tokens")) {
-        cacheWriteTokens = tokens(details.cache_write_tokens);
-      }
+      cacheReadTokens = tokens(details, "cached_tokens");
+      cacheWriteTokens = tokens(details, "cache_write_tokens");
     }
   }
   return createSafeObject({
@@ -182,32 +150,11 @@ function parseAnthropic(
   let outputTokens = 0;
   let cacheReadTokens = 0;
   let cacheWriteTokens = 0;
-  if (
-    Object.prototype.hasOwnProperty.call(body, "usage") &&
-    isPlainObject(body.usage)
-  ) {
-    if (Object.prototype.hasOwnProperty.call(body.usage, "input_tokens")) {
-      inputTokens = tokens(body.usage.input_tokens);
-    }
-    if (Object.prototype.hasOwnProperty.call(body.usage, "output_tokens")) {
-      outputTokens = tokens(body.usage.output_tokens);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usage,
-        "cache_read_input_tokens"
-      )
-    ) {
-      cacheReadTokens = tokens(body.usage.cache_read_input_tokens);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usage,
-        "cache_creation_input_tokens"
-      )
-    ) {
-      cacheWriteTokens = tokens(body.usage.cache_creation_input_tokens);
-    }
+  if (Object.hasOwn(body, "usage") && isPlainObject(body.usage)) {
+    inputTokens = tokens(body.usage, "input_tokens");
+    outputTokens = tokens(body.usage, "output_tokens");
+    cacheReadTokens = tokens(body.usage, "cache_read_input_tokens");
+    cacheWriteTokens = tokens(body.usage, "cache_creation_input_tokens");
   }
   return createSafeObject({
     model,
@@ -229,26 +176,11 @@ function parseBedrockConverse(
   let outputTokens = 0;
   let cacheReadTokens = 0;
   let cacheWriteTokens = 0;
-  if (
-    Object.prototype.hasOwnProperty.call(body, "usage") &&
-    isPlainObject(body.usage)
-  ) {
-    if (Object.prototype.hasOwnProperty.call(body.usage, "inputTokens")) {
-      inputTokens = tokens(body.usage.inputTokens);
-    }
-    if (Object.prototype.hasOwnProperty.call(body.usage, "outputTokens")) {
-      outputTokens = tokens(body.usage.outputTokens);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(body.usage, "cacheReadInputTokens")
-    ) {
-      cacheReadTokens = tokens(body.usage.cacheReadInputTokens);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(body.usage, "cacheWriteInputTokens")
-    ) {
-      cacheWriteTokens = tokens(body.usage.cacheWriteInputTokens);
-    }
+  if (Object.hasOwn(body, "usage") && isPlainObject(body.usage)) {
+    inputTokens = tokens(body.usage, "inputTokens");
+    outputTokens = tokens(body.usage, "outputTokens");
+    cacheReadTokens = tokens(body.usage, "cacheReadInputTokens");
+    cacheWriteTokens = tokens(body.usage, "cacheWriteInputTokens");
   }
   return createSafeObject({
     model,
@@ -265,7 +197,7 @@ function parseGemini(
 ): AICall {
   let model = modelFromPath;
   if (
-    Object.prototype.hasOwnProperty.call(body, "modelVersion") &&
+    Object.hasOwn(body, "modelVersion") &&
     typeof body.modelVersion === "string" &&
     body.modelVersion
   ) {
@@ -275,49 +207,14 @@ function parseGemini(
   let outputTokens = 0;
   let cacheReadTokens = 0;
   if (
-    Object.prototype.hasOwnProperty.call(body, "usageMetadata") &&
+    Object.hasOwn(body, "usageMetadata") &&
     isPlainObject(body.usageMetadata)
   ) {
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usageMetadata,
-        "promptTokenCount"
-      )
-    ) {
-      inputTokens += tokens(body.usageMetadata.promptTokenCount);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usageMetadata,
-        "toolUsePromptTokenCount"
-      )
-    ) {
-      inputTokens += tokens(body.usageMetadata.toolUsePromptTokenCount);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usageMetadata,
-        "candidatesTokenCount"
-      )
-    ) {
-      outputTokens += tokens(body.usageMetadata.candidatesTokenCount);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usageMetadata,
-        "thoughtsTokenCount"
-      )
-    ) {
-      outputTokens += tokens(body.usageMetadata.thoughtsTokenCount);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body.usageMetadata,
-        "cachedContentTokenCount"
-      )
-    ) {
-      cacheReadTokens = tokens(body.usageMetadata.cachedContentTokenCount);
-    }
+    inputTokens += tokens(body.usageMetadata, "promptTokenCount");
+    inputTokens += tokens(body.usageMetadata, "toolUsePromptTokenCount");
+    outputTokens += tokens(body.usageMetadata, "candidatesTokenCount");
+    outputTokens += tokens(body.usageMetadata, "thoughtsTokenCount");
+    cacheReadTokens = tokens(body.usageMetadata, "cachedContentTokenCount");
   }
   return createSafeObject({
     model,
@@ -332,43 +229,27 @@ function parseGemini(
 function parseGeminiInteraction(
   body: Record<string, unknown>
 ): AICall | undefined {
-  if (
-    !Object.prototype.hasOwnProperty.call(body, "usage") ||
-    !isPlainObject(body.usage)
-  ) {
+  if (!Object.hasOwn(body, "usage") || !isPlainObject(body.usage)) {
     return undefined;
   }
   const model =
-    Object.prototype.hasOwnProperty.call(body, "model") &&
-    typeof body.model === "string" &&
-    body.model
+    Object.hasOwn(body, "model") && typeof body.model === "string" && body.model
       ? body.model
       : "unknown";
   return createSafeObject({
     model,
-    inputTokens: Object.prototype.hasOwnProperty.call(
-      body.usage,
-      "total_input_tokens"
-    )
-      ? tokens(body.usage.total_input_tokens)
-      : 0,
-    outputTokens: Object.prototype.hasOwnProperty.call(
-      body.usage,
-      "total_output_tokens"
-    )
-      ? tokens(body.usage.total_output_tokens)
-      : 0,
-    cacheReadTokens: Object.prototype.hasOwnProperty.call(
-      body.usage,
-      "total_cached_tokens"
-    )
-      ? tokens(body.usage.total_cached_tokens)
-      : 0,
+    inputTokens: tokens(body.usage, "total_input_tokens"),
+    outputTokens: tokens(body.usage, "total_output_tokens"),
+    cacheReadTokens: tokens(body.usage, "total_cached_tokens"),
     cacheWriteTokens: 0,
   });
 }
 
-function tokens(value: unknown): number {
+function tokens(obj: object, key: string): number {
+  if (!Object.hasOwn(obj, key)) {
+    return 0;
+  }
+  const value = (obj as Record<string, unknown>)[key];
   if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) {
     return value;
   }
