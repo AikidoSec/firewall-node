@@ -1,4 +1,5 @@
 import { Agent } from "../agent/Agent";
+import { isAIProviderTrafficCaptureEnabled } from "../ai-governance/isAIProviderTrafficCaptureEnabled";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
@@ -80,6 +81,10 @@ export class Anthropic implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
+    if (isAIProviderTrafficCaptureEnabled()) {
+      return;
+    }
+
     hooks
       .addPackage("@anthropic-ai/sdk")
       .withVersion("^1.0.0 || ^0.40.0")

@@ -6,18 +6,19 @@ type AIProviderStats = {
     input: number;
     output: number;
     total: number;
+    cacheRead: number;
+    cacheWrite: number;
   };
 };
+
+const MAX_MODEL_LENGTH = 256;
+const MAX_DISTINCT_ENTRIES = 500;
 
 export class AIStatistics {
   private calls: Map<string, AIProviderStats> = new Map();
 
   private getProviderKey(provider: string, model: string): string {
     return `${provider}:${model}`;
-  }
-
-  private getRouteKey(path: string, method: string): string {
-    return `${method}:${path}`;
   }
 
   private ensureProviderStats(
@@ -35,6 +36,8 @@ export class AIStatistics {
           input: 0,
           output: 0,
           total: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
         },
       });
     }
@@ -47,13 +50,28 @@ export class AIStatistics {
     model,
     inputTokens,
     outputTokens,
+    cacheReadTokens = 0,
+    cacheWriteTokens = 0,
   }: {
     provider: string;
     model: string;
     inputTokens: number;
     outputTokens: number;
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
   }) {
     if (!provider || !model) {
+      return;
+    }
+
+    if (model.length > MAX_MODEL_LENGTH) {
+      return;
+    }
+
+    if (
+      this.calls.size >= MAX_DISTINCT_ENTRIES &&
+      !this.calls.has(this.getProviderKey(provider, model))
+    ) {
       return;
     }
 
@@ -62,6 +80,8 @@ export class AIStatistics {
     providerStats.tokens.input += inputTokens;
     providerStats.tokens.output += outputTokens;
     providerStats.tokens.total += inputTokens + outputTokens;
+    providerStats.tokens.cacheRead += cacheReadTokens;
+    providerStats.tokens.cacheWrite += cacheWriteTokens;
   }
 
   getStats() {
@@ -74,6 +94,8 @@ export class AIStatistics {
           input: stats.tokens.input,
           output: stats.tokens.output,
           total: stats.tokens.total,
+          cacheRead: stats.tokens.cacheRead,
+          cacheWrite: stats.tokens.cacheWrite,
         },
       };
     });
