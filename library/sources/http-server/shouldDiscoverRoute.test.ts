@@ -45,10 +45,19 @@ t.test("it does not discover internal GET redirects", async () => {
   const base = { method: "GET", route: "/blog", forceProtectionOff: false };
 
   for (const statusCode of [301, 302, 303, 307, 308]) {
-    t.same(
-      shouldDiscoverRoute({ ...base, statusCode, redirectLocation: "/login" }),
-      false
-    );
+    for (const redirectLocation of [
+      "/login",
+      "login",
+      "?next=/home",
+      ".",
+      "..",
+    ]) {
+      t.same(
+        shouldDiscoverRoute({ ...base, statusCode, redirectLocation }),
+        false,
+        redirectLocation
+      );
+    }
     t.same(
       shouldDiscoverRoute({
         ...base,

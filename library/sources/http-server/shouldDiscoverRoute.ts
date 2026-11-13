@@ -109,12 +109,14 @@ function isInternalRedirect(
     return true;
   }
 
-  // The host header can be manipulated by the client if there is no trusted proxy
-  if (!isBehindTrustedProxy || !host) {
-    return false;
-  }
-
   const url = tryParseURL(isProtocolRelative ? `http:${location}` : location);
 
-  return url?.host === host;
+  // Can not be parsed without a base URL, so it is a relative reference (e.g. login, ?next=/home, ..)
+  if (!url) {
+    return !isProtocolRelative;
+  }
+
+  // Absolute URL or protocol-relative URL, only internal if the host is the same
+  // The host header can be manipulated by the client if there is no trusted proxy
+  return isBehindTrustedProxy === true && url.host === host;
 }
