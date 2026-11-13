@@ -1,10 +1,21 @@
 import * as t from "tap";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { GoogleGenAi as GoogleGenAiWrapper } from "./GoogleGenAi";
+import { Undici } from "./Undici";
+import { isAIProviderTrafficCaptureEnabled } from "../ai-governance/isAIProviderTrafficCaptureEnabled";
 import { runWithContext, type Context } from "../agent/Context";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { getInstance } from "../agent/AgentSingleton";
 import { setTimeout } from "timers/promises";
+
+function getExpectedProvider(): string {
+  return isAIProviderTrafficCaptureEnabled()
+    ? new URL(
+        process.env.GOOGLE_GEMINI_BASE_URL ||
+          "https://generativelanguage.googleapis.com"
+      ).origin
+    : "google";
+}
 
 export function createGoogleGenAiTests(versionPkgName: string) {
   t.test(
@@ -17,10 +28,11 @@ export function createGoogleGenAiTests(versionPkgName: string) {
     },
     async (t) => {
       startTestAgent({
-        wrappers: [new GoogleGenAiWrapper()],
-        rewrite: {
-          "@google/genai": versionPkgName,
-        },
+        // The Undici sink is needed when AIKIDO_FEATURE_AI_NETWORK_CAPTURE is enabled
+        wrappers: [new GoogleGenAiWrapper(), new Undici()],
+        rewrite: isAIProviderTrafficCaptureEnabled()
+          ? {}
+          : { "@google/genai": versionPkgName },
       });
 
       const getTestContext = (): Context => {
@@ -60,7 +72,7 @@ export function createGoogleGenAiTests(versionPkgName: string) {
 
         t.match(agent.getAIStatistics().getStats(), [
           {
-            provider: "google",
+            provider: getExpectedProvider(),
             model: "gemini-2.5-flash-lite",
             calls: 1,
             tokens: {
@@ -95,7 +107,7 @@ export function createGoogleGenAiTests(versionPkgName: string) {
 
         t.match(agent.getAIStatistics().getStats(), [
           {
-            provider: "google",
+            provider: getExpectedProvider(),
             model: "gemini-2.5-flash-lite",
             calls: 1,
             tokens: {
@@ -103,7 +115,7 @@ export function createGoogleGenAiTests(versionPkgName: string) {
             },
           },
           {
-            provider: "google",
+            provider: getExpectedProvider(),
             model: "gemini-2.5-flash",
             calls: 1,
             tokens: {
@@ -130,7 +142,7 @@ export function createGoogleGenAiTests(versionPkgName: string) {
 
         t.match(agent.getAIStatistics().getStats(), [
           {
-            provider: "google",
+            provider: getExpectedProvider(),
             model: "gemini-2.5-flash-lite",
             calls: 1,
             tokens: {
@@ -138,7 +150,7 @@ export function createGoogleGenAiTests(versionPkgName: string) {
             },
           },
           {
-            provider: "google",
+            provider: getExpectedProvider(),
             model: "gemini-2.5-flash",
             calls: 2,
             tokens: {
