@@ -28,7 +28,7 @@ t.test("it rejects invalid status codes", async () => {
 });
 
 t.test("it accepts valid status codes", async () => {
-  for (let code = 200; code <= 399; code++) {
+  for (let code = 200; code <= 299; code++) {
     t.same(
       shouldDiscoverRoute({
         statusCode: code,
@@ -40,6 +40,81 @@ t.test("it accepts valid status codes", async () => {
     );
   }
 });
+
+t.test("it does not discover internal GET redirects", async () => {
+  const base = { method: "GET", route: "/blog", forceProtectionOff: false };
+
+  for (const statusCode of [301, 302, 303, 307, 308]) {
+    t.same(
+      shouldDiscoverRoute({ ...base, statusCode, redirectLocation: "/login" }),
+      false
+    );
+    t.same(
+      shouldDiscoverRoute({
+        ...base,
+        statusCode,
+        redirectLocation: "http://example.com//blog",
+        host: "example.com",
+        isBehindTrustedProxy: true,
+      }),
+      false
+    );
+  }
+});
+
+t.test(
+  "it discovers external GET redirects and non-GET redirects",
+  async () => {
+    const base = { route: "/auth/google", forceProtectionOff: false };
+
+    t.same(
+      shouldDiscoverRoute({
+        ...base,
+        method: "GET",
+        statusCode: 302,
+        redirectLocation: "https://accounts.google.com/o/oauth2",
+        host: "example.com",
+        isBehindTrustedProxy: true,
+      }),
+      true
+    );
+    t.same(
+      shouldDiscoverRoute({
+        ...base,
+        method: "GET",
+        statusCode: 302,
+        redirectLocation: "//evil.com/path",
+        host: "example.com",
+        isBehindTrustedProxy: true,
+      }),
+      true
+    );
+    t.same(
+      shouldDiscoverRoute({
+        ...base,
+        method: "GET",
+        statusCode: 302,
+        redirectLocation: "http://example.com/auth/google",
+        host: "example.com",
+        isBehindTrustedProxy: false,
+      }),
+      true
+    );
+    t.same(
+      shouldDiscoverRoute({ ...base, method: "GET", statusCode: 304 }),
+      true
+    );
+    t.same(
+      shouldDiscoverRoute({
+        ...base,
+        method: "POST",
+        statusCode: 302,
+        redirectLocation: "/dashboard",
+      }),
+      true
+    );
+  }
+);
 
 t.test("it does not discover route for OPTIONS or HEAD methods", async () => {
   t.same(
@@ -350,54 +425,6 @@ t.test("it ignores files that end with .config", async () => {
       forceProtectionOff: false,
     }),
     false
-  );
-});
-
-t.test("it allows redirects", async () => {
-  t.same(
-    shouldDiscoverRoute({
-      statusCode: 301,
-      route: "/",
-      method: "GET",
-      forceProtectionOff: false,
-    }),
-    true
-  );
-  t.same(
-    shouldDiscoverRoute({
-      statusCode: 302,
-      route: "/",
-      method: "GET",
-      forceProtectionOff: false,
-    }),
-    true
-  );
-  t.same(
-    shouldDiscoverRoute({
-      statusCode: 303,
-      route: "/",
-      method: "GET",
-      forceProtectionOff: false,
-    }),
-    true
-  );
-  t.same(
-    shouldDiscoverRoute({
-      statusCode: 307,
-      route: "/",
-      method: "GET",
-      forceProtectionOff: false,
-    }),
-    true
-  );
-  t.same(
-    shouldDiscoverRoute({
-      statusCode: 308,
-      route: "/",
-      method: "GET",
-      forceProtectionOff: false,
-    }),
-    true
   );
 });
 

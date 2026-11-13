@@ -84,6 +84,9 @@ function discoverRouteFromStream(
         forceProtectionOff: agent
           .getConfig()
           .isForceProtectionOffRoute(context),
+        redirectLocation: stream.sentHeaders.location?.toString(),
+        host: context.headers[":authority"]?.toString(),
+        isBehindTrustedProxy: context.isBehindTrustedProxy,
       });
 
       if (shouldDiscover) {
