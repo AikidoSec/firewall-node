@@ -130,6 +130,27 @@ t.test(
         },
       },
       {
+        path: "/v1beta/interactions",
+        body: {
+          id: "abc",
+          status: "completed",
+          created: "2026-01-01T00:00:00Z",
+          model: "gemini-2.5-flash",
+          usage: {
+            total_input_tokens: 15,
+            total_output_tokens: 7,
+            total_cached_tokens: 10,
+          },
+        },
+        expected: {
+          model: "gemini-2.5-flash",
+          inputTokens: 15,
+          outputTokens: 7,
+          cacheReadTokens: 10,
+          cacheWriteTokens: 0,
+        },
+      },
+      {
         path: "/model/us.anthropic.claude-sonnet-4-20250514-v1%3A0/converse",
         body: {
           output: {
@@ -170,6 +191,16 @@ t.test(
     }
   }
 );
+
+t.test("it ignores Gemini interactions without usage", async (t) => {
+  t.equal(
+    parseAIResponse(
+      new URL("/v1beta/interactions", "https://gateway.internal"),
+      { id: "abc", status: "in_progress", model: "gemini-2.5-flash" }
+    ),
+    undefined
+  );
+});
 
 t.test("it ignores inherited model and usage fields", async (t) => {
   const paths = [
