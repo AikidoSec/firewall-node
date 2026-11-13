@@ -3,8 +3,17 @@ import { createServer } from "http";
 import type { AddressInfo } from "net";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { OpenAI as OpenAISink } from "./OpenAI";
+import { Undici } from "./Undici";
+import { HTTPRequest } from "./HTTPRequest";
+import { isAIProviderTrafficCaptureEnabled } from "../ai-governance/isAIProviderTrafficCaptureEnabled";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { setTimeout } from "timers/promises";
+
+function getExpectedProvider(): string {
+  return isAIProviderTrafficCaptureEnabled()
+    ? new URL(process.env.OPENAI_BASE_URL || "https://api.openai.com").origin
+    : "openai";
+}
 
 export function createOpenAITests(openAiPkgName: string) {
   t.test(
@@ -17,10 +26,12 @@ export function createOpenAITests(openAiPkgName: string) {
     },
     async (t) => {
       const agent = startTestAgent({
-        wrappers: [new OpenAISink()],
-        rewrite: {
-          openai: openAiPkgName,
-        },
+        // The Undici and HTTPRequest sinks are needed when AIKIDO_FEATURE_AI_NETWORK_CAPTURE is enabled
+        // (openai v4 uses node-fetch, which goes through node:http)
+        wrappers: [new OpenAISink(), new Undici(), new HTTPRequest()],
+        rewrite: isAIProviderTrafficCaptureEnabled()
+          ? {}
+          : { openai: openAiPkgName },
       });
 
       const { OpenAI } = require(openAiPkgName) as typeof import("openai-v7");
@@ -39,7 +50,7 @@ export function createOpenAITests(openAiPkgName: string) {
 
       t.match(agent.getAIStatistics().getStats(), [
         {
-          provider: "openai",
+          provider: getExpectedProvider(),
           calls: 1,
           tokens: {
             input: 22,
@@ -65,7 +76,7 @@ export function createOpenAITests(openAiPkgName: string) {
 
       t.match(agent.getAIStatistics().getStats(), [
         {
-          provider: "openai",
+          provider: getExpectedProvider(),
           calls: 2,
           tokens: {
             input: 44,
@@ -92,14 +103,19 @@ export function createOpenAITests(openAiPkgName: string) {
   t.test(
     "It reports Azure OpenAI calls under the azure provider, not openai",
     {
-      skip: getMajorNodeVersion() < 22 ? "Node version < 22" : undefined,
+      skip:
+        getMajorNodeVersion() < 22
+          ? "Node version < 22"
+          : isAIProviderTrafficCaptureEnabled()
+            ? "Providers are identified by origin when capturing network traffic"
+            : undefined,
     },
     async (t) => {
       const agent = startTestAgent({
         wrappers: [new OpenAISink()],
-        rewrite: {
-          openai: openAiPkgName,
-        },
+        rewrite: isAIProviderTrafficCaptureEnabled()
+          ? {}
+          : { openai: openAiPkgName },
       });
 
       const { OpenAI, AzureOpenAI } = require(
