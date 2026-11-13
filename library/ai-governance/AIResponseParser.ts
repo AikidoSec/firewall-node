@@ -1,5 +1,6 @@
 import type { Transform } from "stream";
 import * as zlib from "zlib";
+import { isJsonContentType } from "../helpers/isJsonContentType";
 import {
   type AICall,
   isAIRequestPath,
@@ -28,8 +29,7 @@ export function createAIResponseParser({
   if (!isAIRequestPath(url.pathname)) {
     return undefined;
   }
-  const mime = contentType?.split(";", 1)[0].trim().toLowerCase();
-  if (mime !== "application/json" && !mime?.endsWith("+json")) {
+  if (!contentType || !isJsonContentType(contentType)) {
     return undefined;
   }
   const decoder = createDecoder(contentEncoding);
