@@ -5,6 +5,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import type { AddressInfo } from "net";
 import { parseHeaders } from "./parseHeaders";
+import { getMajorNodeVersion } from "../../helpers/getNodeVersion";
 
 t.test("it works", async (t) => {
   t.same(
@@ -62,51 +63,65 @@ t.test("it works", async (t) => {
   );
 });
 
-t.test("it parses the response headers of HTTP/2 requests", async (t) => {
-  const { Agent, fetch } = require("undici-v8") as typeof import("undici-v8");
+t.test(
+  "it parses the response headers of HTTP/2 requests",
+  {
+    skip:
+      getMajorNodeVersion() < 22
+        ? "undici v8 requires Node.js 22+ (ReadableStream)"
+        : false,
+  },
+  async (t) => {
+    const { Agent, fetch } = require("undici-v8") as typeof import("undici-v8");
 
-  const server = createSecureServer(
-    {
-      key: readFileSync(join(__dirname, "../../sources/fixtures/key.pem")),
-      cert: readFileSync(join(__dirname, "../../sources/fixtures/cert.pem")),
-    },
-    (req, res) => {
-      res.writeHead(200, {
-        "Content-Type": "application/json",
-        "X-Foo": "bar",
-      });
-      res.end("{}");
-    }
-  );
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const dispatcher = new Agent({
-    allowH2: true,
-    connect: { rejectUnauthorized: false },
-  });
-  t.teardown(async () => {
-    await dispatcher.close();
-    server.close();
-  });
-
-  let headers: Record<string, string | string[]> | undefined;
-  const onHeaders = (message: unknown) => {
-    headers = parseHeaders(
-      (message as { response: { headers: Parameters<typeof parseHeaders>[0] } })
-        .response.headers
+    const server = createSecureServer(
+      {
+        key: readFileSync(join(__dirname, "../../sources/fixtures/key.pem")),
+        cert: readFileSync(join(__dirname, "../../sources/fixtures/cert.pem")),
+      },
+      (req, res) => {
+        res.writeHead(200, {
+          "Content-Type": "application/json",
+          "X-Foo": "bar",
+        });
+        res.end("{}");
+      }
     );
-  };
-  dc.subscribe("undici:request:headers", onHeaders);
-  t.teardown(() => dc.unsubscribe("undici:request:headers", onHeaders));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve)
+    );
+    const dispatcher = new Agent({
+      allowH2: true,
+      connect: { rejectUnauthorized: false },
+    });
+    t.teardown(async () => {
+      await dispatcher.close();
+      server.close();
+    });
 
-  const { port } = server.address() as AddressInfo;
-  const response = await fetch(`https://127.0.0.1:${port}/`, { dispatcher });
-  await response.text();
+    let headers: Record<string, string | string[]> | undefined;
+    const onHeaders = (message: unknown) => {
+      headers = parseHeaders(
+        (
+          message as {
+            response: { headers: Parameters<typeof parseHeaders>[0] };
+          }
+        ).response.headers
+      );
+    };
+    dc.subscribe("undici:request:headers", onHeaders);
+    t.teardown(() => dc.unsubscribe("undici:request:headers", onHeaders));
 
-  t.match(headers, {
-    "content-type": "application/json",
-    "x-foo": "bar",
-  });
-});
+    const { port } = server.address() as AddressInfo;
+    const response = await fetch(`https://127.0.0.1:${port}/`, { dispatcher });
+    await response.text();
+
+    t.match(headers, {
+      "content-type": "application/json",
+      "x-foo": "bar",
+    });
+  }
+);
 
 t.test("it is not affected by prototype pollution header names", async (t) => {
   const fromArray = parseHeaders([
