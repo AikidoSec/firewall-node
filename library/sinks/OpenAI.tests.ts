@@ -15,14 +15,35 @@ function getExpectedProvider(): string {
     : "openai";
 }
 
+function getItWorksTestSkipReason(): string | undefined {
+  if (!process.env.OPENAI_API_KEY) {
+    return "OpenAI API key not set";
+  }
+
+  if (getMajorNodeVersion() < 22) {
+    return "Node version < 22";
+  }
+
+  return undefined;
+}
+
+function getAzureTestSkipReason(): string | undefined {
+  if (getMajorNodeVersion() < 22) {
+    return "Node version < 22";
+  }
+
+  if (isAIProviderTrafficCaptureEnabled()) {
+    return "Providers are identified by origin when capturing network traffic";
+  }
+
+  return undefined;
+}
+
 export function createOpenAITests(openAiPkgName: string) {
   t.test(
     "It works",
     {
-      skip:
-        !process.env.OPENAI_API_KEY || getMajorNodeVersion() < 22
-          ? "OpenAI API key not set or Node version < 22"
-          : undefined,
+      skip: getItWorksTestSkipReason(),
     },
     async (t) => {
       const agent = startTestAgent({
@@ -103,12 +124,7 @@ export function createOpenAITests(openAiPkgName: string) {
   t.test(
     "It reports Azure OpenAI calls under the azure provider, not openai",
     {
-      skip:
-        getMajorNodeVersion() < 22
-          ? "Node version < 22"
-          : isAIProviderTrafficCaptureEnabled()
-            ? "Providers are identified by origin when capturing network traffic"
-            : undefined,
+      skip: getAzureTestSkipReason(),
     },
     async (t) => {
       const agent = startTestAgent({
