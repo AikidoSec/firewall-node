@@ -248,3 +248,26 @@ t.test("it tracks cache tokens", async () => {
     },
   ]);
 });
+
+t.test("it bounds untrusted model names", async (t) => {
+  const stats = new AIStatistics();
+  stats.onAICall({
+    provider: "openai",
+    model: "a".repeat(100_000),
+    inputTokens: 1,
+    outputTokens: 1,
+  });
+  t.same(stats.isEmpty(), true);
+
+  stats.reset();
+  for (let i = 0; i < 2000; i++) {
+    stats.onAICall({
+      provider: "openai",
+      model: `model-${i}`,
+      inputTokens: 1,
+      outputTokens: 1,
+    });
+  }
+  const result = stats.getStats();
+  t.equal(result.length, 500);
+});

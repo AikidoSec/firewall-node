@@ -11,15 +11,14 @@ type AIProviderStats = {
   };
 };
 
+const MAX_MODEL_LENGTH = 256;
+const MAX_DISTINCT_ENTRIES = 500;
+
 export class AIStatistics {
   private calls: Map<string, AIProviderStats> = new Map();
 
   private getProviderKey(provider: string, model: string): string {
     return `${provider}:${model}`;
-  }
-
-  private getRouteKey(path: string, method: string): string {
-    return `${method}:${path}`;
   }
 
   private ensureProviderStats(
@@ -62,6 +61,17 @@ export class AIStatistics {
     cacheWriteTokens?: number;
   }) {
     if (!provider || !model) {
+      return;
+    }
+
+    if (model.length > MAX_MODEL_LENGTH) {
+      return;
+    }
+
+    if (
+      this.calls.size >= MAX_DISTINCT_ENTRIES &&
+      !this.calls.has(this.getProviderKey(provider, model))
+    ) {
       return;
     }
 
