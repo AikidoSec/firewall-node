@@ -463,24 +463,28 @@ t.test("count mode: use nth IP from the right", async (t) => {
 });
 
 t.test(
-  "count mode: private IP at the selected slot continues walking left",
+  "count mode: never select an IP left of the client boundary",
   async (t) => {
-    process.env.AIKIDO_TRUST_PROXY = "1";
+    process.env.AIKIDO_TRUST_PROXY = "2";
     clearTrustProxyCache();
-    t.same(
-      getIPAddressFromRequest({
-        headers: { "x-forwarded-for": "9.9.9.9, 127.0.0.1" },
-        remoteAddress: "5.5.5.5",
-      }),
-      "9.9.9.9"
-    );
-    t.same(
-      getIPAddressFromRequest({
-        headers: { "x-forwarded-for": "127.0.0.1, 192.168.0.1" },
-        remoteAddress: "5.5.5.5",
-      }),
-      "5.5.5.5"
-    );
+    for (const [header, expected] of [
+      ["9.9.9.9, 10.0.0.42, 8.8.8.8", "10.0.0.42"],
+      ["9.9.9.9, ::1, 8.8.8.8", "::1"],
+      ["9.9.9.9, ::ffff:192.168.0.1, 8.8.8.8", "::ffff:192.168.0.1"],
+      ["9.9.9.9, 10.0.0.42:1234, 8.8.8.8", "10.0.0.42"],
+      ["9.9.9.9, invalid, 8.8.8.8", "5.5.5.5"],
+      ["9.9.9.9, , 8.8.8.8", "5.5.5.5"],
+      ["8.8.8.8", "5.5.5.5"],
+    ]) {
+      t.same(
+        getIPAddressFromRequest({
+          headers: { "x-forwarded-for": header },
+          remoteAddress: "5.5.5.5",
+        }),
+        expected,
+        header
+      );
+    }
   }
 );
 
