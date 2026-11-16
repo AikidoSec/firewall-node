@@ -47,7 +47,7 @@ function parseTrustProxy(value: string | undefined): TrustProxyConfig {
 
   if (/^\d+$/.test(value)) {
     const n = parseInt(value, 10);
-    if (n > 0) {
+    if (Number.isSafeInteger(n) && n > 0) {
       return { type: "count", value: n };
     }
   }

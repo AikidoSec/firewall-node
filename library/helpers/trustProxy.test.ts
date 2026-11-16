@@ -50,6 +50,15 @@ t.test("trust proxy set to 0", async () => {
   t.equal(isTrustedProxyRequest(undefined), false);
 });
 
+t.test("unsafe proxy counts disable trust", async () => {
+  for (const value of ["9007199254740992", "9".repeat(400)]) {
+    process.env.AIKIDO_TRUST_PROXY = value;
+    clearTrustProxyCache();
+    t.equal(isTrustedProxyRequest("10.0.0.1"), false);
+    t.same(getTrustProxyConfig(), { type: "boolean", value: false });
+  }
+});
+
 t.test("trust proxy set to a single CIDR range", async () => {
   process.env.AIKIDO_TRUST_PROXY = "1.2.3.4/32";
   const config = getTrustProxyConfig();
