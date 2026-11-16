@@ -35,13 +35,13 @@ function selectClientIP(
   ips: string[],
   config: TrustProxyConfig
 ): string | undefined {
-  // In count mode, the configured number of rightmost hops are trusted
-  // proxies, so the search starts to their left instead of at the end
-  const startIndex =
-    config.type === "count" ? ips.length - config.value : ips.length - 1;
+  if (config.type === "count") {
+    const ip = ips[ips.length - config.value];
+    return ip && isIP(ip) ? ip : undefined;
+  }
 
   // Search right-to-left for the first non-private IP not belonging to a trusted proxy
-  for (let i = startIndex; i >= 0; i--) {
+  for (let i = ips.length - 1; i >= 0; i--) {
     const ip = ips[i];
     if (!isIP(ip) || isPrivateIP(ip)) {
       continue;
