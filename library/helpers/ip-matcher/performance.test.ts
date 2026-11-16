@@ -6,7 +6,7 @@ import { loadNodeInternals } from "../loadNodeInternals";
 import { BlockList } from "net";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { getSemverNodeVersion } from "../getNodeVersion";
+import { getMajorNodeVersion, getSemverNodeVersion } from "../getNodeVersion";
 import { isVersionGreaterOrEqual } from "../isVersionGreaterOrEqual";
 
 // @esm-tests-skip
@@ -109,10 +109,16 @@ t.test("test performance in comparison to node:net.blocklist", async (t) => {
       }
     }
   }
+  if (getMajorNodeVersion() === 16) {
+    t.skip(
+      "relative BlockList performance is flaky on Node.js 16 under CPU contention",
+      () => {}
+    );
+    return;
+  }
+
   const endBlockList = performance.now();
-
   const blockListMs = (endBlockList - startBlockList) / iterations;
-
   const percentageDiff = ((blockListMs - ipMatcherMs) / ipMatcherMs) * 100;
 
   // @ts-expect-error Outdated types
