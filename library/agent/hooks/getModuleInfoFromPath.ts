@@ -17,23 +17,21 @@ export type ModulePathInfo = {
   path: string;
 };
 
-function fileUrlToPath(url: string): string {
-  try {
-    return fileURLToPath(url);
-  } catch {
-    return url.slice(7);
-  }
-}
-
 /**
  * Get the module name and dir from a path that is inside a node_modules folder.
  */
 export function getModuleInfoFromPath(
   filePath: string
 ): ModulePathInfo | undefined {
-  const _filePath = filePath.startsWith("file://")
-    ? fileUrlToPath(filePath)
-    : filePath;
+  let _filePath = filePath;
+
+  if (filePath.startsWith("file://")) {
+    try {
+      _filePath = fileURLToPath(filePath);
+    } catch {
+      _filePath = filePath.slice(7);
+    }
+  }
 
   const segments = _filePath.split(sep);
   const i = segments.lastIndexOf("node_modules");
