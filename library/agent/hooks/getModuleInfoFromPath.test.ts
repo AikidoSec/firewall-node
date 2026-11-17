@@ -44,3 +44,16 @@ t.test("works with file:// protocol", async (t) => {
     }
   );
 });
+
+t.test("decodes percent-encoded file:// URLs", async (t) => {
+  t.same(
+    getModuleInfoFromPath(
+      "file:///Users/aikido/My%20Projects/node_modules/mysql/lib/Connection.js"
+    ),
+    {
+      name: "mysql",
+      base: "/Users/aikido/My Projects/node_modules/mysql",
+      path: "lib/Connection.js",
+    }
+  );
+});

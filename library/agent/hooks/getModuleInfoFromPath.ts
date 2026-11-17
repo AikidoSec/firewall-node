@@ -1,4 +1,5 @@
 import { sep } from "path";
+import { fileURLToPath } from "url";
 
 export type ModulePathInfo = {
   /**
@@ -6,14 +7,23 @@ export type ModulePathInfo = {
    */
   name: string;
   /**
-   * Absolute path to the package inside node_modules.
+   * Absolute path to the package inside node_modules (native path separators).
    */
   base: string;
   /**
    * Relative path to required file inside the package folder.
+   * Always uses forward slashes, independent of the platform.
    */
   path: string;
 };
+
+function fileUrlToPath(url: string): string {
+  try {
+    return fileURLToPath(url);
+  } catch {
+    return url.slice(7);
+  }
+}
 
 /**
  * Get the module name and dir from a path that is inside a node_modules folder.
@@ -21,10 +31,9 @@ export type ModulePathInfo = {
 export function getModuleInfoFromPath(
   filePath: string
 ): ModulePathInfo | undefined {
-  let _filePath = filePath;
-  if (_filePath.startsWith("file://")) {
-    _filePath = filePath.slice(7);
-  }
+  const _filePath = filePath.startsWith("file://")
+    ? fileUrlToPath(filePath)
+    : filePath;
 
   const segments = _filePath.split(sep);
   const i = segments.lastIndexOf("node_modules");
@@ -44,6 +53,6 @@ export function getModuleInfoFromPath(
   return {
     name: name,
     base: segments.slice(0, i + offset).join(sep),
-    path: segments.slice(i + offset).join(sep),
+    path: segments.slice(i + offset).join("/"),
   };
 }
