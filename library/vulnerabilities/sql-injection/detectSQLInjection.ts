@@ -16,20 +16,21 @@ export const SQLInjectionDetectionResult = {
 export type SQLInjectionDetectionResultType =
   (typeof SQLInjectionDetectionResult)[keyof typeof SQLInjectionDetectionResult];
 
+// queryLowercase must already be lowercased by the caller, so it is only done once per query
 export function detectSQLInjection(
-  query: string,
+  queryLowercase: string,
   userInput: string,
   dialect: SQLDialect
 ): SQLInjectionDetectionResultType {
   const userInputNormalized = userInput.toLowerCase().trim();
-  if (shouldReturnEarly(query, userInputNormalized)) {
+  if (shouldReturnEarly(queryLowercase, userInputNormalized)) {
     return SQLInjectionDetectionResult.SAFE;
   }
 
   let code: number;
   try {
     code = wasm_detect_sql_injection(
-      query.toLowerCase(),
+      queryLowercase,
       userInputNormalized,
       dialect.getWASMDialectInt()
     );

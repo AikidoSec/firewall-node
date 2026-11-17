@@ -141,3 +141,162 @@ t.test(
     );
   }
 );
+
+t.test("it detects injection when the query is uppercase", async () => {
+  const sql = "SELECT * FROM USERS WHERE ID = '1' OR 1=1; -- '";
+
+  t.same(
+    checkContextForSqlInjection({
+      sql,
+      operation: "mysql.query",
+      dialect: new SQLDialectMySQL(),
+      context: {
+        cookies: {},
+        headers: {},
+        remoteAddress: "ip",
+        method: "POST",
+        url: "url",
+        query: {},
+        body: { id: "1' or 1=1; --" },
+        source: "express",
+        route: "/",
+        routeParams: {},
+      },
+    }),
+    {
+      operation: "mysql.query",
+      kind: "sql_injection",
+      source: "body",
+      pathsToPayload: [".id"],
+      metadata: { sql, dialect: "MySQL" },
+      payload: "1' or 1=1; --",
+    }
+  );
+});
+
+t.test("it detects injection when the user input is uppercase", async () => {
+  const sql = "select * from users where id = '1' or 1=1; -- '";
+
+  t.same(
+    checkContextForSqlInjection({
+      sql,
+      operation: "mysql.query",
+      dialect: new SQLDialectMySQL(),
+      context: {
+        cookies: {},
+        headers: {},
+        remoteAddress: "ip",
+        method: "POST",
+        url: "url",
+        query: {},
+        body: { id: "1' OR 1=1; --" },
+        source: "express",
+        route: "/",
+        routeParams: {},
+      },
+    }),
+    {
+      operation: "mysql.query",
+      kind: "sql_injection",
+      source: "body",
+      pathsToPayload: [".id"],
+      metadata: { sql, dialect: "MySQL" },
+      payload: "1' OR 1=1; --",
+    }
+  );
+});
+
+t.test("it detects injection with mixed case query and input", async () => {
+  const sql = "SeLeCt * FrOm UsErS wHeRe Id = '1' Or 1=1; -- '";
+
+  t.same(
+    checkContextForSqlInjection({
+      sql,
+      operation: "mysql.query",
+      dialect: new SQLDialectMySQL(),
+      context: {
+        cookies: {},
+        headers: {},
+        remoteAddress: "ip",
+        method: "POST",
+        url: "url",
+        query: {},
+        body: { id: "1' oR 1=1; --" },
+        source: "express",
+        route: "/",
+        routeParams: {},
+      },
+    }),
+    {
+      operation: "mysql.query",
+      kind: "sql_injection",
+      source: "body",
+      pathsToPayload: [".id"],
+      metadata: { sql, dialect: "MySQL" },
+      payload: "1' oR 1=1; --",
+    }
+  );
+});
+
+t.test(
+  "it detects injection after checking other safe user strings against the same query",
+  async () => {
+    const sql = "SELECT * FROM users WHERE name = 'bob' OR 1=1; -- '";
+
+    t.same(
+      checkContextForSqlInjection({
+        sql,
+        operation: "mysql.query",
+        dialect: new SQLDialectMySQL(),
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "POST",
+          url: "url",
+          query: {},
+          body: {
+            a: "USERS",
+            b: ["SELECT", "bob"],
+            c: { d: "unrelated" },
+            name: "bob' OR 1=1; --",
+          },
+          source: "express",
+          route: "/",
+          routeParams: {},
+        },
+      }),
+      {
+        operation: "mysql.query",
+        kind: "sql_injection",
+        source: "body",
+        pathsToPayload: [".name"],
+        metadata: { sql, dialect: "MySQL" },
+        payload: "bob' OR 1=1; --",
+      }
+    );
+  }
+);
+
+t.test("it does not flag safe user input in a mixed case query", async () => {
+  t.same(
+    checkContextForSqlInjection({
+      sql: "SELECT * FROM Users WHERE Name = 'Bob'",
+      operation: "mysql.query",
+      dialect: new SQLDialectMySQL(),
+      context: {
+        cookies: {},
+        headers: {},
+        remoteAddress: "ip",
+        method: "POST",
+        url: "url",
+        query: {},
+        body: { name: "BOB", other: "users" },
+        source: "express",
+        route: "/",
+        routeParams: {},
+      },
+    }),
+    undefined
+  );
+});

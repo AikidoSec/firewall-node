@@ -26,7 +26,7 @@ t.test("It ignores safely escaped backslash", async () => {
 t.test("it recovers after deeply nested parentheses", async () => {
   const payload = "(".repeat(10_000);
 
-  detectSQLInjection(payload, payload, new SQLDialectGeneric());
+  detectSQLInjection(payload.toLowerCase(), payload, new SQLDialectGeneric());
   isSqlInjection("SELECT * FROM users WHERE id = '1' OR 1=1", "1' OR 1=1");
 });
 
@@ -393,7 +393,7 @@ for (const file of files) {
         const escaped = escapeLikeDatabase(sql, "'");
         t.same(
           detectSQLInjection(
-            `SELECT * FROM users WHERE id = ${escaped}`,
+            `SELECT * FROM users WHERE id = ${escaped}`.toLowerCase(),
             sql,
             new SQLDialectMySQL()
           ),
@@ -409,7 +409,7 @@ for (const file of files) {
         const escaped = escapeLikeDatabase(sql, '"');
         t.same(
           detectSQLInjection(
-            `SELECT * FROM users WHERE id = ${escaped}`,
+            `SELECT * FROM users WHERE id = ${escaped}`.toLowerCase(),
             sql,
             new SQLDialectMySQL()
           ),
@@ -438,7 +438,7 @@ function isSqlInjection(
 
   for (const dialect of dialects) {
     t.same(
-      detectSQLInjection(sql, input, dialect),
+      detectSQLInjection(sql.toLowerCase(), input, dialect),
       SQLInjectionDetectionResult.INJECTION_DETECTED,
       `${sql} (${dialect.constructor.name})`
     );
@@ -458,7 +458,7 @@ function isNotSqlInjection(
 ) {
   for (const dialect of dialects) {
     t.same(
-      detectSQLInjection(sql, input, dialect),
+      detectSQLInjection(sql.toLowerCase(), input, dialect),
       SQLInjectionDetectionResult.SAFE,
       `${sql} (${dialect.constructor.name})`
     );
@@ -478,7 +478,7 @@ function isTokenizeError(
 ) {
   for (const dialect of dialects) {
     t.same(
-      detectSQLInjection(sql, input, dialect),
+      detectSQLInjection(sql.toLowerCase(), input, dialect),
       SQLInjectionDetectionResult.FAILED_TO_TOKENIZE,
       `${sql} (${dialect.constructor.name})`
     );

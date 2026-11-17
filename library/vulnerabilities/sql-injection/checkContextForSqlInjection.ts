@@ -25,8 +25,10 @@ export function checkContextForSqlInjection({
   context: Context;
   dialect: SQLDialect;
 }): InterceptorResult {
+  const sqlLowercase = sql.toLowerCase();
+
   for (const str of extractStringsFromUserInputCached(context)) {
-    const result = detectSQLInjection(sql, str, dialect);
+    const result = detectSQLInjection(sqlLowercase, str, dialect);
 
     if (result === SQLInjectionDetectionResult.INJECTION_DETECTED) {
       const source = getSourceForUserString(context, str);

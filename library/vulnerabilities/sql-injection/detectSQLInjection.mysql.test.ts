@@ -82,9 +82,17 @@ t.test("It flags SET CHARACTER SET as SQL injection", async () => {
 });
 
 function isSqlInjection(sql: string, input: string) {
-  t.same(detectSQLInjection(sql, input, new SQLDialectMySQL()), 1, sql);
+  t.same(
+    detectSQLInjection(sql.toLowerCase(), input, new SQLDialectMySQL()),
+    1,
+    sql
+  );
 }
 
 function isNotSQLInjection(sql: string, input: string) {
-  t.same(detectSQLInjection(sql, input, new SQLDialectMySQL()), 0, sql);
+  t.same(
+    detectSQLInjection(sql.toLowerCase(), input, new SQLDialectMySQL()),
+    0,
+    sql
+  );
 }
