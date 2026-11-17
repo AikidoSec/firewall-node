@@ -139,3 +139,27 @@ t.test(
     t.same(failedToWrap, [fastifyPath]);
   }
 );
+
+for (const suffix of ["?iitm=true", "?t=123", "#hash"]) {
+  t.test(
+    `it does not instrument file URLs with a query or hash (${suffix})`,
+    { skip },
+    async (t) => {
+      const { failedToWrap } = setup();
+
+      const previous = {
+        format: "commonjs" as const,
+        shortCircuit: undefined,
+        source: fastifySource,
+      };
+      const result = onModuleLoad(
+        `${fastifyUrl}${suffix}`,
+        undefined as any,
+        previous
+      );
+
+      t.equal(result, previous);
+      t.same(failedToWrap, []);
+    }
+  );
+}
