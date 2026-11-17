@@ -51,6 +51,8 @@ export function getModuleInfoFromPath(
   return {
     name: name,
     base: segments.slice(0, i + offset).join(sep),
+    // We use / as path separator here, so that our file based instrumentation works
+    // e.g. .onFileRequire("lib/connection-promise.js", ...)
     path: segments.slice(i + offset).join("/"),
   };
 }
