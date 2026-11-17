@@ -313,3 +313,67 @@ pub fn insert_access_local_var<'a>(
 
     body.push(stmt_expression);
 }
+
+// Build a call statement `callee('arg1', 'arg2', ...)` from string literal arguments
+fn string_call_statement<'a>(
+    allocator: &'a Allocator,
+    builder: &'a AstBuilder,
+    callee: &'a str,
+    string_args: &[&str],
+) -> Statement<'a> {
+    let mut args: OxcVec<'a, Argument<'a>> =
+        OxcVec::with_capacity_in(string_args.len(), &allocator);
+
+    for arg in string_args {
+        args.push(Argument::StringLiteral(StringLiteral::boxed(
+            SPAN,
+            allocator.alloc_str(arg),
+            None,
+            builder,
+        )));
+    }
+
+    let call_expr = Expression::new_call_expression(
+        SPAN,
+        Expression::Identifier(IdentifierReference::boxed(SPAN, callee, builder)),
+        None,
+        args,
+        false,
+        builder,
+    );
+
+    Statement::new_expression_statement(SPAN, call_expr, builder)
+}
+
+// Add a statement to the end of the body: __instrumentPackageWrapped('name', 'version');
+pub fn insert_package_wrapped<'a>(
+    allocator: &'a Allocator,
+    builder: &'a AstBuilder,
+    pkg_name: &str,
+    pkg_version: &str,
+    body: &mut OxcVec<'a, Statement<'a>>,
+) {
+    body.push(string_call_statement(
+        allocator,
+        builder,
+        "__instrumentPackageWrapped",
+        &[pkg_name, pkg_version],
+    ));
+}
+
+// Add a statement to the end of the body: __instrumentPackageLoaded('name', 'version', 'agent_version');
+pub fn insert_package_loaded<'a>(
+    allocator: &'a Allocator,
+    builder: &'a AstBuilder,
+    pkg_name: &str,
+    pkg_version: &str,
+    agent_version: &str,
+    body: &mut OxcVec<'a, Statement<'a>>,
+) {
+    body.push(string_call_statement(
+        allocator,
+        builder,
+        "__instrumentPackageLoaded",
+        &[pkg_name, pkg_version, agent_version],
+    ));
+}

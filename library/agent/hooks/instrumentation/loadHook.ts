@@ -1,5 +1,8 @@
 import type { LoadFunction } from "./types";
-import { getModuleInfoFromPath } from "../getModuleInfoFromPath";
+import {
+  getModuleInfoFromPath,
+  ModulePathInfo,
+} from "../getModuleInfoFromPath";
 import { isBuiltinModule } from "../isBuiltinModule";
 import { getPackageVersionFromPath } from "./getPackageVersionFromPath";
 import { transformCode } from "./codeTransformation";
@@ -70,11 +73,14 @@ export function onModuleLoad(
   }
 }
 
-function patchPackage(
+export function patchPackage(
   path: string,
-  previousLoadResult: ReturnType<LoadFunction>
+  previousLoadResult: ReturnType<LoadFunction>,
+  isBundling = false,
+  moduleInfo: ModulePathInfo | undefined = undefined,
+  pkgVersion: string | undefined = undefined
 ) {
-  const moduleInfo = getModuleInfoFromPath(path);
+  moduleInfo ??= getModuleInfoFromPath(path);
   if (!moduleInfo) {
     // This is e.g. the case for user code (not a dependency)
     // We don't want to modify user code yet
@@ -82,7 +88,7 @@ function patchPackage(
   }
 
   // Check if the version of the package is supported
-  const pkgVersion = getPackageVersionFromPath(moduleInfo.base);
+  pkgVersion ??= getPackageVersionFromPath(moduleInfo.base);
   if (!pkgVersion) {
     // We can't determine the version of the package
     return previousLoadResult;
@@ -139,7 +145,8 @@ function patchPackage(
     path,
     sourceString,
     pkgLoadFormat,
-    matchingInstructions
+    matchingInstructions,
+    isBundling
   );
 
   // Prevent returning empty or undefined source text
