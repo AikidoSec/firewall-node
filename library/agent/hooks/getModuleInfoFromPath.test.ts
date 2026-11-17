@@ -44,3 +44,34 @@ t.test("works with file:// protocol", async (t) => {
     }
   );
 });
+
+t.test(
+  "falls back to stripping file:// if the URL can't be converted",
+  { skip: process.platform === "win32" ? "POSIX paths only" : false },
+  async (t) => {
+    // Encoded slashes (%2F) make fileURLToPath throw
+    t.same(
+      getModuleInfoFromPath(
+        "file:///Users/aikido/a%2Fb/node_modules/mysql/lib/Connection.js"
+      ),
+      {
+        name: "mysql",
+        base: "/Users/aikido/a%2Fb/node_modules/mysql",
+        path: "lib/Connection.js",
+      }
+    );
+  }
+);
+
+t.test("decodes percent-encoded file:// URLs", async (t) => {
+  t.same(
+    getModuleInfoFromPath(
+      "file:///Users/aikido/My%20Projects/node_modules/mysql/lib/Connection.js"
+    ),
+    {
+      name: "mysql",
+      base: "/Users/aikido/My Projects/node_modules/mysql",
+      path: "lib/Connection.js",
+    }
+  );
+});
