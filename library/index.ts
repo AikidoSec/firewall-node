@@ -1,6 +1,7 @@
 import isFirewallSupported from "./helpers/isFirewallSupported";
 import shouldEnableFirewall from "./helpers/shouldEnableFirewall";
 import { setUser } from "./agent/context/user";
+import { track } from "./agent/context/track";
 import { markUnsafe } from "./agent/context/markUnsafe";
 import { shouldBlockRequest } from "./middleware/shouldBlockRequest";
 import { addExpressMiddleware } from "./middleware/express";
@@ -11,6 +12,7 @@ import { addKoaMiddleware } from "./middleware/koa";
 import { isNewHookSystemUsed } from "./agent/isNewHookSystemUsed";
 import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
+import { addH3Middleware } from "./middleware/h3";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
 import { shutdown } from "./agent/shutdown";
@@ -67,6 +69,7 @@ if (!isNewHookSystemUsed()) {
 
 export {
   setUser,
+  track,
   markUnsafe,
   shouldBlockRequest,
   addExpressMiddleware,
@@ -78,6 +81,7 @@ export {
   addRestifyMiddleware,
   elysiaHandler,
   setRateLimitGroup,
+  addH3Middleware,
   shutdown,
   setTenantId,
   runWithTenant,
@@ -91,6 +95,7 @@ export {
 // e.g. import Zen from '@aikidosec/firewall'; would not work without this, as Zen.setUser would be undefined
 export default {
   setUser,
+  track,
   markUnsafe,
   shouldBlockRequest,
   addExpressMiddleware,
@@ -102,6 +107,7 @@ export default {
   addRestifyMiddleware,
   elysiaHandler,
   setRateLimitGroup,
+  addH3Middleware,
   shutdown,
   setTenantId,
   runWithTenant,

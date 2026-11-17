@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
 import type { Context } from "./Context";
+import type { EndpointConfig } from "./Config";
 t.test("it returns false if empty rules", async () => {
   const config = new ServiceConfig([], 0, [], []);
   t.same(config.getLastUpdatedAt(), 0);
@@ -96,6 +97,31 @@ t.test("it works", async () => {
     ]
   );
 });
+
+t.test(
+  "endpoint config does not inherit forceProtectionOff from a polluted Object.prototype",
+  async (t) => {
+    // @ts-expect-error Simulating prototype pollution
+    Object.prototype.forceProtectionOff = true;
+    t.teardown(() => {
+      // @ts-expect-error Simulating prototype pollution
+      delete Object.prototype.forceProtectionOff;
+    });
+
+    const endpointWithoutOwnFlag = {
+      method: "GET",
+      route: "/foo",
+      rateLimiting: { enabled: false, maxRequests: 0, windowSizeInMS: 0 },
+    } as unknown as EndpointConfig;
+
+    const config = new ServiceConfig([endpointWithoutOwnFlag], 0, [], []);
+
+    const context = { url: undefined, method: "GET", route: "/foo" };
+
+    t.same(config.getEndpoints(context)[0].forceProtectionOff, undefined);
+    t.same(config.isForceProtectionOffRoute(context), false);
+  }
+);
 
 t.test("it checks if IP is bypassed", async () => {
   const config = new ServiceConfig([], 0, [], ["1.2.3.4"]);

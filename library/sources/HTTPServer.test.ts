@@ -10,6 +10,8 @@ import { createTestAgent } from "../helpers/createTestAgent";
 import { mkdtemp, writeFile, unlink } from "fs/promises";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { setTimeout as sleep } from "timers/promises";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 import { FileSystem } from "../sinks/FileSystem";
 import { Path } from "../sinks/Path";
 import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
@@ -119,6 +121,7 @@ t.test("it wraps the createServer function of http module", async () => {
           source: "http.createServer",
           routeParams: {},
           cookies: {},
+          isBehindTrustedProxy: true,
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
         });
@@ -166,6 +169,7 @@ t.test("it wraps the createServer function of https module", async () => {
           source: "https.createServer",
           routeParams: {},
           cookies: {},
+          isBehindTrustedProxy: true,
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
         });
@@ -552,6 +556,7 @@ t.test("it wraps on request event of http", async () => {
           source: "http.createServer",
           routeParams: {},
           cookies: {},
+          isBehindTrustedProxy: true,
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
         });
@@ -597,6 +602,7 @@ t.test("it wraps on request event of https", async () => {
           cookies: {},
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
+          isBehindTrustedProxy: true,
         });
         server.close();
         resolve();
@@ -1318,3 +1324,226 @@ t.test("Invalid multipart form data is ignored", async (t) => {
     });
   });
 });
+
+t.test("It limits the number of parsed urlencoded fields", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "1";
+
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  const body = Array.from({ length: 5000 }, (_, i) => `a${i}=b`).join("&");
+
+  await new Promise<void>((resolve) => {
+    server.listen(3236, () => {
+      fetch({
+        url: new URL("http://localhost:3236"),
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+        timeoutInMS: 2000,
+      }).then(({ statusCode, body }) => {
+        t.same(statusCode, 200);
+        const context = JSON.parse(body);
+        t.same(context.body.fields.length, 1000);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("It limits the number of parsed multipart parts", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "1";
+
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  const boundary = "----TestBoundary";
+  const body =
+    Array.from(
+      { length: 5000 },
+      (_, i) =>
+        `--${boundary}\r\nContent-Disposition: form-data; name="a${i}"\r\n\r\nb\r\n`
+    ).join("") + `--${boundary}--`;
+
+  await new Promise<void>((resolve) => {
+    server.listen(3237, () => {
+      fetch({
+        url: new URL("http://localhost:3237"),
+        method: "POST",
+        headers: {
+          "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        },
+        body,
+        timeoutInMS: 2000,
+      }).then(({ statusCode, body }) => {
+        t.same(statusCode, 200);
+        const context = JSON.parse(body);
+        t.same(context.body.fields.length, 1000);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test(
+  "Multipart form data without boundary does not crash the process",
+  async (t) => {
+    // Enables body parsing
+    process.env.NEXT_DEPLOYMENT_ID = "1";
+
+    const server = http.createServer((req, res) => {
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify(getContext()));
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3235, () => {
+        fetch({
+          url: new URL("http://localhost:3235"),
+          method: "POST",
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          body: "test",
+          timeoutInMS: 500,
+        }).then(({ statusCode, body }) => {
+          t.same(statusCode, 200);
+          const context = JSON.parse(body);
+          t.same(context.body, undefined);
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
+
+t.test(
+  "it does not block a request whose path matches the exact absolute file being served",
+  async (t) => {
+    const tmpDir = await mkdtemp("/tmp/aikido-");
+    const tmpFile = join(tmpDir, "generated-style-test.css");
+    await writeFile(tmpFile, "body { color: red; }", { encoding: "utf-8" });
+
+    const server = http.createServer((req, res) => {
+      try {
+        const file = readFileSync(req.url || "");
+
+        res.statusCode = 200;
+        res.end(file);
+      } catch (error) {
+        res.statusCode = 500;
+        if (error instanceof Error) {
+          res.end(error.message);
+          return;
+        }
+        res.end("Internal server error");
+      }
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3398, async () => {
+        const response = await new Promise<{
+          statusCode: number | undefined;
+          body: string;
+        }>((resolve, reject) => {
+          const req = http.request(
+            {
+              hostname: "localhost",
+              port: 3398,
+              path: tmpFile,
+              method: "GET",
+            },
+            (res) => {
+              let data = "";
+
+              res.on("data", (chunk) => {
+                data += chunk;
+              });
+
+              res.on("end", () => {
+                resolve({ statusCode: res.statusCode, body: data });
+              });
+            }
+          );
+
+          req.on("error", (err) => {
+            reject(err);
+          });
+
+          req.end();
+        });
+
+        t.equal(response.statusCode, 200);
+        t.equal(response.body, "body { color: red; }");
+
+        server.close();
+        await unlink(tmpFile);
+        resolve();
+      });
+    });
+  }
+);
+
+t.test(
+  "it blocks path traversal once when source maps are enabled",
+  // ESM frames are file:// URLs, so Node does not call path.resolve for them
+  { skip: isEsmUnitTest() ? "requires CommonJS" : false },
+  async (t) => {
+    api.clear();
+
+    const server = http.createServer((req, res) => {
+      try {
+        const url = new URL(req.url!, `http://${req.headers.host}`);
+        res.end(readFileSync(url.searchParams.get("name")!));
+      } catch (error) {
+        res.statusCode = 500;
+        res.end(error instanceof Error ? error.message : "Internal error");
+      }
+    });
+
+    process.setSourceMapsEnabled(true);
+    try {
+      await new Promise<void>((resolve) => {
+        // The payload is a CommonJS file that is part of the stack trace
+        const name = encodeURIComponent(__filename);
+        server.listen(3398, () => {
+          fetch({
+            url: new URL(`http://localhost:3398/?name=${name}`),
+            method: "GET",
+            headers: { "x-forwarded-for": "1.2.3.4" },
+            timeoutInMS: 500,
+          }).then(({ statusCode, body }) => {
+            t.equal(statusCode, 500);
+            t.equal(
+              body,
+              "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from query.name"
+            );
+            server.close();
+            resolve();
+          });
+        });
+      });
+    } finally {
+      process.setSourceMapsEnabled(false);
+    }
+
+    await sleep(100);
+
+    const attacks = api
+      .getEvents()
+      .filter((event) => event.type === "detected_attack");
+    t.equal(attacks.length, 1);
+    t.match(attacks[0], {
+      attack: { kind: "path_traversal", operation: "fs.readFileSync" },
+    });
+  }
+);

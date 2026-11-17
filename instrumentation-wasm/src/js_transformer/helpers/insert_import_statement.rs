@@ -1,7 +1,11 @@
 use oxc_allocator::{Allocator, Vec as OxcVec};
 use oxc_ast::{
-    AstBuilder, NONE,
-    ast::{Argument, ImportOrExportKind, Statement, VariableDeclarationKind},
+    ast::{
+        Argument, BindingIdentifier, BindingPattern, BindingProperty, Expression,
+        IdentifierReference, ImportDeclarationSpecifier, ImportOrExportKind, ModuleExportName,
+        PropertyKey, Statement, StringLiteral, VariableDeclarationKind, VariableDeclarator,
+    },
+    builder::AstBuilder,
 };
 use oxc_span::{SPAN, SourceType};
 
@@ -54,23 +58,25 @@ pub fn insert_import_statement<'a>(
 ) {
     // Common JS require() statement
     if is_common_js(source_type, has_module_syntax) {
-        let mut require_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(1);
-        require_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+        let mut require_args: OxcVec<'a, Argument<'a>> = OxcVec::with_capacity_in(1, &allocator);
+        require_args.push(Argument::StringLiteral(StringLiteral::boxed(
             SPAN,
             allocator.alloc_str(INSTRUMENT_IMPORT_SOURCE),
             None,
+            builder,
         )));
 
-        let mut binding_properties = builder.vec_with_capacity(method_names.len());
+        let mut binding_properties: OxcVec<'a, BindingProperty<'a>> =
+            OxcVec::with_capacity_in(method_names.len(), &allocator);
 
         for method_name in method_names.iter() {
-            // Only import the function if it is used in the file
-            binding_properties.push(builder.binding_property(
+            binding_properties.push(BindingProperty::new(
                 SPAN,
-                builder.property_key_static_identifier(SPAN, *method_name),
-                builder.binding_pattern_binding_identifier(SPAN, *method_name),
+                PropertyKey::new_static_identifier(SPAN, *method_name, builder),
+                BindingPattern::new_binding_identifier(SPAN, *method_name, builder),
                 true,
                 false,
+                builder,
             ));
         }
 
@@ -79,28 +85,30 @@ pub fn insert_import_statement<'a>(
             return;
         }
 
-        let mut declarations = builder.vec_with_capacity(1);
-        declarations.push(builder.variable_declarator(
+        let mut declarations = OxcVec::with_capacity_in(1, &allocator);
+        declarations.push(VariableDeclarator::new(
             SPAN,
-            VariableDeclarationKind::Const,
-            builder.binding_pattern_object_pattern(SPAN, binding_properties, NONE),
-            NONE,
-            Some(builder.expression_call(
+            BindingPattern::new_object_pattern(SPAN, binding_properties, None, builder),
+            None,
+            Some(Expression::new_call_expression(
                 SPAN,
-                builder.expression_identifier(SPAN, "require"),
-                NONE,
+                Expression::Identifier(IdentifierReference::boxed(SPAN, "require", builder)),
+                None,
                 require_args,
                 false,
+                builder,
             )),
             false,
+            builder,
         ));
 
-        let var_declaration = Statement::VariableDeclaration(builder.alloc_variable_declaration(
+        let var_declaration = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Const,
             declarations,
             false,
-        ));
+            builder,
+        );
 
         body.insert(0, var_declaration);
 
@@ -108,13 +116,15 @@ pub fn insert_import_statement<'a>(
     }
     // else: ESM import statement
 
-    let mut specifiers = builder.vec_with_capacity(method_names.len());
+    let mut specifiers: OxcVec<'a, ImportDeclarationSpecifier<'a>> =
+        OxcVec::with_capacity_in(method_names.len(), &allocator);
     for method_name in method_names.iter() {
-        specifiers.push(builder.import_declaration_specifier_import_specifier(
+        specifiers.push(ImportDeclarationSpecifier::new_import_specifier(
             SPAN,
-            builder.module_export_name_identifier_name(SPAN, *method_name),
-            builder.binding_identifier(SPAN, *method_name),
+            ModuleExportName::new_identifier_name(SPAN, *method_name, builder),
+            BindingIdentifier::new(SPAN, *method_name, builder),
             ImportOrExportKind::Value,
+            builder,
         ));
     }
 
@@ -123,14 +133,20 @@ pub fn insert_import_statement<'a>(
         return;
     }
 
-    let import_stmt = Statement::ImportDeclaration(builder.alloc_import_declaration(
+    let import_stmt = Statement::new_import_declaration(
         SPAN,
         Some(specifiers),
-        builder.string_literal(SPAN, allocator.alloc_str(INSTRUMENT_IMPORT_SOURCE), None),
+        StringLiteral::new(
+            SPAN,
+            allocator.alloc_str(INSTRUMENT_IMPORT_SOURCE),
+            None,
+            builder,
+        ),
         None,
-        NONE,
+        None,
         ImportOrExportKind::Value,
-    ));
+        builder,
+    );
 
     body.insert(0, import_stmt);
 }
@@ -144,7 +160,8 @@ pub fn insert_import_statement_for_instructions<'a>(
     file_instructions: &FileInstructions,
     is_bundling: bool,
 ) {
-    let mut method_names = builder.vec_with_capacity(MAX_IMPORT_METHODS);
+    let mut method_names: OxcVec<'a, &str> =
+        OxcVec::with_capacity_in(MAX_IMPORT_METHODS, &allocator);
 
     // Iter file_instructions to determine which methods to import
     for (method_name, predicate) in IMPORT_METHODS.iter() {
@@ -178,7 +195,7 @@ pub fn insert_import_statement_for_sca<'a>(
     builder: &'a AstBuilder,
     body: &mut OxcVec<'a, Statement<'a>>,
 ) {
-    let mut method_names = builder.vec_with_capacity(1);
+    let mut method_names: OxcVec<'a, &str> = OxcVec::with_capacity_in(1, &allocator);
 
     method_names.push(INSTRUMENT_PACKAGE_LOADED_METHOD_NAME);
 

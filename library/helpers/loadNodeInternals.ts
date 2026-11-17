@@ -1,8 +1,11 @@
-import { existsSync } from "node:fs";
+import { existsSync as existsSyncMaybeWrapped } from "node:fs";
 import { join } from "node:path";
 import { getLibraryRoot } from "./getLibraryRoot";
 import { getMajorNodeVersion } from "./getNodeVersion";
 import { isMusl } from "./isMusl";
+import { getOriginal } from "./wrap";
+
+const existsSync = getOriginal(existsSyncMaybeWrapped);
 
 export type NativeIPMatcher = {
   has(network: string): boolean;

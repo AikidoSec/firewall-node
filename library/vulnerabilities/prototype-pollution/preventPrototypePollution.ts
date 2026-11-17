@@ -1,6 +1,8 @@
 import { getInstance } from "../../agent/AgentSingleton";
+import { colorText } from "../../helpers/colorText";
 import { getPackageVersion } from "../../helpers/getPackageVersion";
 import { satisfiesVersion } from "../../helpers/satisfiesVersion";
+import { warnBox } from "../../helpers/warnBox";
 
 type PackageName = string;
 type PackageRange = string;
@@ -14,8 +16,21 @@ export function preventPrototypePollution() {
   const result = freezeBuiltinsIfPossible(INCOMPATIBLE_PACKAGE);
   const agent = getInstance();
 
-  /* c8 ignore next 4 */
   if (!result.success) {
+    const packages = Object.entries(result.incompatiblePackages)
+      .map(([name, version]) => `${name}@${version}`)
+      .join(", ");
+
+    // oxlint-disable-next-line no-console
+    console.warn(
+      colorText(
+        "red",
+        warnBox(
+          `Zen did NOT freeze JavaScript built-ins to prevent prototype pollution because an incompatible package was found: ${packages}. Your application remains vulnerable to prototype pollution attacks.`
+        )
+      )
+    );
+
     agent?.unableToPreventPrototypePollution(result.incompatiblePackages);
     return;
   }

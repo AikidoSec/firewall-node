@@ -14,6 +14,7 @@ export type Context = {
   headers: Record<string, string | string[] | undefined>;
   routeParams: Record<string, string> | undefined;
   remoteAddress: string | undefined;
+  isBehindTrustedProxy?: boolean;
   body: unknown; // Can be an object, string or undefined (the body is parsed by something like body-parser)
   cookies: Record<string, string>;
   attackDetected?: boolean;
@@ -39,6 +40,8 @@ export type Context = {
   rateLimitedEndpoint?: Endpoint; // The route that was rate limited
   tenantId?: string; // Used for IDOR protection - set via setTenantId() (runWithTenant() overrides this)
   bypassRequest?: boolean; // Used to disable protection (like bypassed Ips)
+  customEventsTracked?: number;
+  customEventLimitWarningLogged?: boolean;
 };
 
 /**
@@ -89,6 +92,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.headers = context.headers;
     current.routeParams = context.routeParams;
     current.remoteAddress = context.remoteAddress;
+    current.isBehindTrustedProxy = context.isBehindTrustedProxy;
     current.body = context.body;
     current.cookies = context.cookies;
     current.source = context.source;

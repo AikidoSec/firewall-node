@@ -5,13 +5,19 @@ import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { addXmlToContext } from "./xml/addXmlToContext";
 import { isXmlInContext } from "./xml/isXmlInContext";
+import { toXmlString } from "./xml/toXmlString";
 
 /**
  * Wrapper for xml-js package.
  */
 export class XmlMinusJs implements Wrapper {
   private inspectParse(args: unknown[], result: unknown, jsonStr: boolean) {
-    if (!args.length || typeof args[0] !== "string") {
+    if (!args.length) {
+      return;
+    }
+
+    const xmlString = toXmlString(args[0]);
+    if (xmlString === undefined) {
       return;
     }
 
@@ -20,8 +26,6 @@ export class XmlMinusJs implements Wrapper {
       // We expect the context to be set by the wrapped http server
       return;
     }
-
-    const xmlString = args[0] as string;
 
     // Check if the XML string is in the request context
     if (!isXmlInContext(xmlString, context)) {

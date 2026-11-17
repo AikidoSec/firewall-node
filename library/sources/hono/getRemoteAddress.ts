@@ -9,10 +9,10 @@ export function getRemoteAddress(c: Context): string | undefined {
   if (c.env) {
     try {
       const bindings = c.env.server ? c.env.server : c.env;
-      const addressInfo = bindings.incoming.socket.address();
+      const remoteAddress = bindings.incoming.socket.remoteAddress;
 
-      if ("address" in addressInfo && typeof addressInfo.address === "string") {
-        return addressInfo.address;
+      if (typeof remoteAddress === "string") {
+        return remoteAddress;
       }
     } catch {
       // Ignore

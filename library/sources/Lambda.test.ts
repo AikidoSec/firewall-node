@@ -119,6 +119,7 @@ t.test("it transforms callback handler to async handler", async (t) => {
     },
     source: "lambda/gateway",
     route: "/dev/{proxy+}",
+    isBehindTrustedProxy: true,
   });
 });
 
@@ -155,6 +156,7 @@ t.test("it also works with event v2", async (t) => {
     },
     source: "lambda/gateway",
     route: "/dev/some/path",
+    isBehindTrustedProxy: true,
   });
 });
 
@@ -217,6 +219,7 @@ t.test("json header is missing for gateway event", async (t) => {
     },
     source: "lambda/gateway",
     route: "/dev/{proxy+}",
+    isBehindTrustedProxy: true,
   });
 });
 
@@ -300,7 +303,6 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       operation: "mongodb.query",
       kind: "nosql_op",
       blocked: false,
-      durationInMs: 0.1,
       attackDetected: false,
       withoutContext: false,
     });
@@ -325,7 +327,6 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
     operation: "mongodb.query",
     kind: "nosql_op",
     blocked: false,
-    durationInMs: 0.1,
     attackDetected: false,
     withoutContext: false,
   });
@@ -340,7 +341,6 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
     operation: "mongodb.query",
     kind: "nosql_op",
     blocked: false,
-    durationInMs: 0.1,
     attackDetected: false,
     withoutContext: false,
   });
@@ -369,19 +369,6 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
             },
             interceptorThrewError: 0,
             withoutContext: 0,
-            compressedTimings: [
-              {
-                averageInMS: 0.09999999999999981,
-                percentiles: {
-                  50: 0.1,
-                  75: 0.1,
-                  90: 0.1,
-                  95: 0.1,
-                  99: 0.1,
-                },
-                compressedAt: 60 * 1000 * 10 + 1,
-              },
-            ],
           },
         },
         startedAt: 0,
@@ -437,7 +424,6 @@ t.test(
         operation: "mongodb.query",
         kind: "nosql_op",
         blocked: false,
-        durationInMs: 0.1,
         attackDetected: false,
         withoutContext: false,
       });
@@ -511,6 +497,7 @@ t.test("undefined values", async () => {
     cookies: {},
     routeParams: {},
     source: "lambda/gateway",
+    isBehindTrustedProxy: true,
   });
 });
 
@@ -532,6 +519,49 @@ t.test("no cookie header", async () => {
     cookies: {},
   });
 });
+
+t.test(
+  "it does not count requests for routes with forceProtectionOff",
+  async () => {
+    const api = new ReportingAPIForTesting({
+      success: true,
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      excludedUserIdsFromRateLimiting: [],
+      endpoints: [
+        {
+          method: "GET",
+          route: "/dev/{proxy+}",
+          forceProtectionOff: true,
+          rateLimiting: {
+            enabled: false,
+            windowSizeInMS: 0,
+            maxRequests: 0,
+          },
+        },
+      ],
+    });
+    const agent = createTestAgent({
+      block: false,
+      token: new Token("token"),
+      serverless: "lambda",
+      api,
+    });
+    agent.start([]);
+
+    const handler = createLambdaWrapper(async () => {});
+
+    await handler(gatewayEvent, lambdaContext, () => {});
+
+    t.match(agent.getInspectionStatistics().getStats(), {
+      requests: {
+        total: 0,
+      },
+    });
+  }
+);
 
 t.test("it counts attacks", async () => {
   const agent = createTestAgent({
@@ -768,6 +798,7 @@ t.test("it detects attack waves", async (t) => {
       routeParams: {},
       source: "lambda/gateway",
       route: path,
+      isBehindTrustedProxy: true,
     });
   }
 
@@ -952,5 +983,6 @@ t.test("it works with v2 event with removed cookie header", async (t) => {
     },
     source: "lambda/gateway",
     route: "/some/path",
+    isBehindTrustedProxy: true,
   });
 });

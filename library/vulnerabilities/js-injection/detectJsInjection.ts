@@ -1,7 +1,11 @@
 import { shouldReturnEarly } from "./shouldReturnEarly";
-import { wasm_detect_js_injection } from "../../internals/zen_internals";
+import { isDebugging } from "../../helpers/isDebugging";
+import {
+  __wbg_reset_state as resetWasmInstance,
+  wasm_detect_js_injection,
+} from "../../internals/zen_internals";
 
-type ZenInternalsJsSourceType =
+export type ZenInternalsJsSourceType =
   | 0 // js (auto-detect CJS or ESM)
   | 1 // ts (TypeScript)
   | 2 // cjs (CommonJS)
@@ -17,20 +21,27 @@ export function detectJsInjection(
   code: string,
   userInput: string,
   // Assume CommonJS by default, as the eval-function and new Function-constructor can not execute ESM directly
-  // The oxc parser has a bug that causes HTML-like comments to not be parsed in the unambiguous mode
-  // See https://github.com/oxc-project/oxc/issues/18392
   sourceType: ZenInternalsJsSourceType = 2
 ): boolean {
-  const codeLowercase = code.toLowerCase();
-  const userInputLowercase = userInput.toLowerCase();
-
-  if (shouldReturnEarly(codeLowercase, userInputLowercase)) {
+  if (shouldReturnEarly(code.toLowerCase(), userInput.toLowerCase())) {
     return false;
   }
 
-  return wasm_detect_js_injection(
-    codeLowercase,
-    userInputLowercase,
-    sourceType
-  );
+  try {
+    return wasm_detect_js_injection(code, userInput, sourceType);
+  } catch {
+    if (isDebugging()) {
+      // oxlint-disable-next-line no-console
+      console.warn(
+        "AIKIDO: Zen could not check for JavaScript injection due to an internal error."
+      );
+    }
+    // A failed WASM call poisons the current instance, so replace it.
+    try {
+      resetWasmInstance();
+    } catch {
+      // The WASM error is already handled, so a failed reset should not throw.
+    }
+    return false;
+  }
 }

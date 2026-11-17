@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, Vec as OxcVec};
 use oxc_ast::{
-    AstBuilder, NONE,
-    ast::{Argument, Expression, Statement},
+    ast::{Argument, Expression, IdentifierReference, Statement, StringLiteral},
+    builder::AstBuilder,
 };
 use oxc_span::SPAN;
 
@@ -34,37 +34,48 @@ fn transform_statement<'a>(
 ) {
     match statement {
         Statement::ReturnStatement(return_stmt) => {
-            let mut instrument_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(3);
+            let mut instrument_args: OxcVec<'a, Argument<'a>> =
+                OxcVec::with_capacity_in(3, &allocator);
 
             // Add the identifier to the arguments
-            instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+            instrument_args.push(Argument::StringLiteral(StringLiteral::boxed(
                 SPAN,
                 allocator.alloc_str(identifier),
                 None,
+                builder,
             )));
 
             // Also pass the function arguments
-            instrument_args.push(builder.expression_identifier(SPAN, "arguments").into());
+            instrument_args.push(
+                Expression::Identifier(IdentifierReference::boxed(SPAN, "arguments", builder))
+                    .into(),
+            );
 
             // Add original return value as the second argument
-            let arg_expr = return_stmt
-                .argument
-                .take()
-                .unwrap_or_else(|| builder.expression_identifier(SPAN, "undefined"));
+            let arg_expr = return_stmt.argument.take().unwrap_or_else(|| {
+                Expression::Identifier(IdentifierReference::boxed(SPAN, "undefined", builder))
+            });
 
             let needs_await = matches!(arg_expr, Expression::AwaitExpression(_));
 
             instrument_args.push(arg_expr.into());
 
             // Add the `this` context as argument
-            instrument_args.push(builder.expression_identifier(SPAN, "this").into());
+            instrument_args.push(
+                Expression::Identifier(IdentifierReference::boxed(SPAN, "this", builder)).into(),
+            );
 
-            let new_call_expr = builder.expression_call(
+            let new_call_expr = Expression::new_call_expression(
                 SPAN,
-                builder.expression_identifier(SPAN, "__instrumentModifyReturnValue"),
-                NONE,
+                Expression::Identifier(IdentifierReference::boxed(
+                    SPAN,
+                    "__instrumentModifyReturnValue",
+                    builder,
+                )),
+                None,
                 instrument_args,
                 false,
+                builder,
             );
 
             if !needs_await {
@@ -72,7 +83,11 @@ fn transform_statement<'a>(
                 return_stmt.argument = Some(new_call_expr);
             } else {
                 // If the original return value was awaited, we need to await the new call expression
-                return_stmt.argument = Some(builder.expression_await(SPAN, new_call_expr));
+                return_stmt.argument = Some(Expression::new_await_expression(
+                    SPAN,
+                    new_call_expr,
+                    builder,
+                ));
             }
         }
         // Recursively transform nested statements

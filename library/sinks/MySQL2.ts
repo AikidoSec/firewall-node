@@ -5,8 +5,7 @@ import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
-import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
-import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
+import { checkContextForSqlInjectionAndIdor } from "../vulnerabilities/checkContextForSqlInjectionAndIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialects/SQLDialectMySQL";
 import { colorText } from "../helpers/colorText";
@@ -103,21 +102,10 @@ export class MySQL2 implements Wrapper {
       return undefined;
     }
 
-    // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
-    if (context) {
-      const sqlInjectionResult = checkContextForSqlInjection({
-        operation: operation,
-        sql: sql,
-        context: context,
-        dialect: this.dialect,
-      });
-      if (sqlInjectionResult) {
-        return sqlInjectionResult;
-      }
-    }
-
-    return checkContextForIdor({
+    return checkContextForSqlInjectionAndIdor({
       sql,
+      operation,
+      context,
       dialect: this.dialect,
       resolvePlaceholder: (placeholder, placeholderNumber) =>
         this.resolvePlaceholder(placeholder, placeholderNumber, params),

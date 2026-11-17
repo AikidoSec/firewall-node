@@ -1,5 +1,6 @@
 import { fetch } from "../../helpers/fetch";
 import { getAPIURL } from "../getAPIURL";
+import { getCommonAgentHeaders } from "../getCommonAgentHeaders";
 import { FetchListsAPI, FetchListsAPIResponse } from "./FetchListsAPI";
 import type { Token } from "./Token";
 
@@ -11,6 +12,7 @@ export class FetchListsAPINodeHTTP implements FetchListsAPI {
       url: new URL(`${this.baseUrl.toString()}api/runtime/firewall/lists`),
       method: "GET",
       headers: {
+        ...getCommonAgentHeaders(),
         // We need to set the Accept-Encoding header to "gzip" to receive the response in gzip format
         "Accept-Encoding": "gzip",
         Authorization: token.asString(),

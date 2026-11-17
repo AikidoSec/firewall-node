@@ -16,6 +16,7 @@ import { createTestAgent } from "../helpers/createTestAgent";
 import { Token } from "../agent/api/Token";
 import { getInstance } from "../agent/AgentSingleton";
 import { isWrapped, wrap } from "../helpers/wrap";
+import { clearTrustProxyCache } from "../helpers/trustProxy";
 
 t.beforeEach(async () => {
   delete process.env.AIKIDO_CLOUD_FUNCTION_FLUSH_EVERY_MS;
@@ -138,6 +139,52 @@ t.test("it counts requests", async (t) => {
     },
   });
 });
+
+t.test(
+  "it does not count requests for routes with forceProtectionOff",
+  async (t) => {
+    const api = new ReportingAPIForTesting({
+      success: true,
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      excludedUserIdsFromRateLimiting: [],
+      endpoints: [
+        {
+          method: "GET",
+          route: "/",
+          forceProtectionOff: true,
+          rateLimiting: {
+            enabled: false,
+            windowSizeInMS: 0,
+            maxRequests: 0,
+          },
+        },
+      ],
+    });
+    const agent = createTestAgent({
+      serverless: "gcp",
+      token: new Token("123"),
+      api,
+    });
+    agent.start([]);
+
+    const app = getExpressApp();
+
+    await request(app).get("/");
+    t.same(agent.getInspectionStatistics().getStats().requests, {
+      total: 0,
+      aborted: 0,
+      rateLimited: 0,
+      attacksDetected: { total: 0, blocked: 0 },
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
+    });
+  }
+);
 
 t.test("it counts attacks", async (t) => {
   const agent = createTestAgent({
@@ -329,6 +376,67 @@ t.test("it waits for attack events to be sent before returning", async (t) => {
 
   t.equal(attackEvents.length, 2, "both attack events should have been sent");
 });
+
+t.test(
+  "it uses the socket address and not req.ip for the trusted proxy check",
+  async (t) => {
+    const originalTrustProxy = process.env.AIKIDO_TRUST_PROXY;
+    process.env.AIKIDO_TRUST_PROXY = "10.0.0.0/8";
+    clearTrustProxyCache();
+
+    t.teardown(() => {
+      if (originalTrustProxy === undefined) {
+        delete process.env.AIKIDO_TRUST_PROXY;
+      } else {
+        process.env.AIKIDO_TRUST_PROXY = originalTrustProxy;
+      }
+      clearTrustProxyCache();
+    });
+
+    async function isBehindTrustedProxy(ip: string, socketAddress?: string) {
+      let result: boolean | undefined;
+
+      const wrappedHandler = createCloudFunctionWrapper((req, res) => {
+        result = getContext()?.isBehindTrustedProxy;
+        res.sendStatus(200);
+      });
+
+      await wrappedHandler(
+        {
+          method: "GET",
+          ip,
+          socket: socketAddress ? { remoteAddress: socketAddress } : undefined,
+          body: {},
+          protocol: "http",
+          get: () => "localhost",
+          originalUrl: "/",
+          query: {},
+          cookies: {},
+          headers: {},
+        } as any,
+        { sendStatus: () => {} } as any
+      );
+
+      return result;
+    }
+
+    t.equal(
+      await isBehindTrustedProxy("10.1.2.3", "203.0.113.5"),
+      false,
+      "forged req.ip in trusted range must not be trusted when socket peer is untrusted"
+    );
+    t.equal(
+      await isBehindTrustedProxy("203.0.113.5", "10.1.2.3"),
+      true,
+      "trusted socket peer is trusted regardless of req.ip"
+    );
+    t.equal(
+      await isBehindTrustedProxy("10.1.2.3", undefined),
+      false,
+      "missing socket address is not trusted"
+    );
+  }
+);
 
 t.test("getFlushEveryMS", async (t) => {
   t.equal(

@@ -3,7 +3,6 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 import { checkContextForShellInjection } from "../vulnerabilities/shell-injection/checkContextForShellInjection";
 
@@ -177,7 +176,8 @@ export class ChildProcess implements Wrapper {
 
     return args.some(
       (arg) =>
-        isPlainObject(arg) &&
+        typeof arg === "object" &&
+        arg !== null &&
         "shell" in arg &&
         (arg.shell === true || typeof arg.shell === "string")
     );

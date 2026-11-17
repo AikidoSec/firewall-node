@@ -113,6 +113,15 @@ t.test("it works with ipv6 ranges", async (t) => {
   t.same(matcher.has("2001:db9::abc"), true);
 });
 
+t.test("it strips zones from scoped IPv6 addresses", async (t) => {
+  const matcher = new IPMatcher(["fe80::/10", "::1/128"]);
+
+  t.same(matcher.has("fe80::1%eth0"), true);
+  t.same(matcher.has("fe80::1%dummy0"), true);
+  t.same(matcher.has("::1%lo"), true);
+  t.same(matcher.has("fe80::1%"), false);
+});
+
 t.test("mix ipv4 and ipv6", async (t) => {
   const input = ["2002:db8::/32", "10.0.0.0/8"];
 

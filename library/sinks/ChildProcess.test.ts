@@ -220,3 +220,49 @@ t.test("it works", async (t) => {
     }
   );
 });
+
+t.test("it detects shell usage with non-plain options objects", async () => {
+  const agent = createTestAgent({});
+
+  agent.start([new ChildProcess()]);
+
+  const { spawn, spawnSync, execFile, execFileSync } =
+    require("child_process") as typeof import("child_process");
+
+  class ShellOptions {
+    shell = true;
+  }
+
+  class InheritedShellOptions {
+    get shell() {
+      return true;
+    }
+  }
+
+  const message = (fn: string) =>
+    `Zen has blocked a shell injection: child_process.${fn}(...) originating from body.file.matches`;
+
+  for (const options of [new ShellOptions(), new InheritedShellOptions()]) {
+    runWithContext(unsafeContext, () => {
+      throws(() => spawn("ls `echo .`", [], options).unref(), message("spawn"));
+
+      throws(() => spawnSync("ls `echo .`", [], options), message("spawnSync"));
+
+      throws(
+        () =>
+          execFile(
+            "ls `echo .`",
+            [],
+            options,
+            (err, stdout, stderr) => {}
+          ).unref(),
+        message("execFile")
+      );
+
+      throws(
+        () => execFileSync("ls `echo .`", [], options),
+        message("execFileSync")
+      );
+    });
+  }
+});

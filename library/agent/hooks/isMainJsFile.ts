@@ -1,7 +1,10 @@
 import type { PackageJson } from "type-fest";
 import type { ModulePathInfo } from "./getModuleInfoFromPath";
-import { resolve } from "path";
+import { resolve as resolveMaybeWrapped } from "path";
 import { isPlainObject } from "../../helpers/isPlainObject";
+import { getOriginal } from "../../helpers/wrap";
+
+const resolve = getOriginal(resolveMaybeWrapped);
 
 /**
  * This function checks if the required file is the main file of the package.

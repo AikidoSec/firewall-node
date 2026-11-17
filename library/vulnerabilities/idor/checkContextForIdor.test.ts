@@ -43,6 +43,34 @@ t.test("checkContextForIdor", async (t) => {
     requireTenantId: false,
   });
 
+  await t.test("recovers after a deeply nested UNION query", async (t) => {
+    const deeplyNestedQuery = Array.from(
+      { length: 20_000 },
+      () => "SELECT 1"
+    ).join(" UNION ALL ");
+
+    t.match(
+      check({
+        sql: deeplyNestedQuery,
+        dialect: sqlite,
+        resolvePlaceholder: () => undefined,
+      }),
+      {
+        idorViolation: true,
+        message: "Zen IDOR protection: failed to analyze SQL query",
+      }
+    );
+
+    t.match(
+      check({
+        sql: "SELECT * FROM orders WHERE tenant_id = 'org_456'",
+        dialect: sqlite,
+        resolvePlaceholder: () => undefined,
+      })?.message,
+      "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+    );
+  });
+
   await t.test("blocks when ? placeholder could not be resolved", async () => {
     const result = check({
       sql: "SELECT * FROM orders WHERE tenant_id = ?",

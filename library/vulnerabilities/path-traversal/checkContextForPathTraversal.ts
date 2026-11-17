@@ -1,5 +1,6 @@
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
+import { isCapturingStack } from "../../helpers/captureStack";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractPathStringsFromUserInputCached } from "../../helpers/extractPathStringsFromUserInputCached";
 import { getSourceForUserString } from "../../helpers/getSourceForUserString";
@@ -20,6 +21,11 @@ export function checkContextForPathTraversal({
   context: Context;
   checkPathStart?: boolean;
 }): InterceptorResult {
+  if (isCapturingStack()) {
+    // Triggered by Node's source map support while we build a stack trace
+    return;
+  }
+
   const isUrl = filename instanceof URL;
   const pathString = pathToString(filename);
   if (!pathString) {
@@ -29,18 +35,31 @@ export function checkContextForPathTraversal({
   for (const str of extractPathStringsFromUserInputCached(context)) {
     if (detectPathTraversal(pathString, str, checkPathStart, isUrl)) {
       const source = getSourceForUserString(context, str);
-      if (source) {
-        return {
-          operation: operation,
-          kind: "path_traversal",
-          source: source,
-          pathsToPayload: getPathsToPayload(str, context[source]),
-          metadata: {
-            filename: pathString,
-          },
-          payload: str,
-        };
+      if (!source) {
+        continue;
       }
+
+      // Ignore absolute path traversal for the url source.
+      // E.g. a server could be serving a file at /app/index.html, and a request to /app/index.html should not be blocked.
+      // This does not skip relative path traversal checks for the url source
+      if (
+        checkPathStart &&
+        source === "url" &&
+        !detectPathTraversal(pathString, str, false, isUrl)
+      ) {
+        continue;
+      }
+
+      return {
+        operation: operation,
+        kind: "path_traversal",
+        source: source,
+        pathsToPayload: getPathsToPayload(str, context[source]),
+        metadata: {
+          filename: pathString,
+        },
+        payload: str,
+      };
     }
   }
 }

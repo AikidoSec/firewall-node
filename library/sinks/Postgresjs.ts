@@ -2,50 +2,79 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
 import { getContext } from "../agent/Context";
-import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { checkContextForSqlInjectionAndIdor } from "../vulnerabilities/checkContextForSqlInjectionAndIdor";
+import type { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 
 export class Postgresjs implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectPostgres();
 
-  private inspectQuery(args: unknown[]): InterceptorResult {
-    const context = getContext();
-
-    if (!context) {
+  private resolvePlaceholder(
+    placeholder: string,
+    params: unknown[] | undefined
+  ): unknown {
+    const match = /^\$(\d+)$/.exec(placeholder);
+    if (!match || !params) {
       return undefined;
     }
 
-    if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
-      const sql: string = args[0];
+    return params[Number.parseInt(match[1], 10) - 1];
+  }
 
-      return checkContextForSqlInjection({
-        sql: sql,
-        context: context,
-        operation: "sql.unsafe",
-        dialect: this.dialect,
-      });
+  private inspectQuery(args: unknown[]): InterceptorResult {
+    if (typeof args[0] !== "string" || args[0].length === 0) {
+      return undefined;
     }
 
-    return undefined;
+    const sql = args[0];
+    const params = Array.isArray(args[1]) ? args[1] : undefined;
+
+    return checkContextForSqlInjectionAndIdor({
+      sql,
+      operation: "sql.unsafe",
+      context: getContext(),
+      dialect: this.dialect,
+      resolvePlaceholder: (placeholder) =>
+        this.resolvePlaceholder(placeholder, params),
+    });
   }
 
   wrap(hooks: Hooks) {
+    const wrapExportsForCjs = (
+      exports: unknown,
+      pkgInfo: PartialWrapPackageInfo
+    ) =>
+      wrapExport(exports, undefined, pkgInfo, {
+        kind: undefined,
+        modifyReturnValue: (args, returnValue) => {
+          wrapExport(returnValue, "unsafe", pkgInfo, {
+            kind: "sql_op",
+            inspectArgs: (args) => this.inspectQuery(args),
+          });
+          return returnValue;
+        },
+      });
+
     hooks
       .addPackage("postgres")
-      .withVersion("^3.0.0")
+      .withVersion("^4.0.0 || ^3.0.0")
       .onRequire((exports, pkgInfo) => {
-        return wrapExport(exports, undefined, pkgInfo, {
-          kind: undefined,
-          modifyReturnValue: (args, returnValue) => {
-            wrapExport(returnValue, "unsafe", pkgInfo, {
-              kind: "sql_op",
-              inspectArgs: (args) => this.inspectQuery(args),
-            });
-            return returnValue;
-          },
-        });
+        // v3 (CJS)
+        if (typeof exports === "function") {
+          return wrapExportsForCjs(exports, pkgInfo);
+        }
+
+        // v4 is ESM only: require() returns a read-only module namespace object
+        if (exports && typeof exports.default === "function") {
+          return {
+            ...exports,
+            default: wrapExportsForCjs(exports.default, pkgInfo),
+          };
+        }
+
+        return exports;
       })
       .addMultiFileInstrumentation(
         [

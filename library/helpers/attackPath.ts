@@ -113,7 +113,14 @@ export function getPathsToPayload(
           break;
         }
 
-        traverse(value[key], path.concat({ type: "object", key }), depth + 1);
+        const keyPath = path.concat({ type: "object", key });
+
+        if (key.toLowerCase() === attackPayloadLowercase) {
+          matches.add(keyPath);
+          continue;
+        }
+
+        traverse(value[key], keyPath, depth + 1);
       }
     }
   };

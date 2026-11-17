@@ -85,11 +85,6 @@ type OperationStats = {
   interceptorThrewError: number;
   withoutContext: number;
   total: number;
-  compressedTimings: {
-    averageInMS: number;
-    percentiles: Record<string, number>;
-    compressedAt: number;
-  }[];
 };
 
 type Heartbeat = {
@@ -169,4 +164,24 @@ export type DetectedAttackWave = {
   time: number;
 };
 
-export type Event = Started | DetectedAttack | Heartbeat | DetectedAttackWave;
+export type Event =
+  | Started
+  | DetectedAttack
+  | Heartbeat
+  | DetectedAttackWave
+  | CustomEvent;
+
+export type CustomEvent = {
+  type: "custom";
+  name: string; // Name of the event controlled by the user
+  request: {
+    method: string | undefined;
+    ipAddress: string | undefined;
+    userAgent: string | undefined;
+    source: string;
+    route: string | undefined;
+  };
+  agent: AgentInfo;
+  user?: User; // Only set if setUser(...) was called in the request
+  time: number; // Unix timestamp in milliseconds
+};

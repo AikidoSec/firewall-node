@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_ast::AstBuilder;
+use oxc_ast::builder::AstBuilder;
 use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
 use oxc_parser::Parser;
 
@@ -21,10 +21,10 @@ pub fn transform_code_str_insert_sca(
 
     let mut parser_result = Parser::new(&allocator, code, source_type).parse();
 
-    if parser_result.panicked || !parser_result.errors.is_empty() {
+    if parser_result.fatal_error || parser_result.diagnostics.has_errors() {
         return Err(format!(
             "Error while parsing code: {:?}",
-            parser_result.errors
+            parser_result.diagnostics
         ));
     }
 

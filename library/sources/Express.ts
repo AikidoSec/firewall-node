@@ -40,7 +40,10 @@ export class Express implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const expressMethodNames = METHODS.map((method) => method.toLowerCase());
+    const expressMethodNames = [
+      ...METHODS.map((method) => method.toLowerCase()),
+      "all",
+    ];
 
     hooks
       .addPackage("express")

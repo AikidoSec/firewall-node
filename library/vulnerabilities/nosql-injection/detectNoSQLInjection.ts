@@ -93,13 +93,13 @@ function matchFilterPartInUser(
 function removeKeysThatDontStartWithDollarSign(
   filter: Record<string, unknown>
 ): Record<string, unknown> {
-  return Object.keys(filter).reduce((acc, key) => {
+  const result: Record<string, unknown> = {};
+  for (const key of Object.keys(filter)) {
     if (key.startsWith("$")) {
-      return { ...acc, [key]: filter[key] };
+      result[key] = filter[key];
     }
-
-    return acc;
-  }, {});
+  }
+  return result;
 }
 
 // Returns true if every operator in userOperators is present in filterOperators
@@ -126,8 +126,13 @@ function isUserOperatorsSubsetOf(
 
 function findFilterPartWithOperators(
   userInput: unknown,
-  partOfFilter: unknown
+  partOfFilter: unknown,
+  depth = 0
 ): { found: false } | { found: true; pathToPayload: string; payload: unknown } {
+  if (depth > MAX_DEPTH) {
+    return { found: false };
+  }
+
   if (isPlainObject(partOfFilter)) {
     const object = removeKeysThatDontStartWithDollarSign(partOfFilter);
     if (Object.keys(object).length > 0) {
@@ -143,7 +148,11 @@ function findFilterPartWithOperators(
     }
 
     for (const key in partOfFilter) {
-      const result = findFilterPartWithOperators(userInput, partOfFilter[key]);
+      const result = findFilterPartWithOperators(
+        userInput,
+        partOfFilter[key],
+        depth + 1
+      );
 
       if (result.found) {
         return {
@@ -157,7 +166,7 @@ function findFilterPartWithOperators(
 
   if (Array.isArray(partOfFilter)) {
     for (const value of partOfFilter) {
-      const result = findFilterPartWithOperators(userInput, value);
+      const result = findFilterPartWithOperators(userInput, value, depth + 1);
 
       if (result.found) {
         return {

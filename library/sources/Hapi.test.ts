@@ -225,6 +225,18 @@ t.test("it rate limits based on IP address", async (t) => {
   t.ok(parseInt(response3.headers["retry-after"]) > 0);
 });
 
+t.test("it rate limits if Host header contains URI delimiters", async (t) => {
+  const send = async () =>
+    request((await getServer()).listener)
+      .get("/rate-limited")
+      .set("Host", "example.test?x=")
+      .set("X-Forwarded-For", "5.6.7.8");
+
+  t.match((await send()).status, 200);
+  t.match((await send()).status, 200);
+  t.match((await send()).status, 429);
+});
+
 t.test("it blocks based on user ID", async (t) => {
   const response = await request((await getServer()).listener)
     .get("/blocked-user")

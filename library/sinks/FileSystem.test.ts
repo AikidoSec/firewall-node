@@ -1,7 +1,12 @@
 import * as t from "tap";
+import { join } from "path";
 import { Context, runWithContext } from "../agent/Context";
 import { FileSystem } from "./FileSystem";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
+import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
+
+const helloWorldFixture = join(__dirname, "fixtures/helloWorld.js");
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -309,3 +314,53 @@ t.test("it works", async (t) => {
     }
   );
 });
+
+t.test(
+  "openAsBlob",
+  {
+    skip: !isVersionGreaterOrEqual("19.8.0", getSemverNodeVersion())
+      ? "requires Node.js >= 19.8.0"
+      : false,
+  },
+  async (t) => {
+    const agent = createTestAgent({ serverless: "lambda" });
+
+    agent.start([new FileSystem()]);
+
+    const { openAsBlob, openAsBlobSync } = require("fs");
+
+    const blob = await openAsBlob(helloWorldFixture);
+    t.ok(blob instanceof Blob);
+
+    await runWithContext(unsafeContext, async () => {
+      const error = await t.rejects(() => openAsBlob("../../test.txt"));
+      t.ok(error instanceof Error);
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "Zen has blocked a path traversal attack: fs.openAsBlob(...) originating from body.file.matches"
+        );
+      }
+    });
+
+    await t.test(
+      "openAsBlobSync",
+      {
+        skip: !isVersionGreaterOrEqual("26.10.0", getSemverNodeVersion())
+          ? "requires Node.js >= 26.10.0"
+          : false,
+      },
+      async (t) => {
+        const syncBlob = openAsBlobSync(helloWorldFixture);
+        t.ok(syncBlob instanceof Blob);
+
+        runWithContext(unsafeContext, () => {
+          throws(
+            () => openAsBlobSync("../../test.txt"),
+            "Zen has blocked a path traversal attack: fs.openAsBlobSync(...) originating from body.file.matches"
+          );
+        });
+      }
+    );
+  }
+);

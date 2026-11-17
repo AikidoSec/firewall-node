@@ -54,13 +54,12 @@ export function createMySQL2IdorTests(versionPkgName: string) {
 
     try {
       await connection.query(`
-        CREATE TABLE IF NOT EXISTS cats_idor2 (
+        CREATE TEMPORARY TABLE cats_idor2 (
             petname varchar(255),
             tenant_id varchar(255)
         );
       `);
-      await connection.query("CREATE TABLE IF NOT EXISTS migrations (id int)");
-      await connection.query("TRUNCATE cats_idor2");
+      await connection.query("CREATE TEMPORARY TABLE migrations (id int)");
 
       await t.test("skips IDOR check when not configured", async () => {
         const [rows] = await runWithContext(context, () => {

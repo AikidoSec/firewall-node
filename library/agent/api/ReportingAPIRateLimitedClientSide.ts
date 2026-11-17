@@ -7,7 +7,7 @@ type ThrottleOptions = { maxEventsPerInterval: number; intervalInMs: number };
 export class ReportingAPIRateLimitedClientSide implements ReportingAPI {
   private readonly maxEventsPerInterval: number;
   private readonly intervalInMs: number;
-  private events: Event[] = [];
+  private events: number[] = [];
 
   constructor(
     private readonly api: ReportingAPI,
@@ -31,7 +31,7 @@ export class ReportingAPIRateLimitedClientSide implements ReportingAPI {
       // Filter out events that are outside the current interval
       // Otherwise, we would keep growing the array indefinitely
       this.events = this.events.filter(
-        (e) => e.time > currentTime - this.intervalInMs
+        (time) => time > currentTime - this.intervalInMs
       );
 
       // If we have reached the maximum number of events, we return an error
@@ -40,7 +40,7 @@ export class ReportingAPIRateLimitedClientSide implements ReportingAPI {
         return { success: false, error: "max_attacks_reached" };
       }
 
-      this.events.push(event);
+      this.events.push(event.time);
     }
 
     return await this.api.report(token, event, timeoutInMS);

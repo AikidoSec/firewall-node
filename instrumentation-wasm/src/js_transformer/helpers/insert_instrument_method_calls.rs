@@ -1,5 +1,5 @@
-use oxc_allocator::{Allocator, Box};
-use oxc_ast::{AstBuilder, ast::FunctionBody};
+use oxc_allocator::Allocator;
+use oxc_ast::{ast::FunctionBody, builder::AstBuilder};
 
 use crate::js_transformer::{
     helpers::{
@@ -15,7 +15,7 @@ pub fn insert_instrument_method_calls<'a>(
     instruction: &FunctionInstructions,
     arg_names: &Vec<String>,
     pkg_version: &'a str,
-    body: &mut Box<'a, FunctionBody<'a>>,
+    body: &mut FunctionBody<'a>,
     is_constructor: bool,
 ) {
     if instruction.modify_args && !arg_names.is_empty() {

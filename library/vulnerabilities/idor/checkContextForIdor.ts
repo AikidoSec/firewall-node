@@ -7,10 +7,19 @@ import {
 } from "../../agent/context/tenantId";
 import { IdorViolationResult } from "../../agent/hooks/InterceptorResult";
 import { LRUMap } from "../../ratelimiting/LRUMap";
-import { wasm_idor_analyze_sql } from "../../internals/zen_internals";
+import { isDebugging } from "../../helpers/isDebugging";
+import {
+  __wbg_reset_state as resetWasmInstance,
+  wasm_idor_analyze_sql,
+} from "../../internals/zen_internals";
 import { SQLDialect } from "../sql-injection/dialects/SQLDialect";
 import type { SqlQueryResult } from "./IdorAnalysisResult";
 import { IdorProtectionConfig } from "../../agent/IdorProtectionConfig";
+
+export type ResolvePlaceholder = (
+  placeholder: string,
+  placeholderNumber: number | undefined
+) => unknown;
 
 export function checkContextForIdor({
   sql,
@@ -19,10 +28,7 @@ export function checkContextForIdor({
 }: {
   sql: string;
   dialect: SQLDialect;
-  resolvePlaceholder: (
-    placeholder: string,
-    placeholderNumber: number | undefined
-  ) => unknown;
+  resolvePlaceholder: ResolvePlaceholder;
 }): IdorViolationResult | undefined {
   const agent = getInstance();
   if (!agent) {
@@ -114,10 +120,7 @@ function checkWhereFilters(
   queryResult: SqlQueryResult,
   config: IdorProtectionConfig,
   context: TenantContext,
-  resolvePlaceholder: (
-    placeholder: string,
-    placeholderNumber: number | undefined
-  ) => unknown
+  resolvePlaceholder: ResolvePlaceholder
 ): IdorViolationResult | undefined {
   for (const table of queryResult.tables) {
     if (config.excludedTables.includes(table.name)) {
@@ -179,10 +182,7 @@ function checkInsert(
   queryResult: SqlQueryResult,
   config: IdorProtectionConfig,
   context: TenantContext,
-  resolvePlaceholder: (
-    placeholder: string,
-    placeholderNumber: number | undefined
-  ) => unknown
+  resolvePlaceholder: ResolvePlaceholder
 ): IdorViolationResult | undefined {
   for (const table of queryResult.tables) {
     if (config.excludedTables.includes(table.name)) {
@@ -246,8 +246,26 @@ function getAnalysisResults(
     return { results: cached };
   }
 
-  const result = wasm_idor_analyze_sql(sql, dialect.getWASMDialectInt());
+  let result: ReturnType<typeof wasm_idor_analyze_sql>;
+  try {
+    result = wasm_idor_analyze_sql(sql, dialect.getWASMDialectInt());
+  } catch {
+    if (isDebugging()) {
+      // oxlint-disable-next-line no-console
+      console.warn(
+        "AIKIDO: Zen could not check for IDOR due to an internal error."
+      );
+    }
+    // A failed WASM call poisons the current instance, so replace it.
+    try {
+      resetWasmInstance();
+    } catch {
+      // The WASM error is already handled, so a failed reset should not throw.
+    }
+    return undefined;
+  }
 
+  // The WASM function returns null if it cannot serialize the result.
   if (!result) {
     return undefined;
   }

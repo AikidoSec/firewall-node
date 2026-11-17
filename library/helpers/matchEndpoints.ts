@@ -1,5 +1,7 @@
 import { Endpoint } from "../agent/Config";
+import { getInstance } from "../agent/AgentSingleton";
 import { Context } from "../agent/Context";
+import { safeCreateRegExp } from "../agent/safeCreateRegExp";
 import { tryParseURLPath } from "./tryParseURLPath";
 
 export type LimitedContext = Pick<Context, "url" | "method" | "route">;
@@ -54,10 +56,15 @@ export function matchEndpoints(context: LimitedContext, endpoints: Endpoint[]) {
 
     if (path) {
       for (const wildcard of wildcards) {
-        const regex = new RegExp(
+        const regex = safeCreateRegExp(
           `^${wildcard.route.replace(/\*/g, "(.*)")}/?$`,
           "i"
         );
+
+        if (!regex) {
+          getInstance()?.onInvalidEndpointRoute(wildcard.route);
+          continue;
+        }
 
         if (regex.test(path)) {
           matches.push(wildcard);

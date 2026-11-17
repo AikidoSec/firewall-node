@@ -9,6 +9,8 @@ import { getBodyDataType } from "../../agent/api-discovery/getBodyDataType";
 import { tryParseJSON } from "../../helpers/tryParseJSON";
 import { getInstance } from "../../agent/AgentSingleton";
 
+const MAX_FORM_FIELDS = 1000;
+
 type BodyReadResult =
   | {
       success: true;
@@ -34,17 +36,29 @@ export async function readBodyStream(
   if (req.headers["content-type"] !== undefined) {
     const bodyType = getBodyDataType(req.headers);
     if (bodyType === "form-data" || bodyType === "form-urlencoded") {
-      busboy = new Busboy({
-        headers: req.headers as BusboyHeaders,
-      });
+      try {
+        busboy = new Busboy({
+          headers: req.headers as BusboyHeaders,
+          limits: {
+            fields: MAX_FORM_FIELDS,
+            parts: MAX_FORM_FIELDS,
+            files: MAX_FORM_FIELDS,
+          },
+        });
+      } catch (err) {
+        // e.g. multipart/form-data without a boundary
+        getInstance()?.log(
+          `Error parsing form data body: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
 
-      busboy.on("error", (err) => {
+      busboy?.on("error", (err) => {
         getInstance()?.log(
           `Error parsing form data body: ${err instanceof Error ? err.message : String(err)}`
         );
       });
 
-      busboy.on("field", (fieldname, val) => {
+      busboy?.on("field", (fieldname, val) => {
         if (typeof val !== "string") {
           return;
         }

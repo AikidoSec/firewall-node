@@ -554,7 +554,6 @@ t.test("it sends heartbeat when reached max timings", async () => {
       operation: "MongoDB.query",
       kind: "nosql_op",
       blocked: false,
-      durationInMs: 0.1,
       attackDetected: false,
       withoutContext: false,
     });
@@ -569,7 +568,6 @@ t.test("it sends heartbeat when reached max timings", async () => {
       operation: "MongoDB.query",
       kind: "nosql_op",
       blocked: false,
-      durationInMs: 0.1,
       attackDetected: false,
       withoutContext: false,
     });

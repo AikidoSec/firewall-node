@@ -197,6 +197,21 @@ export async function createKoaTests(koaPackageName: string) {
     t.ok(parseInt(response.headers["retry-after"]) > 0);
   });
 
+  t.test("it rate limits if Host header contains URI delimiters", async (t) => {
+    const app = getApp();
+    const send = () =>
+      request(app.callback())
+        .get("/rate-limited")
+        .set("Host", "example.test?x=")
+        .set("X-Forwarded-For", "5.6.7.8");
+
+    await send();
+    await send();
+    const response = await send();
+
+    t.equal(response.status, 429);
+  });
+
   t.test("test legacy generator function middleware", async (t) => {
     const app = getApp();
     const response = await request(app.callback()).get("/v1");

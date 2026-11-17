@@ -81,9 +81,21 @@ export class FileSystem implements Wrapper {
       mkdtemp: { pathsArgs: 1, sync: true, promise: true },
     };
 
+    const semverNodeVersion = getSemverNodeVersion();
+
     // Added in v19.8.0
-    if (isVersionGreaterOrEqual("19.8.0", getSemverNodeVersion())) {
-      functions.openAsBlob = { pathsArgs: 1, sync: false, promise: false };
+    if (isVersionGreaterOrEqual("19.8.0", semverNodeVersion)) {
+      // Added in v26.10.0
+      const syncBlobMethodAvailable = isVersionGreaterOrEqual(
+        "26.10.0",
+        semverNodeVersion
+      );
+
+      functions.openAsBlob = {
+        pathsArgs: 1,
+        sync: syncBlobMethodAvailable,
+        promise: false,
+      };
     }
 
     // Only available on macOS

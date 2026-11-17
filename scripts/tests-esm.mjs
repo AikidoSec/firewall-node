@@ -54,10 +54,13 @@ await execAsyncWithPipe("./node_modules/.bin/tsc -p tsconfig.test.esm.json", {
 
 await writeFile(join(outDir, "package.json"), "{}");
 
-const filesToCopy = glob("**/*.{txt,pem,json,xml,cjs,mjs,prisma,toml,sql}", {
-  cwd: libDir,
-  exclude: ["**/node_modules/**"],
-});
+const filesToCopy = glob(
+  "**/*.{txt,pem,json,xml,js,cjs,mjs,prisma,toml,sql,zip}",
+  {
+    cwd: libDir,
+    exclude: ["**/node_modules/**"],
+  }
+);
 
 for await (const entry of filesToCopy) {
   const src = join(libDir, entry);
@@ -257,6 +260,7 @@ for await (const entry of testFiles) {
               break;
             case "end":
             case "equal":
+            case "not":
             case "ok":
             case "notOk":
             case "fail":
@@ -270,6 +274,9 @@ for await (const entry of testFiles) {
               switch (node.callee.property.name) {
                 case "equal":
                   node.callee.property.name = "strictEqual";
+                  break;
+                case "not":
+                  node.callee.property.name = "notStrictEqual";
                   break;
                 case "throws":
                   node.callee.property.name = "throws";

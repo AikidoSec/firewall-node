@@ -15,6 +15,10 @@ export class Hostnames {
 
     hostname = hostnameToUnicode(normalizeHostname(hostname));
 
+    if (!hostname) {
+      return;
+    }
+
     if (!this.map.has(hostname)) {
       this.map.set(hostname, new Map([[port, 1]]));
     } else {

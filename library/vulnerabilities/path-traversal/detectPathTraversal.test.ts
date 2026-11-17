@@ -238,3 +238,18 @@ t.test(
     t.same(detectPathTraversal("../test.txt", "../"), true);
   }
 );
+
+t.test("user input is only a prefix of a dangerous folder name", async () => {
+  t.same(
+    detectPathTraversal("/app/node_modules/pkg/package.json", "/a"),
+    false
+  );
+  t.same(
+    detectPathTraversal("/app/node_modules/pkg/package.json", "/ap"),
+    false
+  );
+  t.same(detectPathTraversal("/etc/passwd", "/et"), false);
+  // Partial names inside a dangerous folder are still flagged
+  t.same(detectPathTraversal("/etc/passwd", "/etc/pass"), true);
+  t.same(detectPathTraversal("/app/config/secret.yml", "/app/conf"), true);
+});

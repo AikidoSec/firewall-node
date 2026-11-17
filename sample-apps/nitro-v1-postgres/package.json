@@ -1,0 +1,15 @@
+{
+  "name": "nitro-v1-postgres",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nitro build",
+    "start": "node --require @aikidosec/firewall/instrument ./.output/server/index.mjs"
+  },
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "h3": "^1.15.1",
+    "nitropack": "^2.11.0",
+    "pg": "^8.14.1"
+  }
+}

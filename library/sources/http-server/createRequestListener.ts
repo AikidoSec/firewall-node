@@ -151,6 +151,7 @@ function onFinishRequestHandler(
       statusCode: res.statusCode,
       route: context.route,
       method: context.method,
+      forceProtectionOff: agent.getConfig().isForceProtectionOffRoute(context),
     });
 
     if (shouldDiscover) {

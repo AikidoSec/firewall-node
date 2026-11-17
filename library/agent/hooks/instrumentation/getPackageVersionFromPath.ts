@@ -1,6 +1,9 @@
-import { readFileSync } from "fs";
+import { readFileSync as readFileSyncMaybeWrapped } from "fs";
+import { getOriginal } from "../../../helpers/wrap";
 
 const cache = new Map<string, string | undefined>();
+
+const readFileSync = getOriginal(readFileSyncMaybeWrapped);
 
 /**
  * Get the installed version of a package

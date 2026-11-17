@@ -3,14 +3,18 @@ import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse as parseCookies } from "../../helpers/parseCookies";
+import { isTrustedProxyRequest } from "../../helpers/trustProxy";
 
 export function contextFromRequest(ctx: KoaContext): Context {
+  const rawRemoteAddress = ctx.request.socket?.remoteAddress;
+
   return {
     method: ctx.request.method,
     remoteAddress: getIPAddressFromRequest({
       headers: ctx.request.headers,
-      remoteAddress: ctx.request.socket?.remoteAddress,
+      remoteAddress: rawRemoteAddress,
     }),
+    isBehindTrustedProxy: isTrustedProxyRequest(rawRemoteAddress),
     // Body is not available by default in Koa, only if a body parser is used
     body: (ctx.request as any).body ? (ctx.request as any).body : undefined,
     url: ctx.request.href,
@@ -20,7 +24,7 @@ export function contextFromRequest(ctx: KoaContext): Context {
     query: ctx.request.query,
     cookies: ctx.req.headers.cookie ? parseCookies(ctx.req.headers.cookie) : {},
     source: "koa",
-    route: buildRouteFromURL(ctx.request.href),
+    route: buildRouteFromURL(ctx.request.originalUrl),
     subdomains: ctx.request.subdomains,
   };
 }

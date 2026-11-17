@@ -1,7 +1,8 @@
 /* oxlint-disable no-console */
 
-import { hostname, platform, release } from "os";
+import { platform, release } from "os";
 import { getAgentVersion } from "../helpers/getAgentVersion";
+import { getInstanceHostname } from "../helpers/getInstanceHostname";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
@@ -12,6 +13,7 @@ import type {
   AgentInfo,
   DetectedAttack,
   DetectedAttackWave,
+  CustomEvent,
 } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
@@ -60,10 +62,7 @@ export class Agent {
   private serviceConfig = new ServiceConfig([], Date.now(), [], []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
-  private statistics = new InspectionStatistics({
-    maxPerfSamplesInMemory: 5000,
-    maxCompressedStatsInMemory: 20, // per operation
-  });
+  private statistics = new InspectionStatistics();
   private aiStatistics = new AIStatistics();
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
@@ -491,20 +490,11 @@ export class Agent {
     });
   }
 
-  private getHostname() {
-    const instanceName = process.env.AIKIDO_INSTANCE_NAME;
-    if (instanceName && instanceName.trim().length > 0) {
-      return instanceName.trim();
-    }
-
-    return hostname() || "";
-  }
-
   private getAgentInfo(): AgentInfo {
     return {
       dryMode: !this.block,
       /* c8 ignore next */
-      hostname: this.getHostname(),
+      hostname: getInstanceHostname(),
       version: getAgentVersion(),
       library: "firewall-node",
       /* c8 ignore next */
@@ -608,6 +598,12 @@ export class Agent {
     this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
   }
 
+  onInvalidEndpointRoute(route: string) {
+    this.logger.log(
+      `Skipping endpoint route that is not a valid pattern: ${route}`
+    );
+  }
+
   onPackageRequired(name: string, version: string) {
     this.packages.addPackage({
       name,
@@ -661,6 +657,7 @@ export class Agent {
       "micro",
       "nuxt",
       "@trpc/server",
+      "h3",
     ];
 
     return webFrameworks.some(
@@ -711,7 +708,6 @@ export class Agent {
   }
 
   async flushStats(timeoutInMS: number) {
-    this.statistics.forceCompress();
     await this.sendHeartbeat(timeoutInMS);
   }
 
@@ -794,6 +790,24 @@ export class Agent {
         });
       this.pendingEvents.onAPICall(promise);
     }
+  }
+
+  onTrackEvent(event: Omit<CustomEvent, "agent">) {
+    if (!this.token) {
+      return;
+    }
+
+    const completeEvent: CustomEvent = {
+      ...event,
+      agent: this.getAgentInfo(),
+    };
+
+    const promise = this.api
+      .report(this.token, completeEvent, this.timeoutInMS)
+      .catch(() => {
+        this.logger.log("Failed to send tracked event");
+      });
+    this.pendingEvents.onAPICall(promise);
   }
 
   public async shutdown(timeoutInMS = 1000): Promise<void> {

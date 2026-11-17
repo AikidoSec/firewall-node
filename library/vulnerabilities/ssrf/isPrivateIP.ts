@@ -31,6 +31,7 @@ const PRIVATE_IPV6_RANGES = [
   "100::/64", // Discard prefix (RFC 6666)
   "2001:db8::/32", // Documentation prefix (RFC 3849)
   "3fff::/20", // Documentation prefix (RFC 9637)
+  "fec0::/10", // Site-local address (SLA) (Deprecated, but reserved for ever, see RFC 3879)
 ];
 
 // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups

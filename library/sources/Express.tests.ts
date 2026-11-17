@@ -147,6 +147,10 @@ export async function createExpressTests(expressPackageName: string) {
       res.send(getContext());
     });
 
+    newRouter.all("/router-all/:id", (req, res) => {
+      res.send(getContext());
+    });
+
     app.use(newRouter);
 
     app.use("/", express.static(__dirname + "/fixtures/public/"));
@@ -191,6 +195,14 @@ export async function createExpressTests(expressPackageName: string) {
       const context = getContext();
 
       res.send(context);
+    });
+
+    app.all("/all-params/:id", (req, res) => {
+      res.send(getContext());
+    });
+
+    app.route("/route-all/:id").all((req, res) => {
+      res.send(getContext());
     });
 
     app.get("/files", (req, res) => {
@@ -415,6 +427,57 @@ export async function createExpressTests(expressPackageName: string) {
     });
   });
 
+  t.test("it adds context for app.all with route params", async (t) => {
+    const response = await request(getApp()).post("/all-params/123");
+
+    t.match(response.body, {
+      method: "POST",
+      source: "express",
+      route: "/all-params/:number",
+      routeParams: { id: "123" },
+    });
+  });
+
+  t.test("it adds context for route().all with route params", async (t) => {
+    const response = await request(getApp()).put("/route-all/123");
+
+    t.match(response.body, {
+      method: "PUT",
+      source: "express",
+      route: "/route-all/:number",
+      routeParams: { id: "123" },
+    });
+  });
+
+  t.test("it adds context for router.all with route params", async (t) => {
+    const response = await request(getApp()).delete("/router-all/123");
+
+    t.match(response.body, {
+      method: "DELETE",
+      source: "express",
+      route: "/router-all/:number",
+      routeParams: { id: "123" },
+    });
+  });
+
+  t.test("it adds context for router.use on a Router instance", async (t) => {
+    const app = express();
+    const router = express.Router();
+
+    router.use("/inner", (req, res) => {
+      res.send(getContext());
+    });
+
+    app.use("/outer", router);
+
+    const response = await request(app).get("/outer/inner");
+
+    t.match(response.body, {
+      method: "GET",
+      source: "express",
+    });
+  });
+
   t.test("it counts requests", async () => {
     agent.getInspectionStatistics().reset();
     await request(getApp()).get("/");
@@ -594,6 +657,27 @@ export async function createExpressTests(expressPackageName: string) {
       .set("x-forwarded-for", "1.2.3.4");
     t.same(res3.statusCode, 200);
   });
+
+  t.test(
+    "it rate limits even if Host header contains URI delimiters",
+    async () => {
+      for (const _ of Array.from({ length: 3 })) {
+        const res = await request(getApp(false))
+          .get("/rate-limited")
+          .set("Host", "example.test?x=")
+          .set("x-forwarded-for", "5.6.7.8");
+        t.same(res.statusCode, 200);
+      }
+
+      const res = await request(getApp(false))
+        .get("/rate-limited")
+        .set("Host", "example.test?x=")
+        .set("x-forwarded-for", "5.6.7.8");
+      t.same(res.statusCode, 429);
+
+      await sleep(2000);
+    }
+  );
 
   t.test("it rate limits by user", async () => {
     for (const _ of Array.from({ length: 3 })) {
