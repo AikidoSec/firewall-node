@@ -31,9 +31,17 @@ t.test("$$ is treated as placeholder", async () => {
 });
 
 function isSqlInjection(sql: string, input: string) {
-  t.same(detectSQLInjection(sql, input, new SQLDialectSQLite()), 1, sql);
+  t.same(
+    detectSQLInjection(sql.toLowerCase(), input, new SQLDialectSQLite()),
+    1,
+    sql
+  );
 }
 
 function isNotSQLInjection(sql: string, input: string) {
-  t.same(detectSQLInjection(sql, input, new SQLDialectSQLite()), 0, sql);
+  t.same(
+    detectSQLInjection(sql.toLowerCase(), input, new SQLDialectSQLite()),
+    0,
+    sql
+  );
 }

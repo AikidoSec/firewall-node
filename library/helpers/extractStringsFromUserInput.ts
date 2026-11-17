@@ -15,10 +15,9 @@ const MAX_URL_DECODE_DEPTH = 5;
 
 export function extractStringsFromUserInput(
   obj: unknown,
-  depth: number = 0
+  depth: number = 0,
+  results: Set<UserString> = new Set()
 ): Set<UserString> {
-  const results: Set<UserString> = new Set();
-
   if (depth >= MAX_DEPTH) {
     return results;
   }
@@ -26,17 +25,13 @@ export function extractStringsFromUserInput(
   if (isPlainObject(obj)) {
     for (const key in obj) {
       results.add(key);
-      extractStringsFromUserInput(obj[key], depth + 1).forEach((value) => {
-        results.add(value);
-      });
+      extractStringsFromUserInput(obj[key], depth + 1, results);
     }
   }
 
   if (Array.isArray(obj)) {
     for (let i = 0; i < obj.length; i++) {
-      extractStringsFromUserInput(obj[i], depth + 1).forEach((value) =>
-        results.add(value)
-      );
+      extractStringsFromUserInput(obj[i], depth + 1, results);
     }
     // Add array as string to results
     // This prevents bypassing the firewall by HTTP Parameter Pollution

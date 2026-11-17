@@ -1,5 +1,10 @@
 import * as t from "tap";
-import { shouldReturnEarly } from "./shouldReturnEarly";
+import { shouldReturnEarly as shouldReturnEarlyOrig } from "./shouldReturnEarly";
+
+// We lowercase the query and user input in checkContextForSqlInjection.ts before calling shouldReturnEarly
+function shouldReturnEarly(query: string, userInput: string) {
+  return shouldReturnEarlyOrig(query.toLowerCase(), userInput.toLowerCase());
+}
 
 t.test("should return early - true cases", async (t) => {
   // User input is empty

@@ -1,11 +1,14 @@
-export function shouldReturnEarly(query: string, userInput: string) {
+const ALPHANUMERIC_REGEX = /^[a-z0-9_]+$/;
+const NUMBER_LIST_REGEX = /^[ ,]*\d[ ,\d]*$/;
+
+// queryLowercase must already be lowercased by the caller, so it is only done once per query
+export function shouldReturnEarly(queryLowercase: string, userInput: string) {
   // User input too small or larger than query
-  if (userInput.length <= 1 || query.length < userInput.length) {
+  if (userInput.length <= 1 || queryLowercase.length < userInput.length) {
     return true;
   }
 
-  // Lowercase versions of query and user input
-  const queryLowercase = query.toLowerCase();
+  // Lowercase version of user input
   const userInputLowercase = userInput.toLowerCase();
 
   // User input not in query
@@ -14,12 +17,12 @@ export function shouldReturnEarly(query: string, userInput: string) {
   }
 
   // User input is alphanumerical (with underscores allowed)
-  if (userInputLowercase.match(/^[a-z0-9_]+$/i)) {
+  if (ALPHANUMERIC_REGEX.test(userInputLowercase)) {
     return true;
   }
 
   // Check if user input is a valid comma-separated list of numbers
-  if (/^[ ,]*\d[ ,\d]*$/.test(userInput)) {
+  if (NUMBER_LIST_REGEX.test(userInput)) {
     return true;
   }
 
