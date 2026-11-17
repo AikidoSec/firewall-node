@@ -416,6 +416,68 @@ t.test("get ip from different header", async (t) => {
   );
 });
 
+t.test("multiple client IP headers, first match wins", async (t) => {
+  process.env.AIKIDO_CLIENT_IP_HEADER =
+    "cf-connecting-ip, True-Client-IP ,x-real-ip";
+  t.same(
+    getIPAddressFromRequest({
+      headers: { "true-client-ip": "8.8.8.8", "x-real-ip": "7.7.7.7" },
+      remoteAddress: "1.2.3.4",
+    }),
+    "8.8.8.8"
+  );
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "cf-connecting-ip": "9.9.9.9",
+        "true-client-ip": "8.8.8.8",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "9.9.9.9"
+  );
+  t.same(
+    getIPAddressFromRequest({
+      headers: { "cf-connecting-ip": "invalid", "x-real-ip": "7.7.7.7" },
+      remoteAddress: "1.2.3.4",
+    }),
+    "1.2.3.4"
+  );
+  t.same(
+    getIPAddressFromRequest({
+      headers: { "x-forwarded-for": "6.6.6.6" },
+      remoteAddress: "1.2.3.4",
+    }),
+    "1.2.3.4"
+  );
+
+  process.env.AIKIDO_CLIENT_IP_HEADER = "h1,h2,h3,h4,h5,h6";
+  t.same(
+    getIPAddressFromRequest({
+      headers: { h5: "5.5.5.5", h6: "6.6.6.6" },
+      remoteAddress: "1.2.3.4",
+    }),
+    "5.5.5.5"
+  );
+  t.same(
+    getIPAddressFromRequest({
+      headers: { h6: "6.6.6.6" },
+      remoteAddress: "1.2.3.4",
+    }),
+    "1.2.3.4"
+  );
+
+  process.env.AIKIDO_CLIENT_IP_HEADER = " , ,";
+  t.same(
+    getIPAddressFromRequest({
+      headers: { "x-forwarded-for": "6.6.6.6" },
+      remoteAddress: "1.2.3.4",
+    }),
+    "6.6.6.6"
+  );
+  delete process.env.AIKIDO_CLIENT_IP_HEADER;
+});
+
 t.test("count mode: use nth IP from the right", async (t) => {
   process.env.AIKIDO_TRUST_PROXY = "1";
   clearTrustProxyCache();

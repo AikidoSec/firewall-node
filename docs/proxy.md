@@ -9,6 +9,12 @@ If you need to use a different header to determine the client's IP address, you 
 AIKIDO_CLIENT_IP_HEADER=do-connecting-ip node app.js
 ```
 
+You can also provide a comma-separated list of header names (at most 5, additional entries are ignored). Zen checks them in order and uses the first header that is present in the request.
+
+```bash
+AIKIDO_CLIENT_IP_HEADER=cf-connecting-ip,true-client-ip,x-forwarded-for node app.js
+```
+
 ## Advanced proxy trust configuration
 
 The `AIKIDO_TRUST_PROXY` environment variable controls whether Zen reads the IP header at all, and how it selects the client IP from it.
