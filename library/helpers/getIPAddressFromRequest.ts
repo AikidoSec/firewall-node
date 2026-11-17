@@ -66,9 +66,13 @@ function getIpHeaderName(headers: Record<string, unknown>): string {
       .slice(0, MAX_IP_HEADERS);
 
     if (names.length > 0) {
-      return (
-        names.find((name) => typeof headers[name] === "string") ?? names[0]
+      const firstPresent = names.find(
+        (name) => typeof headers[name] === "string"
       );
+      if (firstPresent) {
+        return firstPresent;
+      }
+      return names[0];
     }
   }
   return "x-forwarded-for";
