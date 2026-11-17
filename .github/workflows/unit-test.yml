@@ -30,6 +30,9 @@ jobs:
           - node-version: 22.x
             instrumentation: "current"
             mode: "cjs"
+          - node-version: 22.x
+            instrumentation: "current"
+            mode: "cjs-builtin"
           - node-version: 24.x
             instrumentation: "current"
             mode: "cjs"
@@ -57,6 +60,24 @@ jobs:
           - node-version: 26.x
             instrumentation: "new"
             mode: "esm"
+          - node-version: 24.x
+            instrumentation: "current"
+            mode: "cjs-builtin"
+          - node-version: 24.x
+            instrumentation: "new"
+            mode: "cjs-builtin"
+          - node-version: 25.x
+            instrumentation: "current"
+            mode: "cjs-builtin"
+          - node-version: 25.x
+            instrumentation: "new"
+            mode: "cjs-builtin"
+          - node-version: 26.x
+            instrumentation: "current"
+            mode: "cjs-builtin"
+          - node-version: 26.x
+            instrumentation: "new"
+            mode: "cjs-builtin"
 
     steps:
       - name: Checkout repository
@@ -96,7 +117,7 @@ jobs:
           name: firewall-node-library-${{ github.sha }}
 
       - name: Run tests with current instrumentation (max 3 attempts)
-        if: ${{ matrix.instrumentation == 'current' }}
+        if: ${{ matrix.instrumentation == 'current' && matrix.mode != 'cjs-builtin' }}
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
         with:
           timeout_minutes: 15
@@ -119,16 +140,34 @@ jobs:
           max_attempts: 3
           command: npm run test:esm
 
+      - name: Run CJS tests with built-in runner (max 3 attempts)
+        if: ${{ matrix.mode == 'cjs-builtin' }}
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: npm run test:node -- --coverage ${{ matrix.instrumentation == 'new' && '--new' || '' }}
+
+      - name: Upload built-in runner coverage for comparison
+        if: ${{ matrix.mode == 'cjs-builtin' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: node-test-coverage-${{ matrix.node-version }}-${{ matrix.instrumentation }}
+          path: .builtin-tests/tests/lcov.info
+          if-no-files-found: error
+
       - name: Prepare coverage artifact
+        if: ${{ matrix.mode != 'cjs-builtin' }}
         run: |
           mkdir -p coverage-artifacts
           if [ "${{ matrix.mode }}" = "cjs" ]; then
             cp library/.tap/report/lcov.info coverage-artifacts/${{ matrix.mode }}-${{ matrix.node-version }}-${{ matrix.instrumentation }}.lcov
           else
-            cp .esm-tests/tests/lcov.info coverage-artifacts/${{ matrix.mode }}-${{ matrix.node-version }}-${{ matrix.instrumentation }}.lcov
+            cp .builtin-tests/tests/lcov.info coverage-artifacts/${{ matrix.mode }}-${{ matrix.node-version }}-${{ matrix.instrumentation }}.lcov
           fi
 
       - name: Upload coverage artifact
+        if: ${{ matrix.mode != 'cjs-builtin' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: coverage-${{ matrix.mode }}-${{ matrix.node-version }}-${{ matrix.instrumentation }}
@@ -136,9 +175,10 @@ jobs:
           if-no-files-found: error
 
       - name: Upload coverage
+        if: ${{ matrix.mode != 'cjs-builtin' }}
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
-          files: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
+          files: ./library/.tap/report/lcov.info,./.builtin-tests/tests/lcov.info
           use_oidc: true
           fail_ci_if_error: true
 

@@ -1,4 +1,70 @@
 import assert from "node:assert";
+import * as runner from "node:test";
+import { AsyncLocalStorage } from "node:async_hooks";
+
+export { assert };
+const currentTest = new AsyncLocalStorage();
+
+export function test(name, options, callback) {
+  if (typeof options === "function") {
+    callback = options;
+    options = {};
+  }
+  const parent = currentTest.getStore();
+  const register = parent
+    ? parent.context.test.bind(parent.context)
+    : runner.test;
+  const pending = register(name, options, async (context) => {
+    const state = { context, pending: [] };
+    const finished = new Promise((resolve) => {
+      state.finish = resolve;
+    });
+    await currentTest.run(state, async () => {
+      const result = callback(context);
+      if (result && typeof result.then === "function") await result;
+      else if (callback.length > 0) await finished;
+      await Promise.all(state.pending);
+    });
+  });
+  parent?.pending.push(pending);
+  return pending;
+}
+
+export function end() {
+  currentTest.getStore().finish();
+}
+
+export function teardown(callback) {
+  const context = currentTest.getStore()?.context;
+  return context ? context.after(callback) : runner.after(callback);
+}
+
+export function before(callback) {
+  const context = currentTest.getStore()?.context;
+  return context ? context.before(callback) : runner.before(callback);
+}
+
+export function beforeEach(callback) {
+  const context = currentTest.getStore()?.context;
+  return context ? context.beforeEach(callback) : runner.beforeEach(callback);
+}
+
+export function after(callback) {
+  return teardown(callback);
+}
+
+export function afterEach(callback) {
+  const context = currentTest.getStore()?.context;
+  return context ? context.afterEach(callback) : runner.afterEach(callback);
+}
+
+export function skip(name) {
+  return test(name, { skip: true }, () => {});
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 export function throws(...args) {
   if (args.length === 0) {
@@ -16,7 +82,7 @@ export function throws(...args) {
       if (typeof args[1] === "string") {
         assert.match(
           err.message ?? err.toString(),
-          new RegExp(RegExp.escape(args[1]))
+          new RegExp(escapeRegExp(args[1]))
         );
         return err;
       }
@@ -39,7 +105,7 @@ export function throws(...args) {
 
 export function match(actual, expected, message) {
   if (typeof expected === "string") {
-    expected = new RegExp(RegExp.escape(expected));
+    expected = new RegExp(escapeRegExp(expected));
   }
 
   if (expected instanceof RegExp) {
@@ -97,7 +163,7 @@ export function rejects(...args) {
     );
   }
 
-  return new Promise((resolve, reject) => {
+  const pending = new Promise((resolve, reject) => {
     promise
       .then(() => {
         reject(new Error("Missing expected rejection"));
@@ -111,20 +177,28 @@ export function rejects(...args) {
           args[1] !== null &&
           "message" in args[1]
         ) {
-          match(err.message ?? err.toString(), args[1].message);
-          return resolve(err);
+          try {
+            match(err.message ?? err.toString(), args[1].message);
+            return resolve(err);
+          } catch (error) {
+            return reject(error);
+          }
         }
 
-        throw new TypeError(
-          `Second argument of rejects must be an object with a message property, got ${typeof args[1]}`
+        reject(
+          new TypeError(
+            `Second argument of rejects must be an object with a message property, got ${typeof args[1]}`
+          )
         );
       });
   });
+  currentTest.getStore()?.pending.push(pending);
+  return pending;
 }
 
 export function notMatch(actual, expected, message) {
   if (typeof expected === "string") {
-    expected = new RegExp(RegExp.escape(expected));
+    expected = new RegExp(escapeRegExp(expected));
   }
 
   if (expected instanceof RegExp) {
