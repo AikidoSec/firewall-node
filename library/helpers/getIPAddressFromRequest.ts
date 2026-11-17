@@ -6,6 +6,8 @@ import {
   TrustProxyConfig,
 } from "./trustProxy";
 
+const MAX_IP_HEADERS = 5;
+
 export function getIPAddressFromRequest(req: {
   headers: Record<string, unknown>;
   remoteAddress: string | undefined;
@@ -17,7 +19,7 @@ export function getIPAddressFromRequest(req: {
   const config = getTrustProxyConfig();
 
   if (req.headers) {
-    const ipHeaderName = getIpHeaderName();
+    const ipHeaderName = getIpHeaderName(req.headers);
     if (typeof req.headers[ipHeaderName] === "string") {
       const ips = parseIPsFromHeader(req.headers[ipHeaderName]);
       const ip = selectClientIP(ips, config);
@@ -56,9 +58,18 @@ function selectClientIP(
   return undefined;
 }
 
-function getIpHeaderName(): string {
+function getIpHeaderName(headers: Record<string, unknown>): string {
   if (process.env.AIKIDO_CLIENT_IP_HEADER) {
-    return process.env.AIKIDO_CLIENT_IP_HEADER.toLowerCase();
+    const names = process.env.AIKIDO_CLIENT_IP_HEADER.split(",")
+      .map((name) => name.trim().toLowerCase())
+      .filter((name) => name.length > 0)
+      .slice(0, MAX_IP_HEADERS);
+
+    if (names.length > 0) {
+      return (
+        names.find((name) => typeof headers[name] === "string") ?? names[0]
+      );
+    }
   }
   return "x-forwarded-for";
 }
