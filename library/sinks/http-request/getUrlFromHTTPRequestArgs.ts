@@ -9,7 +9,8 @@ import { isOptionsObject } from "./isOptionsObject";
  */
 export function getUrlFromHTTPRequestArgs(
   args: unknown[],
-  module: "http" | "https"
+  module: "http" | "https",
+  ignoreAgentDefaultPort = false
 ): URL | undefined {
   if (!args || !args.length) {
     return undefined;
@@ -30,10 +31,18 @@ export function getUrlFromHTTPRequestArgs(
   const requestOptions = getRequestOptions(args);
   if (requestOptions) {
     if (!url) {
-      return getUrlFromRequestOptions(requestOptions, module);
+      return getUrlFromRequestOptions(
+        requestOptions,
+        module,
+        ignoreAgentDefaultPort
+      );
     }
 
-    return mergeURLWithRequestOptions(requestOptions, url);
+    return mergeURLWithRequestOptions(
+      requestOptions,
+      url,
+      ignoreAgentDefaultPort
+    );
   }
 
   return url;
@@ -61,7 +70,8 @@ export function getRequestOptions(args: unknown[]) {
  */
 function getUrlFromRequestOptions(
   options: HTTPRequestOptions | HTTPSRequestOptions,
-  module: "http" | "https"
+  module: "http" | "https",
+  ignoreAgentDefaultPort: boolean
 ): URL | undefined {
   let str = "";
   if (typeof options.protocol === "string" && options.protocol.length > 0) {
@@ -81,7 +91,10 @@ function getUrlFromRequestOptions(
   }
 
   // Node.js uses `options.port || options.defaultPort || agent.defaultPort`
-  const port = getValidPort(options.port) ?? getValidPort(options.defaultPort);
+  const port =
+    getValidPort(options.port) ??
+    getValidPort(options.defaultPort) ??
+    (ignoreAgentDefaultPort ? undefined : getAgentDefaultPort(options));
   if (port !== undefined) {
     str += `:${port}`;
   }
@@ -99,6 +112,16 @@ function getValidPort(port: unknown): string | number | undefined {
   }
   if (typeof port === "string" && port.length > 0) {
     return port;
+  }
+  return undefined;
+}
+
+function getAgentDefaultPort(
+  options: HTTPRequestOptions | HTTPSRequestOptions
+): string | number | undefined {
+  const agent = options.agent;
+  if (typeof agent === "object" && agent !== null && "defaultPort" in agent) {
+    return getValidPort(agent.defaultPort);
   }
   return undefined;
 }
@@ -134,7 +157,8 @@ function wrapWithSquareBracketsIfNeeded(hostname: string): string {
  */
 function mergeURLWithRequestOptions(
   options: HTTPRequestOptions | HTTPSRequestOptions,
-  url: URL
+  url: URL,
+  ignoreAgentDefaultPort: boolean
 ): URL | undefined {
   let urlStr = "";
 
@@ -156,7 +180,9 @@ function mergeURLWithRequestOptions(
 
   const port =
     getValidPort(options.port) ??
-    (url.port || getValidPort(options.defaultPort));
+    (url.port ||
+      getValidPort(options.defaultPort) ||
+      (ignoreAgentDefaultPort ? undefined : getAgentDefaultPort(options)));
   if (port !== undefined && port !== "") {
     urlStr += `:${port}`;
   }
