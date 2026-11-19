@@ -1,4 +1,7 @@
 import { lookup } from "dns";
+import { isProxyDispatcher } from "./undici/isProxyDispatcher";
+import { warnAboutUsingProxy } from "../helpers/warnAboutUsingProxy";
+import { getRequestOptions } from "./http-request/getUrlFromHTTPRequestArgs";
 import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
@@ -100,6 +103,20 @@ export class Undici implements Wrapper {
     undiciModule.setGlobalDispatcher(dispatcher);
   }
 
+  private warnIfUsingProxyDispatcher(
+    args: unknown[],
+    exports: typeof import("undici-v8")
+  ): void {
+    const options = getRequestOptions(args);
+    let dispatcher: unknown;
+    if (options && "dispatcher" in options) {
+      dispatcher = options.dispatcher;
+    }
+    if (isProxyDispatcher(dispatcher ?? exports.getGlobalDispatcher())) {
+      warnAboutUsingProxy();
+    }
+  }
+
   private patchExports(
     exports: typeof import("undici-v8"),
     pkgInfo: PartialWrapPackageInfo
@@ -120,7 +137,10 @@ export class Undici implements Wrapper {
     // Print a warning that we can't provide protection if setGlobalDispatcher is called
     wrapExport(exports, "setGlobalDispatcher", pkgInfo, {
       kind: undefined,
-      inspectArgs: (_, agent) => {
+      inspectArgs: (args, agent) => {
+        if (isProxyDispatcher(args[0])) {
+          warnAboutUsingProxy();
+        }
         agent.log(
           `undici.setGlobalDispatcher(..) was called, we can't guarantee protection!`
         );
@@ -133,6 +153,7 @@ export class Undici implements Wrapper {
         kind: "outgoing_http_op",
         // Whenever a request is made, we'll check the hostname whether it's a private IP
         inspectArgs: (args, agent) => {
+          this.warnIfUsingProxyDispatcher(args, exports);
           return this.inspect(args, agent, method);
         },
       });
