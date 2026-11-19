@@ -11,6 +11,10 @@ import { colorText } from "../helpers/colorText";
 import { warnBox } from "../helpers/warnBox";
 import { loadNodeInternals } from "../helpers/loadNodeInternals";
 import { isCodeGenerationFromStringsDisallowed } from "../helpers/isCodeGenerationFromStringsDisallowed";
+import { isCodeGenDisabledForCall } from "../helpers/vmContextsWithCodeGenerationDisabled";
+
+const CODE_GENERATION_FROM_STRINGS_DISALLOWED_MESSAGE =
+  "Code generation from strings disallowed for this context";
 
 export class FunctionSink implements Wrapper {
   private inspectFunction(args: unknown[]): InterceptorResult {
@@ -102,6 +106,11 @@ export class FunctionSink implements Wrapper {
     }
 
     bindings.setCodeGenerationCallback((code: string) => {
+      if (isCodeGenDisabledForCall()) {
+        // Do not override original blocking behavior
+        return CODE_GENERATION_FROM_STRINGS_DISALLOWED_MESSAGE;
+      }
+
       const agent = getInstance();
       if (!agent) {
         return;
