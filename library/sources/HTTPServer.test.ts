@@ -270,6 +270,63 @@ t.test(
   }
 );
 
+t.test(
+  "it only discovers redirects to other hosts or for non-GET methods",
+  async (t) => {
+    const server = http.createServer((req, res) => {
+      const path = req.url ?? "";
+      if (path === "/redirect-relative") {
+        res.writeHead(302, { Location: "/login-page" });
+      } else if (path === "/redirect-set-header") {
+        res.statusCode = 302;
+        res.setHeader("Location", "/login-page");
+      } else if (path === "/redirect-absolute") {
+        res.writeHead(301, { Location: `http://${req.headers.host}/target` });
+      } else if (path === "/redirect-external") {
+        res.writeHead(302, { Location: "https://accounts.example.com/auth" });
+      } else if (path === "/redirect-post") {
+        res.writeHead(302, { Location: "/dashboard" });
+      } else {
+        res.statusCode = 404;
+      }
+      res.end();
+    });
+
+    const discovered = (path: string, method = "GET") =>
+      agent
+        .getRoutes()
+        .asArray()
+        .some((route) => route.path === path && route.method === method);
+
+    await new Promise<void>((resolve) => {
+      server.listen(3342, async () => {
+        const request = (path: string, method = "GET") =>
+          fetch({
+            url: new URL(`http://localhost:3342${path}`),
+            method,
+            headers: {},
+            timeoutInMS: 500,
+          });
+
+        t.equal((await request("/redirect-relative")).statusCode, 302);
+        t.equal((await request("/redirect-set-header")).statusCode, 302);
+        t.equal((await request("/redirect-absolute")).statusCode, 301);
+        t.equal((await request("/redirect-external")).statusCode, 302);
+        t.equal((await request("/redirect-post", "POST")).statusCode, 302);
+
+        t.equal(discovered("/redirect-relative"), false);
+        t.equal(discovered("/redirect-set-header"), false);
+        t.equal(discovered("/redirect-absolute"), false);
+        t.equal(discovered("/redirect-external"), true);
+        t.equal(discovered("/redirect-post", "POST"), true);
+
+        server.close();
+        resolve();
+      });
+    });
+  }
+);
+
 t.test("it parses cookies", async (t) => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");

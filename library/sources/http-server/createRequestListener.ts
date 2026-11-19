@@ -152,6 +152,9 @@ function onFinishRequestHandler(
       route: context.route,
       method: context.method,
       forceProtectionOff: agent.getConfig().isForceProtectionOffRoute(context),
+      redirectLocation: getLocationHeader(res),
+      host: req.headers.host,
+      isBehindTrustedProxy: context.isBehindTrustedProxy,
     });
 
     if (shouldDiscover) {
@@ -178,4 +181,29 @@ function onFinishRequestHandler(
       agent.getInspectionStatistics().onAttackWaveDetected();
     }
   }
+}
+
+function getLocationHeader(res: ServerResponse): string | undefined {
+  if (res.statusCode < 300 || res.statusCode > 399) {
+    return undefined;
+  }
+
+  const header = res.getHeader("location");
+  if (header !== undefined) {
+    return header.toString();
+  }
+
+  // Headers passed directly to res.writeHead(status, headers) are not available via res.getHeader(...)
+  const rawHeaders = (res as { _header?: unknown })._header;
+  if (typeof rawHeaders !== "string") {
+    return undefined;
+  }
+
+  for (const line of rawHeaders.split("\r\n")) {
+    if (line.toLowerCase().startsWith("location:")) {
+      return line.slice("location:".length).trim();
+    }
+  }
+
+  return undefined;
 }

@@ -1,5 +1,6 @@
 import { getFileExtension } from "../../helpers/getFileExtension";
 import { isWellKnownURI } from "../../helpers/isWellKnownURI";
+import { tryParseURL } from "../../helpers/tryParseURL";
 
 const EXCLUDED_METHODS = ["OPTIONS", "HEAD"];
 const IGNORE_EXTENSIONS = ["properties", "config", "webmanifest"];
@@ -10,11 +11,17 @@ export function shouldDiscoverRoute({
   route,
   method,
   forceProtectionOff,
+  redirectLocation,
+  host,
+  isBehindTrustedProxy,
 }: {
   statusCode: number;
   route: string;
   method: string;
   forceProtectionOff: boolean;
+  redirectLocation?: string;
+  host?: string;
+  isBehindTrustedProxy?: boolean;
 }) {
   if (forceProtectionOff) {
     return false;
@@ -23,6 +30,17 @@ export function shouldDiscoverRoute({
   const validStatusCode = statusCode >= 200 && statusCode <= 399;
 
   if (!validStatusCode) {
+    return false;
+  }
+
+  // Do not discover GET routes that redirect within the app
+  // e.g. trailing slash redirects of unknown routes or redirects of all routes to a login page
+  // Redirects for other methods (e.g. POST /login) and redirects to other hosts (e.g. OAuth) are still discovered
+  if (
+    statusCode >= 300 &&
+    method === "GET" &&
+    isInternalRedirect(redirectLocation, host, isBehindTrustedProxy)
+  ) {
     return false;
   }
 
@@ -74,4 +92,31 @@ function isDotFile(segment: string) {
 
 function containsIgnoredString(segment: string) {
   return IGNORE_STRINGS.some((str) => segment.includes(str));
+}
+
+function isInternalRedirect(
+  location: string | undefined,
+  host: string | undefined,
+  isBehindTrustedProxy: boolean | undefined
+) {
+  if (!location) {
+    return false;
+  }
+
+  const isProtocolRelative = location.startsWith("//");
+
+  if (location.startsWith("/") && !isProtocolRelative) {
+    return true;
+  }
+
+  const url = tryParseURL(isProtocolRelative ? `http:${location}` : location);
+
+  // Can not be parsed without a base URL, so it is a relative reference (e.g. login, ?next=/home, ..)
+  if (!url) {
+    return !isProtocolRelative;
+  }
+
+  // Absolute URL or protocol-relative URL, only internal if the host is the same
+  // The host header can be manipulated by the client if there is no trusted proxy
+  return isBehindTrustedProxy === true && url.host === host;
 }
