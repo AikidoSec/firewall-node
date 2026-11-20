@@ -354,10 +354,90 @@ t.test("it extracts cached tokens", async (t) => {
     }),
     {
       model: "claude",
-      inputTokens: 1,
+      inputTokens: 8,
+      outputTokens: 2,
+      cacheReadTokens: 3,
+      cacheWriteTokens: 4,
+    }
+  );
+  t.same(
+    parseAIResponse(
+      new URL(
+        "https://bedrock-runtime.us-east-1.amazonaws.com/model/m/converse"
+      ),
+      {
+        usage: {
+          inputTokens: 10,
+          outputTokens: 2,
+          cacheReadInputTokens: 3,
+          cacheWriteInputTokens: 4,
+        },
+      }
+    ),
+    {
+      model: "m",
+      inputTokens: 17,
       outputTokens: 2,
       cacheReadTokens: 3,
       cacheWriteTokens: 4,
     }
   );
 });
+
+t.test("it adds Gemini Interactions tool-use and thought tokens", async (t) => {
+  t.same(
+    parseAIResponse(new URL("https://example.com/v1beta/interactions"), {
+      model: "gemini",
+      usage: {
+        total_input_tokens: 10,
+        total_tool_use_tokens: 5,
+        total_output_tokens: 20,
+        total_thought_tokens: 7,
+        total_cached_tokens: 4,
+      },
+    }),
+    {
+      model: "gemini",
+      inputTokens: 15,
+      outputTokens: 27,
+      cacheReadTokens: 4,
+      cacheWriteTokens: 0,
+    }
+  );
+});
+
+t.test("it uses the agent of a Gemini interaction as model", async (t) => {
+  t.same(
+    parseAIResponse(new URL("https://example.com/v1beta/interactions"), {
+      agent: "deep-research",
+      usage: { total_input_tokens: 3, total_output_tokens: 4 },
+    }),
+    {
+      model: "deep-research",
+      inputTokens: 3,
+      outputTokens: 4,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+    }
+  );
+});
+
+t.test(
+  "it falls back to the ARN when a Bedrock response has no model",
+  async (t) => {
+    const arn = encodeURIComponent("arn:aws:bedrock:us-east-1:1:profile/abc");
+    t.same(
+      parseAIResponse(new URL(`https://example.com/model/${arn}/converse`), {
+        usage: { inputTokens: 1, outputTokens: 2 },
+      })?.model,
+      "arn:aws:bedrock:us-east-1:1:profile/abc"
+    );
+    t.same(
+      parseAIResponse(new URL(`https://example.com/model/${arn}/converse`), {
+        model: "claude",
+        usage: {},
+      })?.model,
+      "claude"
+    );
+  }
+);
