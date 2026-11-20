@@ -74,7 +74,7 @@ function discoverRouteFromStream(
   }
 
   if (context.route && context.method) {
-    const statusCode = parseInt(stream.sentHeaders[":status"] as string);
+    const statusCode = parseInt(stream.sentHeaders?.[":status"] as string);
 
     if (!isNaN(statusCode)) {
       const shouldDiscover = shouldDiscoverRoute({
