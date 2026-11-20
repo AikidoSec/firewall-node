@@ -1,5 +1,6 @@
-// Control characters (incl. \r, \n, ESC), DEL, C1 controls, Unicode line/paragraph separators, backticks and double quotes
-const UNSAFE_LOG_CHARS = /[\p{Cc}\u{2028}\u{2029}`"]/gu;
+// Control characters (incl. \r, \n, ESC), DEL, C1 controls, Unicode format characters (incl. bidi controls like U+202E),
+// Unicode line/paragraph separators, backticks and double quotes
+const UNSAFE_LOG_CHARS = /[\p{Cc}\p{Cf}\u{2028}\u{2029}`"]/gu;
 
 /**
  * Replace control characters (new lines, carriage returns, ANSI escape bytes, ...)
