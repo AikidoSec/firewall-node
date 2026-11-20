@@ -41,6 +41,60 @@ export class Postgresjs implements Wrapper {
     });
   }
 
+  private wrapClient(client: unknown, pkgInfo: PartialWrapPackageInfo): void {
+    if (typeof client !== "function" && typeof client !== "object") {
+      return;
+    }
+    const hasFunction = (name: string) =>
+      !!client &&
+      typeof (client as Record<string, unknown>)[name] === "function";
+
+    if (hasFunction("unsafe")) {
+      wrapExport(client, "unsafe", pkgInfo, {
+        kind: "sql_op",
+        inspectArgs: (args) => this.inspectQuery(args),
+      });
+    }
+
+    // begin(fn) and savepoint(fn) pass a new client to the callback
+    for (const method of ["begin", "savepoint"]) {
+      if (!hasFunction(method)) {
+        continue;
+      }
+      wrapExport(client, method, pkgInfo, {
+        kind: undefined,
+        modifyArgs: (args) =>
+          args.map((arg) => {
+            if (typeof arg !== "function") {
+              return arg;
+            }
+
+            return (inner: unknown, ...rest: unknown[]) => {
+              this.wrapClient(inner, pkgInfo);
+              return arg(inner, ...rest);
+            };
+          }),
+      });
+    }
+
+    // reserve() resolves to a new client
+    if (hasFunction("reserve")) {
+      wrapExport(client, "reserve", pkgInfo, {
+        kind: undefined,
+        modifyReturnValue: (args, returnValue) => {
+          if (!(returnValue instanceof Promise)) {
+            return returnValue;
+          }
+
+          return returnValue.then((inner) => {
+            this.wrapClient(inner, pkgInfo);
+            return inner;
+          });
+        },
+      });
+    }
+  }
+
   wrap(hooks: Hooks) {
     const wrapExportsForCjs = (
       exports: unknown,
@@ -49,10 +103,7 @@ export class Postgresjs implements Wrapper {
       wrapExport(exports, undefined, pkgInfo, {
         kind: undefined,
         modifyReturnValue: (args, returnValue) => {
-          wrapExport(returnValue, "unsafe", pkgInfo, {
-            kind: "sql_op",
-            inspectArgs: (args) => this.inspectQuery(args),
-          });
+          this.wrapClient(returnValue, pkgInfo);
           return returnValue;
         },
       });

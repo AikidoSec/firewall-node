@@ -150,4 +150,65 @@ export async function createPostgresjsTests(packageName: string) {
       await sql.end();
     }
   });
+
+  t.test(
+    "it inspects unsafe on clients from begin(), savepoint() and reserve()",
+    async (t) => {
+      startTestAgent({
+        wrappers: [new Postgresjs()],
+        rewrite: {
+          postgres: packageName,
+        },
+      });
+
+      let postgres = require(packageName) as typeof import("postgres-v3");
+
+      if (isEsmUnitTest() || typeof postgres !== "function") {
+        // @ts-expect-error ESM not covered by types
+        postgres = postgres.default;
+      }
+
+      const sql = postgres("postgres://root:password@127.0.0.1:27016/main_db");
+      const injection = `SELECT 1 WHERE 'a' = 'x'; -- should be blocked`;
+      const expectedMessage =
+        "Zen has blocked an SQL injection: sql.unsafe(...) originating from body.myTitle";
+
+      try {
+        await runWithContext(context, async () => {
+          const rootError = await t.rejects(async () => {
+            await sql.unsafe(injection);
+          });
+          t.same((rootError as Error).message, expectedMessage);
+
+          const beginError = await t.rejects(async () => {
+            await sql.begin(async (tx) => {
+              await tx.unsafe(injection);
+            });
+          });
+          t.same((beginError as Error).message, expectedMessage);
+
+          const savepointError = await t.rejects(async () => {
+            await sql.begin(async (tx) => {
+              await tx.savepoint(async (sp) => {
+                await sp.unsafe(injection);
+              });
+            });
+          });
+          t.same((savepointError as Error).message, expectedMessage);
+
+          const reserved = await sql.reserve();
+          try {
+            const reserveError = await t.rejects(async () => {
+              await reserved.unsafe(injection);
+            });
+            t.same((reserveError as Error).message, expectedMessage);
+          } finally {
+            reserved.release();
+          }
+        });
+      } finally {
+        await sql.end();
+      }
+    }
+  );
 }
