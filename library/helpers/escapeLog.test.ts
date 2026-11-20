@@ -14,3 +14,13 @@ t.test("it escapes log messages", async (t) => {
   t.equal(escapeLog("a\x00b\x07c\x7fd\x85e"), "a b c d e");
   t.equal(escapeLog("a b c"), "a b c");
 });
+
+t.test("it replaces unicode bidirectional format controls", async (t) => {
+  // Overrides, embeddings and pop directional formatting
+  t.equal(escapeLog("a‮b‬c"), "a b c");
+  t.equal(escapeLog("‪a‫b‭c"), " a b c");
+  // Isolates
+  t.equal(escapeLog("a⁦b⁧c⁨d⁩e"), "a b c d e");
+  // Directional marks and Arabic letter mark
+  t.equal(escapeLog("a‎b‏c؜d"), "a b c d");
+});
