@@ -103,6 +103,10 @@ export function throws(...args) {
   assert.fail("Missing expected exception");
 }
 
+function optionalMessage(message) {
+  return message === undefined ? [] : [message];
+}
+
 export function match(actual, expected, message) {
   if (typeof expected === "string") {
     expected = new RegExp(escapeRegExp(expected));
@@ -113,11 +117,11 @@ export function match(actual, expected, message) {
       actual = String(actual);
     }
 
-    assert.match(actual, expected, message);
+    assert.match(actual, expected, ...optionalMessage(message));
     return;
   }
 
-  assert.partialDeepStrictEqual(actual, expected, message);
+  assert.partialDeepStrictEqual(actual, expected, ...optionalMessage(message));
 }
 
 function toPlainObject(value) {
@@ -131,12 +135,12 @@ export function same(actual, expected, message) {
   assert.deepStrictEqual(
     toPlainObject(actual),
     toPlainObject(expected),
-    message
+    ...optionalMessage(message)
   );
 }
 
 export function pass(message) {
-  assert.ok(true, message);
+  assert.ok(true, ...optionalMessage(message));
 }
 
 export function rejects(...args) {
@@ -206,7 +210,7 @@ export function notMatch(actual, expected, message) {
       actual = String(actual);
     }
 
-    assert.doesNotMatch(actual, expected, message);
+    assert.doesNotMatch(actual, expected, ...optionalMessage(message));
     return;
   }
 

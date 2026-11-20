@@ -37,8 +37,14 @@ jobs:
             instrumentation: "current"
             mode: "cjs"
           - node-version: 24.x
+            instrumentation: "current"
+            mode: "cjs-builtin"
+          - node-version: 24.x
             instrumentation: "new"
             mode: "cjs"
+          - node-version: 24.x
+            instrumentation: "new"
+            mode: "cjs-builtin"
           - node-version: 24.x
             instrumentation: "new"
             mode: "esm"
@@ -46,8 +52,14 @@ jobs:
             instrumentation: "current"
             mode: "cjs"
           - node-version: 25.x
+            instrumentation: "current"
+            mode: "cjs-builtin"
+          - node-version: 25.x
             instrumentation: "new"
             mode: "cjs"
+          - node-version: 25.x
+            instrumentation: "new"
+            mode: "cjs-builtin"
           - node-version: 25.x
             instrumentation: "new"
             mode: "esm"
@@ -55,29 +67,17 @@ jobs:
             instrumentation: "current"
             mode: "cjs"
           - node-version: 26.x
+            instrumentation: "current"
+            mode: "cjs-builtin"
+          - node-version: 26.x
             instrumentation: "new"
             mode: "cjs"
           - node-version: 26.x
             instrumentation: "new"
+            mode: "cjs-builtin"
+          - node-version: 26.x
+            instrumentation: "new"
             mode: "esm"
-          - node-version: 24.x
-            instrumentation: "current"
-            mode: "cjs-builtin"
-          - node-version: 24.x
-            instrumentation: "new"
-            mode: "cjs-builtin"
-          - node-version: 25.x
-            instrumentation: "current"
-            mode: "cjs-builtin"
-          - node-version: 25.x
-            instrumentation: "new"
-            mode: "cjs-builtin"
-          - node-version: 26.x
-            instrumentation: "current"
-            mode: "cjs-builtin"
-          - node-version: 26.x
-            instrumentation: "new"
-            mode: "cjs-builtin"
 
     steps:
       - name: Checkout repository

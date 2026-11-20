@@ -27,7 +27,10 @@ const testPatterns = args.filter(
 );
 const [major, minor] = process.versions.node.split(".").map(Number);
 
-if (cjs ? major < 22 || (major === 22 && minor < 17) : major < 24) {
+const minimumMajor = cjs ? 22 : 24;
+const requiresNewerMinor = cjs && major === minimumMajor && minor < 17;
+
+if (major < minimumMajor || requiresNewerMinor) {
   throw new Error(
     `Node.js ${cjs ? "22.17" : "24"} or higher is required to run this script.`
   );
@@ -69,7 +72,6 @@ if (!cjs) {
       cwd: libDir,
     }
   );
-  await writeFile(join(outDir, "package.json"), "{}");
 } else {
   await copyFile(
     join(libDir, "package.json"),
@@ -77,10 +79,10 @@ if (!cjs) {
   );
 }
 
+await writeFile(join(outDir, "package.json"), "{}");
+
 const testFiles = glob(
-  cjs
-    ? "**/*.{ts,txt,pem,json,xml,js,mjs,prisma,toml,sql,zip}"
-    : "**/*.{test.ts,tests.ts,txt,pem,json,xml,js,mjs,prisma,toml,sql,zip}",
+  "**/*.{ts,txt,pem,json,xml,js,mjs,prisma,toml,sql,zip}",
   {
     cwd: libDir,
     exclude: ["**/node_modules/**", "**/.tap/**", "**/*.d.ts"],
@@ -93,12 +95,12 @@ for await (const entry of testFiles) {
   const dest = join(testsOutDir, entry.replace(/ts$/, "js"));
 
   await mkdir(dirname(dest), { recursive: true });
-  if (cjs && entry.endsWith(".ts")) {
-    await copyFile(src, join(testsOutDir, entry));
-    if (entry.endsWith("/injectedFunctions.ts")) {
-      await copyFile(dest, join(testsOutDir, entry));
+  if (entry.endsWith(".ts") && !/\.(test|tests)\.ts$/.test(entry)) {
+    if (cjs) {
+      // Some tests read the TypeScript sources (e.g. agent/protect.test.ts)
+      await copyFile(src, join(testsOutDir, entry));
     }
-    if (!/\.(test|tests)\.ts$/.test(entry)) continue;
+    continue;
   }
 
   if (
@@ -396,6 +398,18 @@ for await (const entry of testFiles) {
         }
       }
 
+      // Compile dynamic imports to require, like TypeScript does for CommonJS output
+      if (cjs && node.type === "ImportExpression") {
+        const source = generate(node.source);
+        this.replace(
+          parseSync(
+            newFilename,
+            `Promise.resolve().then(() => require(${source}));`
+          ).program.body[0].expression
+        );
+        return;
+      }
+
       // Replace __dirname with import.meta.dirname
       if (!cjs && node.type === "Identifier" && node.name === "__dirname") {
         this.replace({
@@ -424,6 +438,15 @@ for await (const entry of testFiles) {
       `\n//# sourceMappingURL=data:application/json;base64,${Buffer.from(JSON.stringify(result.map)).toString("base64")}\n`;
   }
   await writeFile(dest, output);
+}
+
+if (cjs) {
+  // The instrumentation loads injectedFunctions.ts, but it has to be plain JS here
+  const injectedFunctions = "agent/hooks/instrumentation/injectedFunctions";
+  await copyFile(
+    join(testsOutDir, `${injectedFunctions}.js`),
+    join(testsOutDir, `${injectedFunctions}.ts`)
+  );
 }
 
 // Create package.json with type module to run tap as ESM
