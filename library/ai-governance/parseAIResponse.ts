@@ -39,10 +39,7 @@ export function parseAIResponse(url: URL, body: unknown): AICall | undefined {
     pathname.endsWith("/v1/messages") ||
     /\/publishers\/anthropic\/models\/[^/]+:rawPredict$/.test(pathname)
   ) {
-    return parseAnthropic(
-      body,
-      Object.hasOwn(body, "model") ? body.model : undefined
-    );
+    return parseAnthropic(body, nonEmptyString(body, "model"));
   }
 
   const gemini = /\/models\/([^/:]+):generateContent$/.exec(pathname);
@@ -57,10 +54,10 @@ export function parseAIResponse(url: URL, body: unknown): AICall | undefined {
   const bedrock = /\/model\/([^/]+)\/(converse|invoke)$/.exec(pathname);
   if (bedrock) {
     const model = safeDecodeURIComponent(bedrock[1]);
-    let modelName = Object.hasOwn(body, "model") ? body.model : undefined;
-    if (model && !model.startsWith("arn:")) {
-      modelName = model;
-    }
+    const modelName =
+      model && !model.startsWith("arn:")
+        ? model
+        : (nonEmptyString(body, "model") ?? model);
     if (bedrock[2] === "converse") {
       return parseBedrockConverse(body, modelName);
     }
@@ -72,11 +69,8 @@ export function parseAIResponse(url: URL, body: unknown): AICall | undefined {
 function parseOpenAIChatCompletion(
   body: Record<string, unknown>
 ): AICall | undefined {
-  if (
-    !Object.hasOwn(body, "model") ||
-    typeof body.model !== "string" ||
-    !body.model
-  ) {
+  const model = nonEmptyString(body, "model");
+  if (!model) {
     return undefined;
   }
   let inputTokens = 0;
@@ -96,7 +90,7 @@ function parseOpenAIChatCompletion(
     }
   }
   return createSafeObject({
-    model: body.model,
+    model,
     inputTokens,
     outputTokens,
     cacheReadTokens,
@@ -107,11 +101,8 @@ function parseOpenAIChatCompletion(
 function parseOpenAIResponse(
   body: Record<string, unknown>
 ): AICall | undefined {
-  if (
-    !Object.hasOwn(body, "model") ||
-    typeof body.model !== "string" ||
-    !body.model
-  ) {
+  const model = nonEmptyString(body, "model");
+  if (!model) {
     return undefined;
   }
   let inputTokens = 0;
@@ -131,7 +122,7 @@ function parseOpenAIResponse(
     }
   }
   return createSafeObject({
-    model: body.model,
+    model,
     inputTokens,
     outputTokens,
     cacheReadTokens,
@@ -141,9 +132,9 @@ function parseOpenAIResponse(
 
 function parseAnthropic(
   body: Record<string, unknown>,
-  model: unknown
+  model: string | undefined
 ): AICall | undefined {
-  if (typeof model !== "string" || !model) {
+  if (!model) {
     return undefined;
   }
   let inputTokens = 0;
@@ -151,10 +142,12 @@ function parseAnthropic(
   let cacheReadTokens = 0;
   let cacheWriteTokens = 0;
   if (Object.hasOwn(body, "usage") && isPlainObject(body.usage)) {
-    inputTokens = tokens(body.usage, "input_tokens");
     outputTokens = tokens(body.usage, "output_tokens");
     cacheReadTokens = tokens(body.usage, "cache_read_input_tokens");
     cacheWriteTokens = tokens(body.usage, "cache_creation_input_tokens");
+    // Anthropic's input_tokens excludes cache reads and writes.
+    inputTokens =
+      tokens(body.usage, "input_tokens") + cacheReadTokens + cacheWriteTokens;
   }
   return createSafeObject({
     model,
@@ -167,9 +160,9 @@ function parseAnthropic(
 
 function parseBedrockConverse(
   body: Record<string, unknown>,
-  model: unknown
+  model: string | undefined
 ): AICall | undefined {
-  if (typeof model !== "string" || !model) {
+  if (!model) {
     return undefined;
   }
   let inputTokens = 0;
@@ -177,10 +170,12 @@ function parseBedrockConverse(
   let cacheReadTokens = 0;
   let cacheWriteTokens = 0;
   if (Object.hasOwn(body, "usage") && isPlainObject(body.usage)) {
-    inputTokens = tokens(body.usage, "inputTokens");
     outputTokens = tokens(body.usage, "outputTokens");
     cacheReadTokens = tokens(body.usage, "cacheReadInputTokens");
     cacheWriteTokens = tokens(body.usage, "cacheWriteInputTokens");
+    // Bedrock's inputTokens excludes cache reads and writes.
+    inputTokens =
+      tokens(body.usage, "inputTokens") + cacheReadTokens + cacheWriteTokens;
   }
   return createSafeObject({
     model,
@@ -195,14 +190,7 @@ function parseGemini(
   body: Record<string, unknown>,
   modelFromPath: string
 ): AICall {
-  let model = modelFromPath;
-  if (
-    Object.hasOwn(body, "modelVersion") &&
-    typeof body.modelVersion === "string" &&
-    body.modelVersion
-  ) {
-    model = body.modelVersion;
-  }
+  const model = nonEmptyString(body, "modelVersion") ?? modelFromPath;
   let inputTokens = 0;
   let outputTokens = 0;
   let cacheReadTokens = 0;
@@ -232,17 +220,29 @@ function parseGeminiInteraction(
   if (!Object.hasOwn(body, "usage") || !isPlainObject(body.usage)) {
     return undefined;
   }
-  const model =
-    Object.hasOwn(body, "model") && typeof body.model === "string" && body.model
-      ? body.model
-      : "unknown";
+  // An interaction run by an agent names the agent instead of a model.
   return createSafeObject({
-    model,
-    inputTokens: tokens(body.usage, "total_input_tokens"),
-    outputTokens: tokens(body.usage, "total_output_tokens"),
+    model:
+      nonEmptyString(body, "model") ??
+      nonEmptyString(body, "agent") ??
+      "unknown",
+    inputTokens:
+      tokens(body.usage, "total_input_tokens") +
+      tokens(body.usage, "total_tool_use_tokens"),
+    outputTokens:
+      tokens(body.usage, "total_output_tokens") +
+      tokens(body.usage, "total_thought_tokens"),
     cacheReadTokens: tokens(body.usage, "total_cached_tokens"),
     cacheWriteTokens: 0,
   });
+}
+
+function nonEmptyString(
+  obj: Record<string, unknown>,
+  key: string
+): string | undefined {
+  const value = Object.hasOwn(obj, key) ? obj[key] : undefined;
+  return typeof value === "string" && value ? value : undefined;
 }
 
 function tokens(obj: object, key: string): number {

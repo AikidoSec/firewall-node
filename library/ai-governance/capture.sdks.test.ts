@@ -256,7 +256,7 @@ t.test("it captures @anthropic-ai/sdk messages", { skip }, async (t) => {
   });
   t.equal(message.content[0].text, "Hi there");
   expectStats(t, "claude-mock", {
-    input: 10,
+    input: 19,
     output: 5,
     cacheRead: 7,
     cacheWrite: 2,
@@ -369,7 +369,7 @@ t.test("it captures AWS Bedrock Converse", { skip }, async (t) => {
   );
   t.same(response.output?.message?.content, [{ text: "Hi there" }]);
   expectStats(t, bedrockModel, {
-    input: 10,
+    input: 17,
     output: 5,
     cacheRead: 6,
     cacheWrite: 1,
