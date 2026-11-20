@@ -457,6 +457,26 @@ t.test("does ignore invalid route usage", opts, async (t) => {
   }
 });
 
+t.test(
+  "it keeps encoded slashes in a single route segment",
+  opts,
+  async (t) => {
+    const app = await getApp();
+
+    app.get("/posts/:id", (request, reply) => {
+      reply.send(getContext());
+    });
+
+    const response = await app.inject({ method: "GET", url: "/posts/a%2Fb" });
+
+    t.match(await response.json(), {
+      source: "fastify",
+      route: "/posts/a%2Fb",
+      routeParams: { id: "a/b" },
+    });
+  }
+);
+
 t.test("It works with route params", opts, async (t) => {
   const app = await getApp();
 

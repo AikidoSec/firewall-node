@@ -781,6 +781,16 @@ export async function createExpressTests(expressPackageName: string) {
     }
   );
 
+  t.test("it keeps encoded slashes in a single route segment", async () => {
+    const response = await request(getApp()).get("/nested-router/a%2Fb");
+
+    t.match(response.body, {
+      source: "express",
+      route: "/nested-router/a%2Fb",
+      routeParams: { id: "a/b" },
+    });
+  });
+
   t.test("it supports static files", async (t) => {
     const response = await request(getApp()).get("/test.txt");
 

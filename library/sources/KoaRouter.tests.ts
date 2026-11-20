@@ -191,6 +191,21 @@ export async function createKoaRouterTests(koaRouterPackageName: string) {
     t.match(response.text, "You are rate limited by Zen.");
   });
 
+  t.test(
+    "it keeps encoded slashes in a single route segment",
+    options,
+    async (t) => {
+      const app = await getApp();
+      const response = await request(app.callback()).post("/add/a%2Fb");
+
+      t.match(response.body, {
+        source: "koa",
+        routeParams: { id: "a/b" },
+        route: "/add/a%2Fb",
+      });
+    }
+  );
+
   t.test("gets route params using koa router", options, async (t) => {
     const app = await getApp();
     const response = await request(app.callback()).post("/add/123");

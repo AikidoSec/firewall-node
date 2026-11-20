@@ -134,6 +134,16 @@ export async function createRestifyTests(restifyPackageName: string) {
     });
   });
 
+  t.test("it keeps encoded slashes in a single route segment", async (t) => {
+    const response = await request(getApp()).get("/posts/a%2Fb");
+
+    t.match(response.body.context, {
+      source: "restify",
+      route: "/posts/a%2Fb",
+      routeParams: { id: "a/b" },
+    });
+  });
+
   t.test("it adds context from request body", async (t) => {
     const response = await request(getApp())
       .post("/posts")
