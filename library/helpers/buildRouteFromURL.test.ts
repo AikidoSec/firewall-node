@@ -37,6 +37,17 @@ t.test("it replaces dates", async () => {
   t.same(buildRouteFromURL("/posts/01-05-2023"), "/posts/:date");
 });
 
+t.test("it preserves slugs containing dates", async () => {
+  t.same(
+    buildRouteFromURL("/posts/2023-05-01-article"),
+    "/posts/2023-05-01-article"
+  );
+  t.same(
+    buildRouteFromURL("/posts/3-article-01-05-2023"),
+    "/posts/3-article-01-05-2023"
+  );
+});
+
 t.test("it ignores API version numbers", async () => {
   t.same(buildRouteFromURL("/v1/posts/3"), "/v1/posts/:number");
 });
