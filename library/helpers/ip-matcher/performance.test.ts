@@ -116,6 +116,13 @@ t.test("test performance in comparison to node:net.blocklist", async (t) => {
     );
     return;
   }
+  if (process.env.NODE_TEST_CONTEXT) {
+    t.skip(
+      "relative BlockList performance is unreliable when test files run concurrently",
+      () => {}
+    );
+    return;
+  }
 
   const endBlockList = performance.now();
   const blockListMs = (endBlockList - startBlockList) / iterations;

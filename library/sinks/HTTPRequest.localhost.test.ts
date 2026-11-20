@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { createServer, IncomingMessage, Server } from "http";
+import type { IncomingMessage, Server } from "http";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
@@ -65,7 +65,8 @@ const agent = createTestAgent({
 
 agent.start([new HTTPRequest()]);
 
-const http = require("http");
+const http = require("http") as typeof import("http");
+const { createServer } = require("http") as typeof import("http");
 
 const port = 1343;
 const serverUrl = `http://localhost:${port}`;
@@ -124,7 +125,10 @@ t.test("it blocks requests to other ports", (t) => {
     () => {
       // Server doing a request to localhost but with a different port
       // This should be blocked
-      const request = http.request(`${serverUrl}/favicon.ico`);
+      // Don't reuse the keep-alive socket from the previous test, otherwise there is no DNS lookup
+      const request = http.request(`${serverUrl}/favicon.ico`, {
+        agent: false,
+      });
       request.on("error", (error: Error) => {
         t.same(
           error.message,
