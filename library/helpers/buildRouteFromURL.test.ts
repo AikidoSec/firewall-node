@@ -216,3 +216,37 @@ t.test("it does not turn encoded slashes into path separators", async () => {
   t.not(buildRouteFromURL("/posts/a%2Fb"), buildRouteFromURL("/posts/a/b"));
   t.same(buildRouteFromURL("/posts/a%20b"), "/posts/a b");
 });
+
+t.test("it decodes percent encoded characters per segment", async () => {
+  t.same(buildRouteFromURL("/p/%41"), "/p/A");
+  t.same(buildRouteFromURL("/p/%C3%A4"), "/p/ä");
+  t.same(buildRouteFromURL("/p/a%20b%2Fc"), "/p/a b%2Fc");
+  t.same(buildRouteFromURL("/p/%31%32%33"), "/p/:number");
+  t.same(buildRouteFromURL("/%70/%41"), "/p/A");
+});
+
+t.test("it keeps invalid percent encoding as is", async () => {
+  t.same(buildRouteFromURL("/p/%zz"), "/p/%zz");
+  t.same(buildRouteFromURL("/p/100%"), "/p/100%");
+  t.same(buildRouteFromURL("/p/%E0%A4"), "/p/%E0%A4");
+  t.same(buildRouteFromURL("/p/%E0%A4%2Fa"), "/p/%E0%A4%2Fa");
+});
+
+t.test("it handles multiple and edge position encoded slashes", async () => {
+  t.same(buildRouteFromURL("/p/a%2Fb%2Fc"), "/p/a%2Fb%2Fc");
+  t.same(buildRouteFromURL("/p/%2Fa"), "/p/%2Fa");
+  t.same(buildRouteFromURL("/p/a%2F"), "/p/a%2F");
+  t.same(buildRouteFromURL("/p/%2F"), "/p/%2F");
+  t.same(buildRouteFromURL("/p/a%2f%2Fb"), "/p/a%2F%2Fb");
+});
+
+t.test("it keeps encoded percent signs encoded", async () => {
+  t.same(buildRouteFromURL("/p/100%25"), "/p/100%25");
+  t.same(buildRouteFromURL("/p/%2561"), "/p/%2561");
+});
+
+t.test("it does not let a double encoded slash collide", async () => {
+  t.same(buildRouteFromURL("/posts/a%252Fb"), "/posts/a%252Fb");
+  t.not(buildRouteFromURL("/posts/a%252Fb"), buildRouteFromURL("/posts/a%2Fb"));
+  t.not(buildRouteFromURL("/posts/a%252Fb"), buildRouteFromURL("/posts/a/b"));
+});

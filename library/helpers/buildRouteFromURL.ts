@@ -45,16 +45,21 @@ export function buildRouteFromURL(url: string) {
   return route;
 }
 
-// Decodes a segment but keeps encoded slashes (normalized to %2F)
+// Decodes a segment but keeps %2F and %25 encoded, otherwise "a%252Fb" would
+// decode to "a%2Fb" and get the same route as "a%2Fb"
 function decodeSegment(segment: string): string {
   if (!segment.includes("%")) {
     return segment;
   }
 
   return segment
-    .split(/%2f/i)
-    .map((part) => safeDecodeURIComponent(part) ?? part)
-    .join("%2F");
+    .split(/(%2f|%25)/i)
+    .map((part, index) =>
+      index % 2 === 1
+        ? part.toUpperCase()
+        : (safeDecodeURIComponent(part) ?? part)
+    )
+    .join("");
 }
 
 function replaceURLSegmentWithParam(segment: string) {
