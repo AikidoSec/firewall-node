@@ -1,6 +1,8 @@
 import * as t from "tap";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { Anthropic as AnthropicSink } from "./Anthropic";
+import { Undici } from "./Undici";
+import { isAIProviderTrafficCaptureEnabled } from "../ai-governance/isAIProviderTrafficCaptureEnabled";
 
 t.test(
   "it works",
@@ -11,7 +13,8 @@ t.test(
   },
   async (t) => {
     const agent = createTestAgent();
-    agent.start([new AnthropicSink()]);
+    // The Undici sink is needed when AIKIDO_FEATURE_AI_NETWORK_CAPTURE is enabled,
+    agent.start([new AnthropicSink(), new Undici()]);
 
     const Anthropic = require("@anthropic-ai/sdk");
 
@@ -35,7 +38,12 @@ t.test(
     t.same(result.content[0].text, "Paris");
     t.match(agent.getAIStatistics().getStats(), [
       {
-        provider: "anthropic",
+        // When capturing from the network, the provider is the origin of the request
+        provider: isAIProviderTrafficCaptureEnabled()
+          ? new URL(
+              process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com"
+            ).origin
+          : "anthropic",
         calls: 1,
         model: result.model,
         tokens: {
