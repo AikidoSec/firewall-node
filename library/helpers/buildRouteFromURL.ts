@@ -21,20 +21,18 @@ const NUMBER_ARRAY = /^\d+(?:,\d+)*$/;
  * which modify the request path and can lead to rate limiting bypasses.
  */
 export function buildRouteFromURL(url: string) {
-  let path = tryParseURLPath(url);
+  const path = tryParseURLPath(url);
 
   if (!path) {
     return undefined;
   }
 
-  if (path.includes("%") && path.length >= 3) {
-    const decoded = safeDecodeURIComponent(path);
-    if (decoded) {
-      path = decoded;
-    }
-  }
-
-  const route = path.split("/").map(replaceURLSegmentWithParam).join("/");
+  // Split before decoding, %2F is data, not a separator (RFC 3986 section 2.2 and 2.4)
+  // https://www.rfc-editor.org/rfc/rfc3986#section-2.2
+  const route = path
+    .split("/")
+    .map((segment) => replaceURLSegmentWithParam(decodeSegment(segment)))
+    .join("/");
 
   if (route === "/") {
     return "/";
@@ -45,6 +43,18 @@ export function buildRouteFromURL(url: string) {
   }
 
   return route;
+}
+
+// Decodes a segment but keeps encoded slashes (normalized to %2F)
+function decodeSegment(segment: string): string {
+  if (!segment.includes("%")) {
+    return segment;
+  }
+
+  return segment
+    .split(/%2f/i)
+    .map((part) => safeDecodeURIComponent(part) ?? part)
+    .join("%2F");
 }
 
 function replaceURLSegmentWithParam(segment: string) {

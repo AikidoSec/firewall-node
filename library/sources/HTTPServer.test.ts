@@ -203,6 +203,28 @@ t.test("it parses query parameters", async () => {
   });
 });
 
+t.test("it keeps encoded slashes in a single route segment", async () => {
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3341, () => {
+      fetch({
+        url: new URL("http://localhost:3341/foo/a%2Fb"),
+        method: "GET",
+        headers: {},
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        t.match(JSON.parse(body), { route: "/foo/a%2Fb" });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
 t.test("it discovers routes", async () => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");

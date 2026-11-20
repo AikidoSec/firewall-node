@@ -209,3 +209,10 @@ t.test("it detects numeric comma separated arrays", async (t) => {
   t.same(buildRouteFromURL("/users/1,2,3_"), "/users/1,2,3_");
   t.same(buildRouteFromURL("/users/1,2,3a"), "/users/1,2,3a");
 });
+
+t.test("it does not turn encoded slashes into path separators", async () => {
+  t.same(buildRouteFromURL("/posts/a%2Fb"), "/posts/a%2Fb");
+  t.same(buildRouteFromURL("/posts/a%2fb"), "/posts/a%2Fb");
+  t.not(buildRouteFromURL("/posts/a%2Fb"), buildRouteFromURL("/posts/a/b"));
+  t.same(buildRouteFromURL("/posts/a%20b"), "/posts/a b");
+});

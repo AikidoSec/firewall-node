@@ -408,6 +408,16 @@ t.test(
     }
 
     {
+      const response = await fetch("http://localhost:4125/context/a%2Fb");
+      const body = await response.json();
+      t.match(body, {
+        source: "h3",
+        route: "/context/a%2Fb",
+        routeParams: { name: "a%2Fb" },
+      });
+    }
+
+    {
       const response = await fetch("http://localhost:4125/context2");
       const body = await response.json();
       t.match(body, {

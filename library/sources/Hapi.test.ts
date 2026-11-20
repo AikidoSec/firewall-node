@@ -90,6 +90,13 @@ async function getServer(onRequestExt = true) {
     },
     {
       method: "GET",
+      path: "/posts/{id}",
+      handler: (request, h) => {
+        return getContext();
+      },
+    },
+    {
+      method: "GET",
       path: "/success",
       handler: (request, h) => {
         // @ts-expect-error Not typed
@@ -165,6 +172,18 @@ t.test("it adds context from POST with JSON body", async (t) => {
     source: "hapi",
     route: "/context",
     body: { content: "test", abc: [] },
+  });
+});
+
+t.test("it keeps encoded slashes in a single route segment", async (t) => {
+  const response = await request((await getServer()).listener).get(
+    "/posts/a%2Fb"
+  );
+
+  t.match(response.body, {
+    source: "hapi",
+    route: "/posts/a%2Fb",
+    routeParams: { id: "a/b" },
   });
 });
 
