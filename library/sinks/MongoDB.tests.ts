@@ -455,6 +455,146 @@ export function createMongoDBTests(
         );
       }
 
+      await runWithContext(safeContext, async () => {
+        t.same(await db.command({ ping: 1 }), { ok: 1 });
+      });
+
+      const commandFindError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return db.command({
+            find: collectionName,
+            filter: { title: { $ne: null } },
+          });
+        });
+      });
+      t.ok(commandFindError instanceof Error);
+      if (commandFindError instanceof Error) {
+        t.same(
+          commandFindError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.command(...) originating from body.myTitle"
+        );
+      }
+
+      const commandCountError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return db.command({
+            count: collectionName,
+            query: { title: { $ne: null } },
+          });
+        });
+      });
+      t.ok(commandCountError instanceof Error);
+      if (commandCountError instanceof Error) {
+        t.same(
+          commandCountError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.command(...) originating from body.myTitle"
+        );
+      }
+
+      const commandAggregateError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return db.command({
+            aggregate: collectionName,
+            pipeline: [{ $match: { title: { $ne: null } } }],
+            cursor: {},
+          });
+        });
+      });
+      t.ok(commandAggregateError instanceof Error);
+      if (commandAggregateError instanceof Error) {
+        t.same(
+          commandAggregateError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.command(...) originating from body.myTitle"
+        );
+      }
+
+      const commandUpdateError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return db.command({
+            update: collectionName,
+            updates: [
+              {
+                q: { title: { $ne: null } },
+                u: { $set: { title: "Injected" } },
+              },
+            ],
+          });
+        });
+      });
+      t.ok(commandUpdateError instanceof Error);
+      if (commandUpdateError instanceof Error) {
+        t.same(
+          commandUpdateError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.command(...) originating from body.myTitle"
+        );
+      }
+
+      const commandDeleteError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return db.command({
+            delete: collectionName,
+            deletes: [
+              {
+                q: { title: { $ne: null } },
+                u: { $set: { title: "Injected" } },
+              },
+            ],
+          });
+        });
+      });
+      t.ok(commandDeleteError instanceof Error);
+      if (commandDeleteError instanceof Error) {
+        t.same(
+          commandDeleteError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.command(...) originating from body.myTitle"
+        );
+      }
+
+      const commandMapReduceQueryError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return db.command({
+            map: "function() { emit(this.title, 1); }",
+            mapReduce: collectionName,
+            reduce: "function(key, values) { return values.length; }",
+            query: { title: { $ne: null } },
+            out: { inline: 1 },
+          });
+        });
+      });
+      t.ok(commandMapReduceQueryError instanceof Error);
+      if (commandMapReduceQueryError instanceof Error) {
+        t.same(
+          commandMapReduceQueryError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.command(...) originating from body.myTitle"
+        );
+      }
+
+      const commandMapReduceJsError = await t.rejects(async () => {
+        await runWithContext(
+          {
+            ...unsafeContext,
+            body: {
+              payload: "Hello World!'; console.log('test'); } //",
+            },
+          },
+          () => {
+            return db.command({
+              mapReduce: collectionName,
+              map: "function test() { const test = 'Hello World!'; console.log('test'); } //'; }",
+              reduce: "function(key, values) { return values.length; }",
+              out: { inline: 1 },
+            });
+          }
+        );
+      });
+      t.ok(commandMapReduceJsError instanceof Error);
+      if (commandMapReduceJsError instanceof Error) {
+        t.match(
+          commandMapReduceJsError.message,
+          "Zen has blocked a JavaScript injection: MongoDB.command(...) originating from body.payload"
+        );
+      }
+
       const numberOfQueries = 200;
 
       const results = await Promise.allSettled(
