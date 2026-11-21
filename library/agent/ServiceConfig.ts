@@ -46,6 +46,8 @@ export class ServiceConfig {
 
   private enabledFeatures = new Set<string>();
 
+  private blockedAIToolNames = new Set<string>();
+
   constructor(
     endpoints: EndpointConfig[],
     private lastUpdatedAt: number,
@@ -362,5 +364,13 @@ export class ServiceConfig {
 
   isRealtimeUpdatesEnabled(): boolean {
     return this.enabledFeatures.has("realtime_updates");
+  }
+
+  setBlockedAIToolNames(names: Iterable<string>) {
+    this.blockedAIToolNames = new Set(names);
+  }
+
+  isAIToolBlocked(name: string): boolean {
+    return this.blockedAIToolNames.has(name);
   }
 }
