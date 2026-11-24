@@ -13,7 +13,7 @@ import type {
   Endpoint,
   EndpointConfig,
   Domain,
-  IgnoredHealthRoutes,
+  RequestCountExclusions,
 } from "./Config";
 import type {
   FetchListsAPIResponse,
@@ -51,8 +51,8 @@ export class ServiceConfig {
 
   private enabledFeatures = new Set<string>();
 
-  private ignoredHealthRoutesExact = new Set<string>();
-  private ignoredHealthRoutesSuffix: string[] = [];
+  private requestCountExclusionsExact = new Set<string>();
+  private requestCountExclusionsSuffix: string[] = [];
 
   constructor(
     endpoints: EndpointConfig[],
@@ -364,25 +364,25 @@ export class ServiceConfig {
     return this.excludedUserIdsFromRateLimiting.has(userId);
   }
 
-  updateIgnoredHealthRoutes(routes: IgnoredHealthRoutes) {
-    this.ignoredHealthRoutesExact = new Set(
+  updateRequestCountExclusions(routes: RequestCountExclusions) {
+    this.requestCountExclusionsExact = new Set(
       Array.isArray(routes.exact) ? routes.exact : []
     );
-    this.ignoredHealthRoutesSuffix = Array.isArray(routes.suffix)
+    this.requestCountExclusionsSuffix = Array.isArray(routes.suffix)
       ? routes.suffix.filter((suffix) => suffix.length > 0)
       : [];
   }
 
-  isIgnoredHealthRoute(route: string | undefined): boolean {
+  isExcludedFromRequestCount(route: string | undefined): boolean {
     if (!route) {
       return false;
     }
 
-    if (this.ignoredHealthRoutesExact.has(route)) {
+    if (this.requestCountExclusionsExact.has(route)) {
       return true;
     }
 
-    for (const suffix of this.ignoredHealthRoutesSuffix) {
+    for (const suffix of this.requestCountExclusionsSuffix) {
       if (route.endsWith(suffix)) {
         return true;
       }

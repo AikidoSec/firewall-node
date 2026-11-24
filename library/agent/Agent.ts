@@ -357,11 +357,11 @@ export class Agent {
       }
 
       if (
-        response.ignoredHealthRoutes &&
-        typeof response.ignoredHealthRoutes === "object"
+        response.requestCountExclusions &&
+        typeof response.requestCountExclusions === "object"
       ) {
-        this.serviceConfig.updateIgnoredHealthRoutes(
-          response.ignoredHealthRoutes
+        this.serviceConfig.updateRequestCountExclusions(
+          response.requestCountExclusions
         );
       }
 

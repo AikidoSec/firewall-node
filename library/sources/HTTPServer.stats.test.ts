@@ -256,9 +256,9 @@ t.test(
 );
 
 t.test(
-  "it discovers but does not count requests for ignored health routes",
+  "it discovers but does not count requests for routes excluded from the request count",
   async () => {
-    agent.getConfig().updateIgnoredHealthRoutes({
+    agent.getConfig().updateRequestCountExclusions({
       exact: ["/status"],
       suffix: ["/healthz"],
     });
@@ -300,7 +300,7 @@ t.test(
           t.ok(routes.includes("/api/healthz"));
           agent
             .getConfig()
-            .updateIgnoredHealthRoutes({ exact: [], suffix: [] });
+            .updateRequestCountExclusions({ exact: [], suffix: [] });
           server.close();
           resolve();
         });

@@ -684,39 +684,42 @@ t.test("isBypassedRequest works as expected", async () => {
   t.same(config.isBypassedRequest({}), false);
 });
 
-t.test("isIgnoredHealthRoute works as expected", async () => {
+t.test("isExcludedFromRequestCount works as expected", async () => {
   const config = new ServiceConfig([], 0, [], []);
 
-  t.same(config.isIgnoredHealthRoute("/health"), false);
+  t.same(config.isExcludedFromRequestCount("/health"), false);
 
-  config.updateIgnoredHealthRoutes({
+  config.updateRequestCountExclusions({
     exact: ["/status"],
     suffix: ["/health", "/healthz", ""],
   });
 
-  t.same(config.isIgnoredHealthRoute("/status"), true);
-  t.same(config.isIgnoredHealthRoute("/status/1"), false);
-  t.same(config.isIgnoredHealthRoute("/health"), true);
-  t.same(config.isIgnoredHealthRoute("/api/v1/healthz"), true);
-  t.same(config.isIgnoredHealthRoute("/healthy"), false);
-  t.same(config.isIgnoredHealthRoute("/"), false);
-  t.same(config.isIgnoredHealthRoute(undefined), false);
+  t.same(config.isExcludedFromRequestCount("/status"), true);
+  t.same(config.isExcludedFromRequestCount("/status/1"), false);
+  t.same(config.isExcludedFromRequestCount("/health"), true);
+  t.same(config.isExcludedFromRequestCount("/api/v1/healthz"), true);
+  t.same(config.isExcludedFromRequestCount("/healthy"), false);
+  t.same(config.isExcludedFromRequestCount("/"), false);
+  t.same(config.isExcludedFromRequestCount(undefined), false);
 
-  config.updateIgnoredHealthRoutes({ exact: [], suffix: [] });
-  t.same(config.isIgnoredHealthRoute("/health"), false);
+  config.updateRequestCountExclusions({ exact: [], suffix: [] });
+  t.same(config.isExcludedFromRequestCount("/health"), false);
 });
 
-t.test("updateIgnoredHealthRoutes ignores malformed input", async () => {
+t.test("updateRequestCountExclusions ignores malformed input", async () => {
   const config = new ServiceConfig([], 0, [], []);
-  config.updateIgnoredHealthRoutes({ exact: ["/status"], suffix: ["/health"] });
+  config.updateRequestCountExclusions({
+    exact: ["/status"],
+    suffix: ["/health"],
+  });
 
   // @ts-expect-error Testing with invalid values
-  config.updateIgnoredHealthRoutes({ exact: null, suffix: undefined });
-  t.same(config.isIgnoredHealthRoute("/status"), false);
-  t.same(config.isIgnoredHealthRoute("/health"), false);
+  config.updateRequestCountExclusions({ exact: null, suffix: undefined });
+  t.same(config.isExcludedFromRequestCount("/status"), false);
+  t.same(config.isExcludedFromRequestCount("/health"), false);
 
   // @ts-expect-error Testing with a missing field
-  config.updateIgnoredHealthRoutes({ exact: ["/status"] });
-  t.same(config.isIgnoredHealthRoute("/status"), true);
-  t.same(config.isIgnoredHealthRoute("/health"), false);
+  config.updateRequestCountExclusions({ exact: ["/status"] });
+  t.same(config.isExcludedFromRequestCount("/status"), true);
+  t.same(config.isExcludedFromRequestCount("/health"), false);
 });

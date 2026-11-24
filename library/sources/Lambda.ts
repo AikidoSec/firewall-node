@@ -222,7 +222,7 @@ function incrementStatsAndDiscoverAPISpec(
 
   if (
     forceProtectionOff ||
-    agent.getConfig().isIgnoredHealthRoute(agentContext.route)
+    agent.getConfig().isExcludedFromRequestCount(agentContext.route)
   ) {
     return;
   }

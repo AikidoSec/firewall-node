@@ -22,7 +22,7 @@ export type Endpoint = Omit<EndpointConfig, "allowedIPAddresses"> & {
 
 export type Domain = { hostname: string; mode: "allow" | "block" };
 
-export type IgnoredHealthRoutes = {
+export type RequestCountExclusions = {
   exact: string[];
   suffix: string[];
 };
@@ -38,5 +38,5 @@ export type Config = {
   blockNewOutgoingRequests?: boolean;
   domains?: Domain[];
   enabledFeatures?: string[];
-  ignoredHealthRoutes?: IgnoredHealthRoutes;
+  requestCountExclusions?: RequestCountExclusions;
 };

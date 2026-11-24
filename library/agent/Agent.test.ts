@@ -1054,7 +1054,7 @@ t.test("it goes into monitoring mode after sending startup event", async () => {
 });
 
 t.test(
-  "it stores ignoredHealthRoutes from the startup event response",
+  "it stores requestCountExclusions from the startup event response",
   async () => {
     const api = new ReportingAPIForTesting({
       success: true,
@@ -1064,7 +1064,7 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       excludedUserIdsFromRateLimiting: [],
-      ignoredHealthRoutes: { exact: ["/status"], suffix: ["/healthz"] },
+      requestCountExclusions: { exact: ["/status"], suffix: ["/healthz"] },
     });
     const agent = createTestAgent({
       token: new Token("123"),
@@ -1072,15 +1072,15 @@ t.test(
       api,
       logger: new LoggerNoop(),
     });
-    t.same(agent.getConfig().isIgnoredHealthRoute("/status"), false);
+    t.same(agent.getConfig().isExcludedFromRequestCount("/status"), false);
     agent.start([]);
 
     // Wait for the event to be sent
     await setTimeout(0);
 
-    t.same(agent.getConfig().isIgnoredHealthRoute("/status"), true);
-    t.same(agent.getConfig().isIgnoredHealthRoute("/api/healthz"), true);
-    t.same(agent.getConfig().isIgnoredHealthRoute("/other"), false);
+    t.same(agent.getConfig().isExcludedFromRequestCount("/status"), true);
+    t.same(agent.getConfig().isExcludedFromRequestCount("/api/healthz"), true);
+    t.same(agent.getConfig().isExcludedFromRequestCount("/other"), false);
   }
 );
 

@@ -159,7 +159,7 @@ function onFinishRequestHandler(
     }
 
     if (shouldDiscover || context.rateLimitedEndpoint) {
-      if (!agent.getConfig().isIgnoredHealthRoute(context.route)) {
+      if (!agent.getConfig().isExcludedFromRequestCount(context.route)) {
         agent.getInspectionStatistics().onRequest();
       }
     }
