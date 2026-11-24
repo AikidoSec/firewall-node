@@ -36,3 +36,4 @@ instrumentation-wasm/target/
 
 # Temp esm test directory
 .esm-tests/
+.builtin-tests/
