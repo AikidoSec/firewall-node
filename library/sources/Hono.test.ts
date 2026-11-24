@@ -169,6 +169,10 @@ async function getApp() {
     return c.text(getTestProp());
   });
 
+  app.get("/posts/:id", (c) => {
+    return c.json(getContext());
+  });
+
   app.query("/query/:key", (c) => {
     return c.json(getContext());
   });
@@ -781,3 +785,19 @@ t.test("it works with query method", opts, async (t) => {
     routeParams: { key: "testkey" },
   });
 });
+
+t.test(
+  "it keeps encoded slashes in a single route segment",
+  opts,
+  async (t) => {
+    const app = await getApp();
+    const response = await app.request("/posts/a%2Fb");
+
+    const body = await response.json();
+    t.match(body, {
+      source: "hono",
+      route: "/posts/a%2Fb",
+      routeParams: { id: "a/b" },
+    });
+  }
+);

@@ -124,6 +124,24 @@ t.teardown(async () => {
 
 const opts = { skip };
 
+t.test(
+  "it keeps encoded slashes in a single route segment",
+  opts,
+  async (t) => {
+    const response = await fetch({
+      url: new URL(`http://127.0.0.1:${PORT}/cats/a%2Fb`),
+      method: "GET",
+      headers: {},
+      timeoutInMS: 500,
+    });
+    t.match(JSON.parse(response.body), {
+      source: "elysia",
+      route: "/cats/a%2Fb",
+      routeParams: { id: "a/b" },
+    });
+  }
+);
+
 t.test("it adds context from request for GET", opts, async (t) => {
   const response = await fetch({
     url: new URL(`http://127.0.0.1:${PORT}/?title=test`),
