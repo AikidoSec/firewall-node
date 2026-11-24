@@ -683,3 +683,25 @@ t.test("isBypassedRequest works as expected", async () => {
   // @ts-expect-error Testing with an empty object
   t.same(config.isBypassedRequest({}), false);
 });
+
+t.test("isIgnoredHealthRoute works as expected", async () => {
+  const config = new ServiceConfig([], 0, [], []);
+
+  t.same(config.isIgnoredHealthRoute("/health"), false);
+
+  config.updateIgnoredHealthRoutes({
+    exact: ["/status"],
+    suffix: ["/health", "/healthz", ""],
+  });
+
+  t.same(config.isIgnoredHealthRoute("/status"), true);
+  t.same(config.isIgnoredHealthRoute("/status/1"), false);
+  t.same(config.isIgnoredHealthRoute("/health"), true);
+  t.same(config.isIgnoredHealthRoute("/api/v1/healthz"), true);
+  t.same(config.isIgnoredHealthRoute("/healthy"), false);
+  t.same(config.isIgnoredHealthRoute("/"), false);
+  t.same(config.isIgnoredHealthRoute(undefined), false);
+
+  config.updateIgnoredHealthRoutes({ exact: [], suffix: [] });
+  t.same(config.isIgnoredHealthRoute("/health"), false);
+});

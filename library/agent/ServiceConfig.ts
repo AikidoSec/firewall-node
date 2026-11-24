@@ -9,7 +9,12 @@ import {
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { normalizeHostname } from "../helpers/normalizeHostname";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
-import type { Endpoint, EndpointConfig, Domain } from "./Config";
+import type {
+  Endpoint,
+  EndpointConfig,
+  Domain,
+  IgnoredHealthRoutes,
+} from "./Config";
 import type {
   FetchListsAPIResponse,
   UserAgentDetails,
@@ -45,6 +50,9 @@ export class ServiceConfig {
   private excludedUserIdsFromRateLimiting = new Set<string>();
 
   private enabledFeatures = new Set<string>();
+
+  private ignoredHealthRoutesExact = new Set<string>();
+  private ignoredHealthRoutesSuffix: string[] = [];
 
   constructor(
     endpoints: EndpointConfig[],
@@ -354,6 +362,33 @@ export class ServiceConfig {
 
   isUserExcludedFromRateLimiting(userId: string): boolean {
     return this.excludedUserIdsFromRateLimiting.has(userId);
+  }
+
+  updateIgnoredHealthRoutes(routes: IgnoredHealthRoutes) {
+    this.ignoredHealthRoutesExact = new Set(
+      Array.isArray(routes.exact) ? routes.exact : []
+    );
+    this.ignoredHealthRoutesSuffix = Array.isArray(routes.suffix)
+      ? routes.suffix.filter((suffix) => suffix.length > 0)
+      : [];
+  }
+
+  isIgnoredHealthRoute(route: string | undefined): boolean {
+    if (!route) {
+      return false;
+    }
+
+    if (this.ignoredHealthRoutesExact.has(route)) {
+      return true;
+    }
+
+    for (const suffix of this.ignoredHealthRoutesSuffix) {
+      if (route.endsWith(suffix)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   updateEnabledFeatures(features: string[]) {

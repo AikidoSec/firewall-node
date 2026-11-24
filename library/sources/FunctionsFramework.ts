@@ -134,7 +134,10 @@ function incrementStatsAndDiscoverAPISpec(
     }
   }
 
-  if (forceProtectionOff) {
+  if (
+    forceProtectionOff ||
+    agent.getConfig().isIgnoredHealthRoute(context.route)
+  ) {
     return;
   }
 

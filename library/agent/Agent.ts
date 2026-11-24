@@ -356,6 +356,15 @@ export class Agent {
         );
       }
 
+      if (
+        response.ignoredHealthRoutes &&
+        typeof response.ignoredHealthRoutes === "object"
+      ) {
+        this.serviceConfig.updateIgnoredHealthRoutes(
+          response.ignoredHealthRoutes
+        );
+      }
+
       if (Array.isArray(response.enabledFeatures)) {
         this.serviceConfig.updateEnabledFeatures(response.enabledFeatures);
       }

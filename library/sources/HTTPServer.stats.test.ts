@@ -254,3 +254,57 @@ t.test(
     });
   }
 );
+
+t.test(
+  "it discovers but does not count requests for ignored health routes",
+  async () => {
+    agent.getConfig().updateIgnoredHealthRoutes({
+      exact: ["/status"],
+      suffix: ["/healthz"],
+    });
+
+    const server = http.createServer((req, res) => {
+      res.setHeader("Content-Type", "text/plain");
+      res.end("OK");
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3331, () => {
+        Promise.all([
+          fetch({
+            url: new URL("http://localhost:3331/status"),
+            method: "GET",
+            timeoutInMS: 500,
+          }),
+          fetch({
+            url: new URL("http://localhost:3331/api/healthz"),
+            method: "GET",
+            timeoutInMS: 500,
+          }),
+          fetch({
+            url: new URL("http://localhost:3331/test"),
+            method: "GET",
+            timeoutInMS: 500,
+          }),
+        ]).then(([response1, response2, response3]) => {
+          t.equal(response1.statusCode, 200);
+          t.equal(response2.statusCode, 200);
+          t.equal(response3.statusCode, 200);
+          const { requests } = agent.getInspectionStatistics().getStats();
+          t.same(requests.total, 1);
+          const routes = agent
+            .getRoutes()
+            .asArray()
+            .map((r) => r.path);
+          t.ok(routes.includes("/status"));
+          t.ok(routes.includes("/api/healthz"));
+          agent
+            .getConfig()
+            .updateIgnoredHealthRoutes({ exact: [], suffix: [] });
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
