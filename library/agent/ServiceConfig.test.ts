@@ -705,3 +705,18 @@ t.test("isIgnoredHealthRoute works as expected", async () => {
   config.updateIgnoredHealthRoutes({ exact: [], suffix: [] });
   t.same(config.isIgnoredHealthRoute("/health"), false);
 });
+
+t.test("updateIgnoredHealthRoutes ignores malformed input", async () => {
+  const config = new ServiceConfig([], 0, [], []);
+  config.updateIgnoredHealthRoutes({ exact: ["/status"], suffix: ["/health"] });
+
+  // @ts-expect-error Testing with invalid values
+  config.updateIgnoredHealthRoutes({ exact: null, suffix: undefined });
+  t.same(config.isIgnoredHealthRoute("/status"), false);
+  t.same(config.isIgnoredHealthRoute("/health"), false);
+
+  // @ts-expect-error Testing with a missing field
+  config.updateIgnoredHealthRoutes({ exact: ["/status"] });
+  t.same(config.isIgnoredHealthRoute("/status"), true);
+  t.same(config.isIgnoredHealthRoute("/health"), false);
+});
