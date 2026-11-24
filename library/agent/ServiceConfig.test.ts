@@ -683,3 +683,43 @@ t.test("isBypassedRequest works as expected", async () => {
   // @ts-expect-error Testing with an empty object
   t.same(config.isBypassedRequest({}), false);
 });
+
+t.test("isExcludedFromRequestCount works as expected", async () => {
+  const config = new ServiceConfig([], 0, [], []);
+
+  t.same(config.isExcludedFromRequestCount("/health"), false);
+
+  config.updateRequestCountExclusions({
+    exact: ["/status"],
+    suffix: ["/health", "/healthz", ""],
+  });
+
+  t.same(config.isExcludedFromRequestCount("/status"), true);
+  t.same(config.isExcludedFromRequestCount("/status/1"), false);
+  t.same(config.isExcludedFromRequestCount("/health"), true);
+  t.same(config.isExcludedFromRequestCount("/api/v1/healthz"), true);
+  t.same(config.isExcludedFromRequestCount("/healthy"), false);
+  t.same(config.isExcludedFromRequestCount("/"), false);
+  t.same(config.isExcludedFromRequestCount(undefined), false);
+
+  config.updateRequestCountExclusions({ exact: [], suffix: [] });
+  t.same(config.isExcludedFromRequestCount("/health"), false);
+});
+
+t.test("updateRequestCountExclusions ignores malformed input", async () => {
+  const config = new ServiceConfig([], 0, [], []);
+  config.updateRequestCountExclusions({
+    exact: ["/status"],
+    suffix: ["/health"],
+  });
+
+  // @ts-expect-error Testing with invalid values
+  config.updateRequestCountExclusions({ exact: null, suffix: undefined });
+  t.same(config.isExcludedFromRequestCount("/status"), false);
+  t.same(config.isExcludedFromRequestCount("/health"), false);
+
+  // @ts-expect-error Testing with a missing field
+  config.updateRequestCountExclusions({ exact: ["/status"] });
+  t.same(config.isExcludedFromRequestCount("/status"), true);
+  t.same(config.isExcludedFromRequestCount("/health"), false);
+});

@@ -134,7 +134,10 @@ function incrementStatsAndDiscoverAPISpec(
     }
   }
 
-  if (forceProtectionOff) {
+  if (
+    forceProtectionOff ||
+    agent.getConfig().isExcludedFromRequestCount(context.route)
+  ) {
     return;
   }
 

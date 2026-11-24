@@ -356,6 +356,15 @@ export class Agent {
         );
       }
 
+      if (
+        response.requestCountExclusions &&
+        typeof response.requestCountExclusions === "object"
+      ) {
+        this.serviceConfig.updateRequestCountExclusions(
+          response.requestCountExclusions
+        );
+      }
+
       if (Array.isArray(response.enabledFeatures)) {
         this.serviceConfig.updateEnabledFeatures(response.enabledFeatures);
       }

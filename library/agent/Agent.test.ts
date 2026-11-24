@@ -1054,6 +1054,37 @@ t.test("it goes into monitoring mode after sending startup event", async () => {
 });
 
 t.test(
+  "it stores requestCountExclusions from the startup event response",
+  async () => {
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      excludedUserIdsFromRateLimiting: [],
+      requestCountExclusions: { exact: ["/status"], suffix: ["/healthz"] },
+    });
+    const agent = createTestAgent({
+      token: new Token("123"),
+      suppressConsoleLog: false,
+      api,
+      logger: new LoggerNoop(),
+    });
+    t.same(agent.getConfig().isExcludedFromRequestCount("/status"), false);
+    agent.start([]);
+
+    // Wait for the event to be sent
+    await setTimeout(0);
+
+    t.same(agent.getConfig().isExcludedFromRequestCount("/status"), true);
+    t.same(agent.getConfig().isExcludedFromRequestCount("/api/healthz"), true);
+    t.same(agent.getConfig().isExcludedFromRequestCount("/other"), false);
+  }
+);
+
+t.test(
   "it stores realtimeUpdatesEnabled from the startup event response",
   async () => {
     const logger = new LoggerNoop();

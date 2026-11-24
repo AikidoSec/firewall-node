@@ -9,7 +9,12 @@ import {
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { normalizeHostname } from "../helpers/normalizeHostname";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
-import type { Endpoint, EndpointConfig, Domain } from "./Config";
+import type {
+  Endpoint,
+  EndpointConfig,
+  Domain,
+  RequestCountExclusions,
+} from "./Config";
 import type {
   FetchListsAPIResponse,
   UserAgentDetails,
@@ -45,6 +50,9 @@ export class ServiceConfig {
   private excludedUserIdsFromRateLimiting = new Set<string>();
 
   private enabledFeatures = new Set<string>();
+
+  private requestCountExclusionsExact = new Set<string>();
+  private requestCountExclusionsSuffix: string[] = [];
 
   constructor(
     endpoints: EndpointConfig[],
@@ -354,6 +362,33 @@ export class ServiceConfig {
 
   isUserExcludedFromRateLimiting(userId: string): boolean {
     return this.excludedUserIdsFromRateLimiting.has(userId);
+  }
+
+  updateRequestCountExclusions(routes: RequestCountExclusions) {
+    this.requestCountExclusionsExact = new Set(
+      Array.isArray(routes.exact) ? routes.exact : []
+    );
+    this.requestCountExclusionsSuffix = Array.isArray(routes.suffix)
+      ? routes.suffix.filter((suffix) => suffix.length > 0)
+      : [];
+  }
+
+  isExcludedFromRequestCount(route: string | undefined): boolean {
+    if (!route) {
+      return false;
+    }
+
+    if (this.requestCountExclusionsExact.has(route)) {
+      return true;
+    }
+
+    for (const suffix of this.requestCountExclusionsSuffix) {
+      if (route.endsWith(suffix)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   updateEnabledFeatures(features: string[]) {
