@@ -365,6 +365,16 @@ export class Agent {
         );
       }
 
+      if (
+        Object.prototype.hasOwnProperty.call(response, "sidequest") &&
+        response.sidequest &&
+        typeof response.sidequest === "object"
+      ) {
+        this.serviceConfig.updateSidequest(response.sidequest);
+      } else {
+        this.serviceConfig.updateSidequest(undefined);
+      }
+
       if (Array.isArray(response.enabledFeatures)) {
         this.serviceConfig.updateEnabledFeatures(response.enabledFeatures);
       }

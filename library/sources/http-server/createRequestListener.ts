@@ -1,4 +1,4 @@
-import type { IncomingMessage, RequestListener, ServerResponse } from "http";
+import type { RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
 import {
   type Context,
@@ -11,7 +11,13 @@ import { isPackageInstalled } from "../../helpers/isPackageInstalled";
 import { shouldBlockRequest } from "../../middleware/shouldBlockRequest";
 import { blockIPsAndBots } from "./blockIPsAndBots";
 import { contextFromRequest } from "./contextFromRequest";
+import {
+  countedRequest,
+  servedSidequest,
+  type InstrumentedRequest,
+} from "./InstrumentedRequest";
 import { readBodyStream } from "./readBodyStream";
+import { sendSidequestResponse } from "./sendSidequestResponse";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
 
 export function createRequestListener(
@@ -60,18 +66,19 @@ export function createRequestListener(
   };
 }
 
-// Use symbol to avoid conflicts with other properties
-const countedRequest = Symbol("__zen_request_counted__");
-
 function callListenerWithContext(
   listener: Function,
-  req: IncomingMessage & { [countedRequest]?: boolean },
+  req: InstrumentedRequest,
   res: ServerResponse,
   module: string,
   agent: Agent,
   body: unknown,
   shouldRateLimit: boolean
 ) {
+  if (req[servedSidequest]) {
+    return;
+  }
+
   const context = contextFromRequest(req, body, module);
 
   return runWithContext(context, () => {
@@ -103,6 +110,10 @@ function callListenerWithContext(
       return;
     }
 
+    if (context && sendSidequestResponse(req, res, agent, context)) {
+      return;
+    }
+
     return listener(req, res);
   });
 }
@@ -128,7 +139,7 @@ function applyRateLimiting(res: ServerResponse): boolean {
 }
 
 function onFinishRequestHandler(
-  req: IncomingMessage & { [countedRequest]?: boolean },
+  req: InstrumentedRequest,
   res: ServerResponse,
   agent: Agent,
   context: Context
@@ -142,7 +153,7 @@ function onFinishRequestHandler(
   // Mark the request as counted
   req[countedRequest] = true;
 
-  if (agent.getConfig().isBypassedRequest(context)) {
+  if (req[servedSidequest] || agent.getConfig().isBypassedRequest(context)) {
     return;
   }
 

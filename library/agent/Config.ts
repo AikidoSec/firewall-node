@@ -27,6 +27,14 @@ export type RequestCountExclusions = {
   suffix: string[];
 };
 
+export type SidequestConfig = {
+  enabled: boolean;
+  rules: {
+    match: { pathSuffix: string };
+    response: { body: string; headers?: Record<string, string> };
+  }[];
+};
+
 export type Config = {
   endpoints: EndpointConfig[];
   heartbeatIntervalInMS: number;
@@ -39,4 +47,5 @@ export type Config = {
   domains?: Domain[];
   enabledFeatures?: string[];
   requestCountExclusions?: RequestCountExclusions;
+  sidequest?: SidequestConfig;
 };

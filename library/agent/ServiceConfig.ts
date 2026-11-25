@@ -1,3 +1,4 @@
+import { validateHeaderName, validateHeaderValue } from "http";
 import { addIPv4MappedAddresses } from "../helpers/addIPv4MappedAddresses";
 import { createSafeObject } from "../helpers/createSafeObject";
 import { hostnameToUnicode } from "../helpers/hostnameToUnicode";
@@ -14,6 +15,7 @@ import type {
   EndpointConfig,
   Domain,
   RequestCountExclusions,
+  SidequestConfig,
 } from "./Config";
 import type {
   FetchListsAPIResponse,
@@ -21,6 +23,12 @@ import type {
 } from "./api/FetchListsAPI";
 import { safeCreateRegExp } from "./safeCreateRegExp";
 import type { Context } from "./Context";
+
+type SidequestRule = Readonly<{
+  pathSuffix: string;
+  body: string;
+  headers: Readonly<Record<string, string>>;
+}>;
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -53,6 +61,7 @@ export class ServiceConfig {
 
   private requestCountExclusionsExact = new Set<string>();
   private requestCountExclusionsSuffix: string[] = [];
+  private sidequestRules: SidequestRule[] = [];
 
   constructor(
     endpoints: EndpointConfig[],
@@ -389,6 +398,60 @@ export class ServiceConfig {
     }
 
     return false;
+  }
+
+  updateSidequest(config: SidequestConfig | undefined) {
+    this.sidequestRules = [];
+    if (!config) {
+      return;
+    }
+    const { enabled, rules } = createSafeObject(config);
+    if (enabled !== true || !Array.isArray(rules)) {
+      return;
+    }
+
+    for (const rule of rules) {
+      const { match, response } = createSafeObject(rule);
+      const { pathSuffix } = createSafeObject(match);
+      const { body, headers } = createSafeObject(response);
+      if (
+        typeof pathSuffix !== "string" ||
+        !pathSuffix ||
+        typeof body !== "string"
+      ) {
+        continue;
+      }
+
+      const responseHeaders: Record<string, string> = createSafeObject({});
+      if (headers && typeof headers === "object" && !Array.isArray(headers)) {
+        for (const [name, value] of Object.entries<string>(headers)) {
+          try {
+            validateHeaderName(name);
+            validateHeaderValue(name, value);
+          } catch {
+            continue;
+          }
+          responseHeaders[name.toLowerCase()] = value;
+        }
+      }
+      this.sidequestRules.push(
+        createSafeObject({ pathSuffix, body, headers: responseHeaders })
+      );
+    }
+  }
+
+  findSidequestRule(url: string | undefined): SidequestRule | undefined {
+    if (this.sidequestRules.length === 0) {
+      return undefined;
+    }
+
+    if (!url?.startsWith("/")) {
+      return undefined;
+    }
+
+    const queryStart = url.indexOf("?");
+    const path = queryStart === -1 ? url : url.slice(0, queryStart);
+    return this.sidequestRules.find((rule) => path.endsWith(rule.pathSuffix));
   }
 
   updateEnabledFeatures(features: string[]) {
