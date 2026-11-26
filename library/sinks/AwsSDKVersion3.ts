@@ -3,6 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
+import { getRouteForAiStats } from "../helpers/getRouteForAiStats";
 import { isPlainObject } from "../helpers/isPlainObject";
 
 type InvokeUsage = {
@@ -98,6 +99,7 @@ export class AwsSDKVersion3 implements Wrapper {
         model: modelId,
         inputTokens: inputTokens,
         outputTokens: outputTokens,
+        route: getRouteForAiStats(),
       });
     }
   }
@@ -139,6 +141,7 @@ export class AwsSDKVersion3 implements Wrapper {
       model: modelId,
       inputTokens: inputTokens,
       outputTokens: outputTokens,
+      route: getRouteForAiStats(),
     });
   }
 
