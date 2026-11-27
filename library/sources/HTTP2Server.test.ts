@@ -1054,3 +1054,34 @@ t.test(
     });
   }
 );
+
+t.test(
+  "it does not throw when the client resets the stream before response headers are sent",
+  async () => {
+    const server = http2.createServer();
+    server.on("stream", () => {
+      // Never respond, so sentHeaders stays undefined
+    });
+
+    const errors: Error[] = [];
+    const onUncaught = (err: Error) => errors.push(err);
+    process.on("uncaughtException", onUncaught);
+
+    try {
+      await new Promise<void>((resolve) => server.listen(3470, resolve));
+
+      const client = connect("http://localhost:3470");
+      const req = client.request({ ":path": "/", ":method": "GET" });
+      req.on("error", () => {});
+      req.on("close", () => client.close());
+      await setTimeout(100);
+      req.close(http2.constants.NGHTTP2_CANCEL);
+      await setTimeout(200);
+    } finally {
+      process.removeListener("uncaughtException", onUncaught);
+      server.close();
+    }
+
+    t.same(errors, []);
+  }
+);

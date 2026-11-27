@@ -288,12 +288,12 @@ t.test("Pass invalid arguments to VersionedPackage", async (t) => {
     "Relative paths with '..' are not allowed for require file interceptors"
   );
 
-  t.same(
-    new Package("test")
+  t.equal(
+    typeof new Package("test")
       .withVersion("^1.0.0")
       .onFileRequire("./test", () => {})
       .getRequireFileInterceptor("test"),
-    () => {}
+    "function"
   );
 });
 

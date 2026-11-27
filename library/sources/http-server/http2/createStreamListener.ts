@@ -74,7 +74,7 @@ function discoverRouteFromStream(
   }
 
   if (context.route && context.method) {
-    const statusCode = parseInt(stream.sentHeaders[":status"] as string);
+    const statusCode = parseInt(stream.sentHeaders?.[":status"] as string);
 
     if (!isNaN(statusCode)) {
       const shouldDiscover = shouldDiscoverRoute({
@@ -91,7 +91,9 @@ function discoverRouteFromStream(
       }
 
       if (shouldDiscover || context.rateLimitedEndpoint) {
-        agent.getInspectionStatistics().onRequest();
+        if (!agent.getConfig().isExcludedFromRequestCount(context.route)) {
+          agent.getInspectionStatistics().onRequest();
+        }
       }
 
       if (context.rateLimitedEndpoint) {

@@ -38,6 +38,12 @@ Zen operates autonomously on the same server as your Node.js app to:
 - ✅ Rate limit specific API endpoints by IP or by user
 - ✅ Allows you to block specific users manually
 
+## Supported operating systems
+
+- ✅ Linux (glibc and musl) on x64 and arm64
+- ✅ macOS on x64 and arm64
+- ⚠️ Windows is not officially supported right now and some protections have gaps.
+
 ## Supported libraries and frameworks
 
 Zen for Node.js 16+ is compatible with:

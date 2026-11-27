@@ -6,6 +6,7 @@ import {
   readFile,
   copyFile,
   cp,
+  symlink,
 } from "fs/promises";
 import { dirname, join, resolve } from "path";
 import { exec } from "child_process";
@@ -15,12 +16,24 @@ import { generate } from "astring";
 import { transform } from "oxc-transform";
 import { walk } from "oxc-walker";
 
-const version = process.versions.node.split(".");
-const major = parseInt(version[0], 10);
+const args = process.argv.slice(2);
+const cjs = args.includes("--cjs");
+if (cjs === args.includes("--esm")) {
+  throw new Error("Specify exactly one mode: --cjs or --esm.");
+}
+const newInstrumentation = !cjs || args.includes("--new");
+const testPatterns = args.filter(
+  (arg) => !["--cjs", "--esm", "--new", "--coverage"].includes(arg)
+);
+const [major, minor] = process.versions.node.split(".").map(Number);
 
-if (major < 24) {
-  console.error("Node.js version 24 or higher is required to run this script.");
-  process.exit(1);
+const minimumMajor = cjs ? 22 : 24;
+const requiresNewerMinor = cjs && major === minimumMajor && minor < 17;
+
+if (major < minimumMajor || requiresNewerMinor) {
+  throw new Error(
+    `Node.js ${cjs ? "22.17" : "24"} or higher is required to run this script.`
+  );
 }
 
 async function execAsyncWithPipe(command, options) {
@@ -37,20 +50,34 @@ async function execAsyncWithPipe(command, options) {
 }
 
 const libDir = join(import.meta.dirname, "../library");
-const outDir = join(import.meta.dirname, "../.esm-tests");
+const outDir = join(import.meta.dirname, "../.builtin-tests");
 const libBuildDir = join(import.meta.dirname, "../build");
-const libOutDir = join(outDir, "library");
 const testsOutDir = join(outDir, "tests");
+const libOutDir = cjs ? testsOutDir : join(outDir, "library");
 
 if (existsSync(outDir)) {
   await rm(outDir, { recursive: true, force: true });
 }
 
-await cp(libBuildDir, libOutDir, { recursive: true });
-
-await execAsyncWithPipe("./node_modules/.bin/tsc -p tsconfig.test.esm.json", {
-  cwd: libDir,
+await cp(libBuildDir, libOutDir, {
+  recursive: true,
+  filter: (path) =>
+    path !== join(libBuildDir, "node_modules") && !path.endsWith(".d.ts"),
 });
+
+if (!cjs) {
+  await execAsyncWithPipe(
+    `./node_modules/.bin/tsc -p tsconfig.test.esm.json --outDir ${libOutDir}`,
+    {
+      cwd: libDir,
+    }
+  );
+} else {
+  await copyFile(
+    join(libDir, "package.json"),
+    join(testsOutDir, "package.json")
+  );
+}
 
 await writeFile(join(outDir, "package.json"), "{}");
 
@@ -58,7 +85,7 @@ const filesToCopy = glob(
   "**/*.{txt,pem,json,xml,js,cjs,mjs,prisma,toml,sql,zip}",
   {
     cwd: libDir,
-    exclude: ["**/node_modules/**"],
+    exclude: ["**/node_modules/**", "**/.tap/**", "**/*.d.ts"],
   }
 );
 
@@ -81,10 +108,17 @@ for await (const entry of testFiles) {
   const dest = join(testsOutDir, entry.replace(/ts$/, "js"));
 
   await mkdir(dirname(dest), { recursive: true });
+  if (entry.endsWith(".ts") && !/\.(test|tests)\.ts$/.test(entry)) {
+    if (cjs) {
+      // Some tests read the TypeScript sources (e.g. agent/protect.test.ts)
+      await copyFile(src, join(testsOutDir, entry));
+    }
+    continue;
+  }
 
   const sourceText = await readFile(src, "utf8");
 
-  if (sourceText.includes("// @esm-tests-skip")) {
+  if (!cjs && sourceText.includes("// @esm-tests-skip")) {
     continue;
   }
 
@@ -108,26 +142,30 @@ for await (const entry of testFiles) {
   }
 
   // Fix imports
-  code = code.replace(
-    /import\s+(\w+)\s+from\s+['"](\.[^'"]*)['"];?/g,
-    (match, p1, p2) => {
-      return `import ____${p1} from '${p2}'; const ${p1} = ____${p1}.default;`;
-    }
-  );
-  code = code.replaceAll(
-    /import\s+\*\s+as\s+(\w+)\s+from\s+['"]([^'"]+)['"];?/g,
-    (match, p1, p2) => {
-      return `import ${p1} from '${p2}';`;
-    }
-  );
+  if (!cjs) {
+    code = code.replace(
+      /import\s+(\w+)\s+from\s+['"](\.[^'"]*)['"];?/g,
+      (match, p1, p2) => {
+        return `import ____${p1} from '${p2}'; const ${p1} = ____${p1}.default;`;
+      }
+    );
+    code = code.replaceAll(
+      /import\s+\*\s+as\s+(\w+)\s+from\s+['"]([^'"]+)['"];?/g,
+      (match, p1, p2) => {
+        return `import ${p1} from '${p2}';`;
+      }
+    );
+  }
 
   code =
-    `import * as _testHelpers from '${join(import.meta.dirname, "helpers", "test-helpers.mjs")}';\n` +
+    `import * as _testHelpers from ${JSON.stringify(join(import.meta.dirname, "helpers", "test-helpers.mjs"))};\n` +
     code;
 
   const ast = parseSync(newFilename, code, {
     preserveParens: false,
   });
+
+  const exports = [];
 
   // --------------- Traverse the AST ---------------
 
@@ -139,49 +177,73 @@ for await (const entry of testFiles) {
 
         if (source.value === "tap") {
           node.specifiers = [
-            {
-              type: "ImportSpecifier",
-              imported: { type: "Identifier", name: "test" },
-              local: { type: "Identifier", name: "test" },
-            },
-            {
-              type: "ImportSpecifier",
-              imported: { type: "Identifier", name: "beforeEach" },
-              local: { type: "Identifier", name: "beforeEach" },
-            },
-            {
-              type: "ImportSpecifier",
-              imported: { type: "Identifier", name: "before" },
-              local: { type: "Identifier", name: "before" },
-            },
-            {
-              type: "ImportSpecifier",
-              imported: { type: "Identifier", name: "after" },
-              local: { type: "Identifier", name: "after" },
-            },
-            {
-              type: "ImportSpecifier",
-              imported: { type: "Identifier", name: "afterEach" },
-              local: { type: "Identifier", name: "afterEach" },
-            },
-          ];
-
+            "test",
+            "beforeEach",
+            "before",
+            "after",
+            "afterEach",
+          ].map((name) => ({
+            type: "ImportSpecifier",
+            imported: { type: "Identifier", name },
+            local: { type: "Identifier", name },
+          }));
           source.value = "node:test";
-          source.raw = `'node:test'`;
+          source.raw = JSON.stringify(source.value);
+        }
+
+        if (cjs) {
+          const required = `require(${JSON.stringify(source.value)})`;
+          const declarations = node.specifiers.map((specifier) => {
+            switch (specifier.type) {
+              case "ImportNamespaceSpecifier":
+                return `const ${specifier.local.name} = ${required};`;
+              case "ImportDefaultSpecifier":
+                return `const ${specifier.local.name} = ${required}.default;`;
+              case "ImportSpecifier":
+                return `const ${specifier.local.name} = ${required}[${JSON.stringify(specifier.imported.name)}];`;
+            }
+          });
+          const statements = parseSync(
+            newFilename,
+            declarations.join("\n") || `${required};`
+          ).program.body;
+          if (statements[0].type === "VariableDeclaration") {
+            statements[0].declarations = statements.flatMap(
+              (statement) => statement.declarations
+            );
+          }
+          this.replace(statements[0]);
+          return;
         }
 
         // Only modify relative imports (those starting with ".")
         if (typeof source.value === "string" && source.value.startsWith(".")) {
           const isTestFile = source.value.endsWith(".tests");
           const newPath = resolve(dirname(dest), source.value).replace(
-            ".esm-tests/tests/",
-            isTestFile ? ".esm-tests/tests/" : ".esm-tests/library/"
+            ".builtin-tests/tests/",
+            isTestFile ? ".builtin-tests/tests/" : ".builtin-tests/library/"
           );
 
           // Update import source
           source.value = `${newPath}.js`;
           source.raw = `'${newPath}.js'`;
         }
+      }
+      if (cjs && node.type === "ExportNamedDeclaration") {
+        if (!node.declaration)
+          throw new Error(`Unsupported CJS export in ${entry}`);
+        const declaration = node.declaration;
+        const names =
+          declaration.type === "VariableDeclaration"
+            ? declaration.declarations.map((item) => item.id.name)
+            : [declaration.id.name];
+        this.replace(declaration);
+        for (const name of names) {
+          exports.push(
+            ...parseSync(newFilename, `exports.${name} = ${name};`).program.body
+          );
+        }
+        return;
       }
       // CallExpression nodes
       if (node.type === "CallExpression") {
@@ -194,7 +256,11 @@ for await (const entry of testFiles) {
         ) {
           switch (node.callee.property.name) {
             case "test":
-              node.callee = { type: "Identifier", name: "test" };
+              node.callee = {
+                type: "MemberExpression",
+                object: { type: "Identifier", name: "_testHelpers" },
+                property: { type: "Identifier", name: "test" },
+              };
               const testCb = node.arguments.find(
                 (arg) =>
                   arg.type === "FunctionExpression" ||
@@ -206,21 +272,25 @@ for await (const entry of testFiles) {
                 );
                 process.exit(1);
               }
-              // Ensure the callback has a parameter named 't'
-              if (testCb.params.length === 0) {
-                testCb.params.push({ type: "Identifier", name: "t" });
-              }
               break;
             case "teardown":
-              node.callee = { type: "Identifier", name: "after" };
+              node.callee = {
+                type: "MemberExpression",
+                object: { type: "Identifier", name: "_testHelpers" },
+                property: { type: "Identifier", name: "teardown" },
+              };
               break;
             case "beforeEach":
             case "before":
             case "after":
             case "afterEach":
               node.callee = {
-                type: "Identifier",
-                name: node.callee.property.name,
+                type: "MemberExpression",
+                object: { type: "Identifier", name: "_testHelpers" },
+                property: {
+                  type: "Identifier",
+                  name: node.callee.property.name,
+                },
               };
               break;
             case "setTimeout":
@@ -243,6 +313,8 @@ for await (const entry of testFiles) {
                 property: { type: "Identifier", name: "log" },
               };
               break;
+            case "skip":
+            case "end":
             case "throws":
             case "match":
             case "notMatch":
@@ -258,7 +330,6 @@ for await (const entry of testFiles) {
                 },
               };
               break;
-            case "end":
             case "equal":
             case "not":
             case "ok":
@@ -268,7 +339,7 @@ for await (const entry of testFiles) {
             case "doesNotThrow":
               node.callee.object = {
                 type: "MemberExpression",
-                object: { type: "Identifier", name: "t" },
+                object: { type: "Identifier", name: "_testHelpers" },
                 property: { type: "Identifier", name: "assert" },
               };
               switch (node.callee.property.name) {
@@ -293,16 +364,6 @@ for await (const entry of testFiles) {
                     argument: node.arguments[0],
                   };
                   break;
-                case "end":
-                  node.callee.property.name = "ok";
-                  node.arguments = [
-                    {
-                      type: "Literal",
-                      value: true,
-                      raw: "true",
-                    },
-                  ];
-                  break;
                 case "error":
                   node.callee.property.name = "ifError";
                   break;
@@ -316,6 +377,7 @@ for await (const entry of testFiles) {
 
         // Replace require(...) with await import(...)
         if (
+          !cjs &&
           node.callee.type === "Identifier" &&
           node.callee.name === "require"
         ) {
@@ -331,8 +393,20 @@ for await (const entry of testFiles) {
         }
       }
 
+      // Compile dynamic imports to require, like TypeScript does for CommonJS output
+      if (cjs && node.type === "ImportExpression") {
+        const source = generate(node.source);
+        this.replace(
+          parseSync(
+            newFilename,
+            `Promise.resolve().then(() => require(${source}));`
+          ).program.body[0].expression
+        );
+        return;
+      }
+
       // Replace __dirname with import.meta.dirname
-      if (node.type === "Identifier" && node.name === "__dirname") {
+      if (!cjs && node.type === "Identifier" && node.name === "__dirname") {
         this.replace({
           type: "MemberExpression",
           object: {
@@ -346,52 +420,77 @@ for await (const entry of testFiles) {
     },
   });
 
-  await writeFile(dest, generate(ast.program));
+  ast.program.body.push(...exports);
+  let output = generate(ast.program);
+  if (cjs) {
+    const result = await transform(
+      dest.replace(/js$/, "ts"),
+      '"use strict";\n' + output,
+      { sourcemap: true }
+    );
+    output =
+      result.code +
+      `\n//# sourceMappingURL=data:application/json;base64,${Buffer.from(JSON.stringify(result.map)).toString("base64")}\n`;
+  }
+  await writeFile(dest, output);
+}
+
+if (cjs) {
+  // The instrumentation loads injectedFunctions.ts, but it has to be plain JS here
+  const injectedFunctions = "agent/hooks/instrumentation/injectedFunctions";
+  await copyFile(
+    join(testsOutDir, `${injectedFunctions}.js`),
+    join(testsOutDir, `${injectedFunctions}.ts`)
+  );
 }
 
 // Create package.json with type module to run tap as ESM
-await writeFile(
-  join(testsOutDir, "package.json"),
-  JSON.stringify(
-    {
-      type: "module",
-    },
-    null,
-    2
-  )
-);
+if (!cjs) {
+  await writeFile(
+    join(testsOutDir, "package.json"),
+    JSON.stringify(
+      {
+        type: "module",
+      },
+      null,
+      2
+    )
+  );
+}
 
-await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
-  cwd: testsOutDir,
-});
-
-await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
-  cwd: libOutDir,
-});
+await symlink(join(libDir, "node_modules"), join(testsOutDir, "node_modules"));
+if (!cjs) {
+  await symlink(join(libDir, "node_modules"), join(libOutDir, "node_modules"));
+}
 
 const timeout = 1000 * 60 * 5; // 5 minutes
 
-let command = `node --test --test-concurrency 4 --test-timeout ${timeout} --test-force-exit`;
+let command = `node --test --expose-gc --test-concurrency 4 --test-timeout ${timeout} --test-force-exit`;
+if (cjs) command += " --enable-source-maps";
 
 // Coverage
 command +=
   " --experimental-test-coverage --test-reporter spec --test-reporter lcov";
 command +=
   "  --test-reporter-destination=stdout --test-reporter-destination=lcov.info";
-command += " --test-coverage-include='../library/**'"; // Exclude test files from coverage
+command += ` --test-coverage-include='${libOutDir}/**/*.js'`;
+if (cjs) {
+  command +=
+    " --test-coverage-exclude='**/*.test.js' --test-coverage-exclude='**/*.tests.js'";
+}
 
 // Pass args to test command, e.g. use node --run test:esm -- ./path/to/test.js
-command += ` ${process.argv.slice(2).join(" ")}`;
+command += ` ${testPatterns.map((pattern) => `'${pattern.replace(/\.ts$/, ".js")}'`).join(" ")}`;
 
 await execAsyncWithPipe(command, {
   env: {
     CI: true,
-    AIKIDO_TEST_NEW_INSTRUMENTATION: "true",
     AIKIDO_UNIT_TESTS: "1",
     AIKIDO_CI: "true",
     NODE_OPTIONS: "--disable-warning=ExperimentalWarning",
-    AIKIDO_ESM_TEST: true,
     ...process.env,
+    AIKIDO_ESM_TEST: cjs ? "false" : "true",
+    AIKIDO_TEST_NEW_INSTRUMENTATION: newInstrumentation ? "true" : "false",
   },
   cwd: testsOutDir,
 });

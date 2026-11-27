@@ -2,7 +2,6 @@ import * as t from "tap";
 import { Context, runWithContext } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
-import { resolve } from "path";
 import { Path } from "./Path";
 
 t.test(
@@ -22,7 +21,7 @@ t.test(
     };
     agent.start([new Path()]);
 
-    require("path");
+    const { resolve } = require("path") as typeof import("path");
 
     const context: Context = {
       remoteAddress: "::1",
