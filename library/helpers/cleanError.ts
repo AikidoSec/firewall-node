@@ -10,3 +10,7 @@ export function cleanError(err: Error) {
 
   return err;
 }
+
+export function getErrorMessage(err: Error): string {
+  return err.message;
+}
