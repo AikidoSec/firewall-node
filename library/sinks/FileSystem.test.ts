@@ -61,6 +61,8 @@ t.test("it works", async (t) => {
     realpath,
     promises: fsDotPromise,
     realpathSync,
+    readFileSync,
+    readFile,
   } = require("fs");
   const { writeFile: writeFilePromise } =
     require("fs/promises") as typeof import("fs/promises");
@@ -192,6 +194,22 @@ t.test("it works", async (t) => {
       () => rename(Buffer.from("../test.txt"), "../test2.txt", () => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
+
+    const uint8ArrayPath = new Uint8Array(Buffer.from("../test.txt"));
+    t.notOk(Buffer.isBuffer(uint8ArrayPath));
+
+    throws(
+      () => readFileSync(uint8ArrayPath),
+      "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from body.file.matches"
+    );
+
+    throws(
+      () => readFile(uint8ArrayPath, () => {}),
+      "Zen has blocked a path traversal attack: fs.readFile(...) originating from body.file.matches"
+    );
+
+    // Invalid UTF-8 is ignored, like for Buffer
+    throws(() => readFileSync(new Uint8Array([0xff, 0xfe])), /ENOENT/);
   });
 
   runWithContext(unsafeContextAbsolute, () => {
@@ -208,6 +226,11 @@ t.test("it works", async (t) => {
     throws(
       () => rename("/etc/passwd", "../test123.txt", () => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+    );
+
+    throws(
+      () => readFileSync(new Uint8Array(Buffer.from("/etc/passwd"))),
+      "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from body.file.matches"
     );
   });
 

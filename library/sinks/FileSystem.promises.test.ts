@@ -43,4 +43,30 @@ t.test("when require('fs').promises is used", async (t) => {
       );
     }
   });
+
+  await runWithContext(unsafeContext, async () => {
+    const error = await t.rejects(() =>
+      promises.readFile(Buffer.from("../test.txt"))
+    );
+    t.ok(error instanceof Error);
+    if (error instanceof Error) {
+      t.match(
+        error.message,
+        "Zen has blocked a path traversal attack: fs.readFile(...) originating from body.file.matches"
+      );
+    }
+  });
+
+  await runWithContext(unsafeContext, async () => {
+    const error = await t.rejects(() =>
+      promises.readFile(new Uint8Array(Buffer.from("../test.txt")))
+    );
+    t.ok(error instanceof Error);
+    if (error instanceof Error) {
+      t.match(
+        error.message,
+        "Zen has blocked a path traversal attack: fs.readFile(...) originating from body.file.matches"
+      );
+    }
+  });
 });
