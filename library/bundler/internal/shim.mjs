@@ -4,4 +4,4 @@ import url from "node:url";
 
 globalThis.require = createRequire(import.meta.url);
 globalThis.__filename = url.fileURLToPath(import.meta.url);
-globalThis.__dirname = path.dirname(__filename);
+globalThis.__dirname = path.dirname(globalThis.__filename);

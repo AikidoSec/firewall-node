@@ -31,7 +31,7 @@ let instrumentedForSCA = new Set<string>();
 
 const agentVersion = getAgentVersion();
 
-export const fileMatchRegex = /\.(js|ts|cjs|mjs|jsx|tsx)$/;
+export const fileMatchRegex = /\.(js|ts|cjs|mjs|cts|mts|jsx|tsx)$/;
 
 export function onBuildStart() {
   if (!initialized) {
@@ -100,7 +100,7 @@ export function transform(code: string, id: string) {
   // The same package could be required from different locations with different versions
   if (!instrumentedForSCA.has(moduleInfo.base)) {
     instrumentedForSCA.add(moduleInfo.base);
-    const insertSCAResult = transformCodeInsertSCA(
+    modifiedCode = transformCodeInsertSCA(
       moduleInfo.name,
       pkgVersion,
       agentVersion,
@@ -108,8 +108,6 @@ export function transform(code: string, id: string) {
       modifiedCode,
       "unambiguous"
     );
-
-    modifiedCode = insertSCAResult ?? modifiedCode;
   }
 
   return {
