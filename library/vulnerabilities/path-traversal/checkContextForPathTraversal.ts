@@ -16,7 +16,7 @@ export function checkContextForPathTraversal({
   context,
   checkPathStart = true,
 }: {
-  filename: string | URL | Buffer;
+  filename: string | URL | Uint8Array;
   operation: string;
   context: Context;
   checkPathStart?: boolean;
@@ -65,9 +65,9 @@ export function checkContextForPathTraversal({
 }
 
 /**
- * Convert a fs path argument (string, Buffer, URL) to a string
+ * Convert a fs path argument (string, Buffer, Uint8Array, URL) to a string
  */
-function pathToString(path: string | Buffer | URL): string | undefined {
+function pathToString(path: string | Uint8Array | URL): string | undefined {
   if (typeof path === "string") {
     return path;
   }
@@ -76,7 +76,8 @@ function pathToString(path: string | Buffer | URL): string | undefined {
     return path.pathname;
   }
 
-  if (path instanceof Buffer) {
+  // Buffer is a subclass of Uint8Array, Node.js accepts both as a path
+  if (path instanceof Uint8Array) {
     try {
       return new TextDecoder("utf-8", {
         fatal: true,
