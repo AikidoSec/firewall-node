@@ -22,9 +22,45 @@ import { onHTTPResponse } from "./http-request/onHTTPResponse";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isOptionsObject } from "./http-request/isOptionsObject";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
+import { createAIResponseParser } from "../ai-governance/AIResponseParser";
+import { isAIRequestPath } from "../ai-governance/parseAIResponse";
+import { isAIProviderTrafficCaptureEnabled } from "../ai-governance/isAIProviderTrafficCaptureEnabled";
+import { recordAICall } from "../ai-governance/recordAICall";
+import { tapResponseBody } from "./http-request/tapResponseBody";
 
 export class HTTPRequest implements Wrapper {
   private readonly requestUrls = new WeakMap<object, URL>();
+
+  private captureAIResponse(
+    url: URL,
+    request: ClientRequest,
+    response: IncomingMessage
+  ) {
+    try {
+      if (
+        !isAIProviderTrafficCaptureEnabled() ||
+        request.method !== "POST" ||
+        !isAIRequestPath(url.pathname) ||
+        !response.statusCode ||
+        response.statusCode < 200 ||
+        response.statusCode >= 300
+      ) {
+        return;
+      }
+
+      const parser = createAIResponseParser({
+        url,
+        contentType: response.headers["content-type"],
+        contentEncoding: response.headers["content-encoding"],
+        onCall: (call) => recordAICall(url, call),
+      });
+      if (parser) {
+        tapResponseBody(response, parser);
+      }
+    } catch {
+      return;
+    }
+  }
 
   private inspectHostname(
     agent: Agent,
@@ -207,14 +243,16 @@ export class HTTPRequest implements Wrapper {
     request: ClientRequest;
     response: IncomingMessage;
   }) {
-    const context = getContext();
-
-    if (!context) {
+    const url = this.requestUrls.get(request);
+    this.requestUrls.delete(request);
+    if (!url) {
       return;
     }
 
-    const url = this.requestUrls.get(request);
-    if (!url) {
+    this.captureAIResponse(url, request, response);
+
+    const context = getContext();
+    if (!context) {
       return;
     }
 

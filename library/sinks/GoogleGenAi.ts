@@ -1,4 +1,5 @@
 import { Agent } from "../agent/Agent";
+import { isAIProviderTrafficCaptureEnabled } from "../ai-governance/isAIProviderTrafficCaptureEnabled";
 import type { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
@@ -181,6 +182,10 @@ export class GoogleGenAi implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
+    if (isAIProviderTrafficCaptureEnabled()) {
+      return;
+    }
+
     hooks
       .addPackage("@google/genai")
       .withVersion("^1.6.0 || ^2.0.0")
