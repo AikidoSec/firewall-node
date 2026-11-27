@@ -38,8 +38,8 @@ if (major < minimumMajor || requiresNewerMinor) {
 
 async function execAsyncWithPipe(command, options) {
   const child = exec(command, options);
-  child.stdout && child.stdout.pipe(process.stdout);
-  child.stderr && child.stderr.pipe(process.stderr);
+  child.stdout.pipe(process.stdout);
+  child.stderr.pipe(process.stderr);
   return new Promise((resolve, reject) => {
     child.on("close", (code) => {
       if (code === 0) resolve();
@@ -81,13 +81,26 @@ if (!cjs) {
 
 await writeFile(join(outDir, "package.json"), "{}");
 
-const testFiles = glob(
-  "**/*.{ts,txt,pem,json,xml,js,mjs,prisma,toml,sql,zip}",
+const filesToCopy = glob(
+  "**/*.{txt,pem,json,xml,js,cjs,mjs,prisma,toml,sql,zip}",
   {
     cwd: libDir,
     exclude: ["**/node_modules/**", "**/.tap/**", "**/*.d.ts"],
   }
 );
+
+for await (const entry of filesToCopy) {
+  const src = join(libDir, entry);
+  const dest = join(testsOutDir, entry);
+
+  await mkdir(dirname(dest), { recursive: true });
+  await copyFile(src, dest);
+}
+
+const testFiles = glob("**/*.{test.ts,tests.ts}", {
+  cwd: libDir,
+  exclude: ["**/node_modules/**"],
+});
 
 // Copy all test files and transform them
 for await (const entry of testFiles) {
@@ -100,24 +113,6 @@ for await (const entry of testFiles) {
       // Some tests read the TypeScript sources (e.g. agent/protect.test.ts)
       await copyFile(src, join(testsOutDir, entry));
     }
-    continue;
-  }
-
-  if (
-    [
-      "txt",
-      "pem",
-      "json",
-      "xml",
-      "js",
-      "mjs",
-      "prisma",
-      "toml",
-      "sql",
-      "zip",
-    ].includes(entry.split(".").pop())
-  ) {
-    await copyFile(src, dest);
     continue;
   }
 

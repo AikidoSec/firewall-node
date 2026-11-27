@@ -16,6 +16,10 @@ const INSTRUMENT_INSPECT_ARGS_METHOD_NAME: &str = "__instrumentInspectArgs";
 const INSTRUMENT_MODIFY_ARGS_METHOD_NAME: &str = "__instrumentModifyArgs";
 const INSTRUMENT_MODIFY_RETURN_VALUE_METHOD_NAME: &str = "__instrumentModifyReturnValue";
 const INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME: &str = "__instrumentAccessLocalVariables";
+const INSTRUMENT_PACKAGE_WRAPPED_METHOD_NAME: &str = "__instrumentPackageWrapped";
+const INSTRUMENT_PACKAGE_LOADED_METHOD_NAME: &str = "__instrumentPackageLoaded";
+
+const MAX_IMPORT_METHODS: usize = 7; // Adjust if more methods are added !!!
 
 type ImportMethodPredicate = fn(&FunctionInstructions) -> bool;
 
@@ -50,7 +54,7 @@ pub fn insert_import_statement<'a>(
     allocator: &'a Allocator,
     builder: &'a AstBuilder,
     body: &mut OxcVec<'a, Statement<'a>>,
-    file_instructions: &FileInstructions,
+    method_names: OxcVec<'a, &str>,
 ) {
     // Common JS require() statement
     if is_common_js(source_type, has_module_syntax) {
@@ -63,35 +67,13 @@ pub fn insert_import_statement<'a>(
         )));
 
         let mut binding_properties: OxcVec<'a, BindingProperty<'a>> =
-            OxcVec::with_capacity_in(3, &allocator);
+            OxcVec::with_capacity_in(method_names.len(), &allocator);
 
-        for (method_name, predicate) in IMPORT_METHODS.iter() {
-            // Only import the function if it is used in the file
-            if file_instructions.functions.iter().any(predicate) {
-                binding_properties.push(BindingProperty::new(
-                    SPAN,
-                    PropertyKey::new_static_identifier(SPAN, *method_name, builder),
-                    BindingPattern::new_binding_identifier(SPAN, *method_name, builder),
-                    true,
-                    false,
-                    builder,
-                ));
-            }
-        }
-
-        if !file_instructions.access_local_variables.is_empty() {
+        for method_name in method_names.iter() {
             binding_properties.push(BindingProperty::new(
                 SPAN,
-                PropertyKey::new_static_identifier(
-                    SPAN,
-                    INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME,
-                    builder,
-                ),
-                BindingPattern::new_binding_identifier(
-                    SPAN,
-                    INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME,
-                    builder,
-                ),
+                PropertyKey::new_static_identifier(SPAN, *method_name, builder),
+                BindingPattern::new_binding_identifier(SPAN, *method_name, builder),
                 true,
                 false,
                 builder,
@@ -135,28 +117,12 @@ pub fn insert_import_statement<'a>(
     // else: ESM import statement
 
     let mut specifiers: OxcVec<'a, ImportDeclarationSpecifier<'a>> =
-        OxcVec::with_capacity_in(3, &allocator);
-    for (method_name, predicate) in IMPORT_METHODS.iter() {
-        if file_instructions.functions.iter().any(predicate) {
-            specifiers.push(ImportDeclarationSpecifier::new_import_specifier(
-                SPAN,
-                ModuleExportName::new_identifier_name(SPAN, *method_name, builder),
-                BindingIdentifier::new(SPAN, *method_name, builder),
-                ImportOrExportKind::Value,
-                builder,
-            ));
-        }
-    }
-
-    if !file_instructions.access_local_variables.is_empty() {
+        OxcVec::with_capacity_in(method_names.len(), &allocator);
+    for method_name in method_names.iter() {
         specifiers.push(ImportDeclarationSpecifier::new_import_specifier(
             SPAN,
-            ModuleExportName::new_identifier_name(
-                SPAN,
-                INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME,
-                builder,
-            ),
-            BindingIdentifier::new(SPAN, INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME, builder),
+            ModuleExportName::new_identifier_name(SPAN, *method_name, builder),
+            BindingIdentifier::new(SPAN, *method_name, builder),
             ImportOrExportKind::Value,
             builder,
         ));
@@ -183,4 +149,62 @@ pub fn insert_import_statement<'a>(
     );
 
     body.insert(0, import_stmt);
+}
+
+pub fn insert_import_statement_for_instructions<'a>(
+    source_type: &SourceType,
+    has_module_syntax: bool,
+    allocator: &'a Allocator,
+    builder: &'a AstBuilder,
+    body: &mut OxcVec<'a, Statement<'a>>,
+    file_instructions: &FileInstructions,
+    is_bundling: bool,
+) {
+    let mut method_names: OxcVec<'a, &str> =
+        OxcVec::with_capacity_in(MAX_IMPORT_METHODS, &allocator);
+
+    // Iter file_instructions to determine which methods to import
+    for (method_name, predicate) in IMPORT_METHODS.iter() {
+        if file_instructions.functions.iter().any(predicate) {
+            method_names.push(*method_name);
+        }
+    }
+
+    if !file_instructions.access_local_variables.is_empty() {
+        method_names.push(INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME);
+    }
+
+    if is_bundling {
+        method_names.push(INSTRUMENT_PACKAGE_WRAPPED_METHOD_NAME);
+    }
+
+    insert_import_statement(
+        source_type,
+        has_module_syntax,
+        allocator,
+        builder,
+        body,
+        method_names,
+    );
+}
+
+pub fn insert_import_statement_for_sca<'a>(
+    source_type: &SourceType,
+    has_module_syntax: bool,
+    allocator: &'a Allocator,
+    builder: &'a AstBuilder,
+    body: &mut OxcVec<'a, Statement<'a>>,
+) {
+    let mut method_names: OxcVec<'a, &str> = OxcVec::with_capacity_in(1, &allocator);
+
+    method_names.push(INSTRUMENT_PACKAGE_LOADED_METHOD_NAME);
+
+    insert_import_statement(
+        source_type,
+        has_module_syntax,
+        allocator,
+        builder,
+        body,
+        method_names,
+    );
 }
